@@ -1,0 +1,155 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+* { box-sizing: border-box; padding: 0; margin: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #020617;
+  color: #e2e8f0;
+  min-height: 100vh;
+}
+
+/* ========== ARC THEME ========== */
+.bg-arc-dark { background: linear-gradient(180deg, #020617 0%, #0f172a 50%, #020617 100%); }
+
+/* Glass Card - ArcFlow Style (teal/mint accent, not purple) */
+.glass {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(20, 184, 166, 0.12);
+  border-radius: 1.25rem;
+}
+
+.glass:hover {
+  border-color: rgba(20, 184, 166, 0.25);
+}
+
+.glass-sm {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(20, 184, 166, 0.08);
+  border-radius: 1rem;
+}
+
+/* Gradient Text */
+.text-gradient {
+  background: linear-gradient(135deg, #14b8a6 0%, #2dd4bf 50%, #4ade80 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Primary Button */
+.btn-arc {
+  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+  color: white;
+  font-weight: 600;
+  border-radius: 1rem;
+  padding: 0.75rem 1.5rem;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-arc:hover {
+  background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(20, 184, 166, 0.3);
+}
+
+.btn-arc:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Secondary Button */
+.btn-outline {
+  background: transparent;
+  color: #2dd4bf;
+  font-weight: 600;
+  border-radius: 1rem;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid rgba(20, 184, 166, 0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-outline:hover {
+  background: rgba(20, 184, 166, 0.1);
+  border-color: rgba(20, 184, 166, 0.5);
+}
+
+/* Input */
+.input-arc {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(20, 184, 166, 0.1);
+  border-radius: 1rem;
+  padding: 1rem;
+  color: white;
+  font-size: 1.125rem;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.3s;
+}
+
+.input-arc:focus {
+  border-color: rgba(20, 184, 166, 0.4);
+}
+
+.input-arc::placeholder {
+  color: #475569;
+}
+
+/* Glow Effects */
+.glow-teal {
+  box-shadow: 0 0 40px rgba(20, 184, 166, 0.15), 0 0 80px rgba(20, 184, 166, 0.05);
+}
+
+.glow-teal-sm {
+  box-shadow: 0 0 20px rgba(20, 184, 166, 0.1);
+}
+
+/* Status Badge */
+.badge-success {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-warning {
+  background: rgba(234, 179, 8, 0.15);
+  color: #facc15;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0f172a; }
+::-webkit-scrollbar-thumb { background: #0d9488; border-radius: 3px; }
+
+/* Number Input */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+input[type="number"] { -moz-appearance: textfield; }
+
+/* Fade in */
+.animate-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

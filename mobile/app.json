@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "ArcFlow",
+    "slug": "arcflow",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#020617"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.arcflow.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#020617"
+      },
+      "package": "com.arcflow.app"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
