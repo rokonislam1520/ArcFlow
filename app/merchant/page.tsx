@@ -1,119 +1,232 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { isAddress, parseUnits } from 'viem';
+import { useWallet, publicClient } from '@/lib/useWallet';
+import { useUsdcBalance, formatAmount } from '@/lib/useTokenBalance';
+import { useTransaction } from '@/lib/useTransaction';
+import { WalletGuard } from '@/components/WalletGuard';
+import { TxStatus } from '@/components/TxStatus';
+import { ADDRESSES, USDC_DECIMALS, arcFlowPayAbi, isConfigured } from '@/lib/config';
 
-const merchants = [
-  { name: 'Coffee House', category: 'Food & Drink', amount: '12.50', time: 'Today' },
-  { name: 'Metro Transit', category: 'Transport', amount: '3.00', time: 'Today' },
-  { name: 'BookStore BD', category: 'Shopping', amount: '45.00', time: 'Yesterday' },
-  { name: 'Spotify', category: 'Subscription', amount: '9.99', time: '3 days ago' },
-];
+interface Merchant {
+  wallet: `0x${string}`;
+  name: string;
+  category: string;
+  active: boolean;
+  totalReceived: bigint;
+  txCount: bigint;
+}
 
-const savedMerchants = [
-  { name: 'Coffee House', icon: '☕', address: '0xcoffee...1234' },
-  { name: 'Metro Card', icon: '🚇', address: '0xmetro...5678' },
-  { name: 'Gym Membership', icon: '🏋️', address: '0xgym...9012' },
-  { name: 'Netflix', icon: '🎬', address: '0xnetflix...3456' },
-];
+function MerchantView() {
+  const { address, walletClient } = useWallet();
+  const { balance, formatted, refresh } = useUsdcBalance(address);
 
-export default function MerchantPage() {
-  const [tab, setTab] = useState<'pay' | 'history' | 'merchants'>('pay');
+  const [merchants, setMerchants] = useState<Merchant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  /** Enumerates registered merchants from the contract's own registry. */
+  const loadMerchants = useCallback(async () => {
+    if (!ADDRESSES.pay) return;
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const count = (await publicClient.readContract({
+        address: ADDRESSES.pay,
+        abi: arcFlowPayAbi,
+        functionName: 'getMerchantCount',
+        args: [],
+      })) as bigint;
+
+      const wallets = await Promise.all(
+        Array.from({ length: Number(count) }, (_, i) =>
+          publicClient.readContract({
+            address: ADDRESSES.pay!,
+            abi: arcFlowPayAbi,
+            functionName: 'merchantList',
+            args: [BigInt(i)],
+          }) as Promise<`0x${string}`>
+        )
+      );
+
+      const details = await Promise.all(
+        wallets.map(async (wallet) => {
+          const info = (await publicClient.readContract({
+            address: ADDRESSES.pay!,
+            abi: arcFlowPayAbi,
+            functionName: 'getMerchant',
+            args: [wallet],
+          })) as readonly [string, string, boolean, bigint, bigint];
+          return {
+            wallet,
+            name: info[0],
+            category: info[1],
+            active: info[2],
+            totalReceived: info[3],
+            txCount: info[4],
+          } satisfies Merchant;
+        })
+      );
+
+      setMerchants(details.filter((m) => m.active));
+    } catch (err) {
+      console.error('Failed to load merchants:', err);
+      setLoadError('Could not load the merchant registry from chain.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadMerchants();
+  }, [loadMerchants]);
+
+  const payTx = useTransaction(() => {
+    void refresh();
+    void loadMerchants();
+  });
+
+  const [tab, setTab] = useState<'pay' | 'merchants'>('pay');
+  const [merchantAddr, setMerchantAddr] = useState('');
   const [amount, setAmount] = useState('');
-  const [merchant, setMerchant] = useState('');
+
+  const parsedAmount = useMemo(() => {
+    if (!amount.trim()) return null;
+    try {
+      const v = parseUnits(amount as `${number}`, USDC_DECIMALS);
+      return v > 0n ? v : null;
+    } catch {
+      return null;
+    }
+  }, [amount]);
+
+  const addrValid = isAddress(merchantAddr);
+  const exceedsBalance = parsedAmount !== null && balance !== null && parsedAmount > balance;
+
+  const validationError = merchantAddr && !addrValid
+    ? 'Enter a valid merchant address.'
+    : exceedsBalance
+      ? 'Amount exceeds your USDC balance.'
+      : null;
+
+  const canPay = addrValid && parsedAmount !== null && !exceedsBalance && !payTx.isBusy;
+
+  const handlePay = async () => {
+    if (!canPay || !parsedAmount || !ADDRESSES.pay || !ADDRESSES.usdc) return;
+    await payTx.execute(walletClient, address, {
+      address: ADDRESSES.pay,
+      abi: arcFlowPayAbi,
+      functionName: 'pay',
+      args: [merchantAddr as `0x${string}`, parsedAmount],
+      approval: {
+        token: ADDRESSES.usdc,
+        spender: ADDRESSES.pay,
+        amount: parsedAmount,
+      },
+    });
+  };
 
   return (
     <div className="min-h-screen py-8 animate-in">
       <div className="max-w-lg mx-auto px-4">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Pay Merchant</h1>
-          <p className="text-slate-400">Scan & pay at any merchant accepting stablecoins</p>
+          <p className="text-slate-400">Pay any registered merchant in USDC</p>
         </div>
 
-        {/* Tabs */}
         <div className="flex gap-2 mb-6">
-          {([['pay', 'Pay'], ['history', 'History'], ['merchants', 'Saved']] as const).map(([k, v]) => (
-            <button key={k} onClick={() => setTab(k)}
-              className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-all ${tab === k ? 'bg-arc-500 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}>
+          {([['pay', 'Pay'], ['merchants', 'Registered']] as const).map(([k, v]) => (
+            <button
+              key={k}
+              onClick={() => setTab(k)}
+              className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-all ${
+                tab === k ? 'bg-arc-500 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'
+              }`}
+            >
               {v}
             </button>
           ))}
         </div>
 
         {tab === 'pay' && (
-          <div className="space-y-6">
-            {/* QR Scanner Area */}
-            <div className="glass p-8 text-center">
-              <div className="w-48 h-48 mx-auto rounded-2xl bg-white/[0.03] border-2 border-dashed border-arc-500/30 flex items-center justify-center mb-4">
-                <div className="text-center">
-                  <div className="text-4xl mb-2">📷</div>
-                  <p className="text-sm text-slate-400">Scan QR Code</p>
-                </div>
-              </div>
-              <p className="text-sm text-slate-500">Point camera at merchant QR code</p>
-            </div>
-
-            {/* Manual Pay */}
-            <div className="glass p-6">
-              <h3 className="font-semibold mb-4">Or Pay Manually</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-slate-400 mb-2 block">Merchant</label>
-                  <select value={merchant} onChange={(e) => setMerchant(e.target.value)}
-                    className="w-full input-arc appearance-none cursor-pointer">
-                    <option value="">Select merchant...</option>
-                    {savedMerchants.map((m) => <option key={m.name} value={m.name}>{m.icon} {m.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm text-slate-400 mb-2 block">Amount (USDC)</label>
-                  <div className="relative">
-                    <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00"
-                      className="input-arc text-2xl font-bold pr-16" />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-semibold">USDC</span>
-                  </div>
-                </div>
-                <button className="w-full btn-arc py-4 text-lg" disabled={!amount || !merchant}>
-                  Pay ${parseFloat(amount || '0').toFixed(2)}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {tab === 'history' && (
           <div className="glass p-6">
-            <h3 className="font-semibold mb-4">Payment History</h3>
-            <div className="space-y-3">
-              {merchants.map((m, i) => (
-                <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03]">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-lg">💳</div>
-                    <div>
-                      <div className="font-medium">{m.name}</div>
-                      <div className="text-slate-500 text-xs">{m.category} • {m.time}</div>
-                    </div>
-                  </div>
-                  <div className="text-red-400 font-semibold">-${m.amount}</div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-slate-400 mb-2 block">Merchant Address</label>
+                <input
+                  type="text"
+                  value={merchantAddr}
+                  onChange={(e) => setMerchantAddr(e.target.value)}
+                  placeholder="0x…"
+                  disabled={payTx.isBusy}
+                  className="input-arc font-mono text-sm"
+                />
+              </div>
+              <div>
+                <div className="flex justify-between mb-2">
+                  <label className="text-sm text-slate-400">Amount (USDC)</label>
+                  <span className="text-sm text-slate-500">Balance: {formatted ?? '—'} USDC</span>
                 </div>
-              ))}
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="0.00"
+                    disabled={payTx.isBusy}
+                    className="input-arc text-2xl font-bold pr-16"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-semibold">
+                    USDC
+                  </span>
+                </div>
+              </div>
+
+              {validationError && <p className="text-sm text-red-400">{validationError}</p>}
+
+              <button className="w-full btn-arc py-4 text-lg" disabled={!canPay} onClick={handlePay}>
+                {payTx.isBusy ? 'Processing…' : 'Pay'}
+              </button>
+
+              <TxStatus state={payTx.state} />
             </div>
           </div>
         )}
 
         {tab === 'merchants' && (
           <div className="glass p-6">
-            <h3 className="font-semibold mb-4">Saved Merchants</h3>
+            <h3 className="font-semibold mb-4">Registered Merchants</h3>
+            {loading && <p className="text-slate-400 text-sm">Loading from chain…</p>}
+            {loadError && <p className="text-red-400 text-sm">{loadError}</p>}
+            {!loading && !loadError && merchants.length === 0 && (
+              <p className="text-slate-400 text-sm">No merchants are registered yet.</p>
+            )}
             <div className="space-y-3">
-              {savedMerchants.map((m, i) => (
-                <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] transition-all cursor-pointer"
-                  onClick={() => { setMerchant(m.name); setTab('pay'); }}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-xl">{m.icon}</div>
-                    <div>
-                      <div className="font-medium">{m.name}</div>
-                      <div className="text-slate-500 text-xs font-mono">{m.address}</div>
+              {merchants.map((m) => (
+                <div
+                  key={m.wallet}
+                  className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03]"
+                >
+                  <div className="min-w-0">
+                    <div className="font-medium">{m.name}</div>
+                    <div className="text-slate-500 text-xs">{m.category}</div>
+                    <div className="text-slate-600 text-xs font-mono mt-1 truncate">
+                      {m.wallet}
+                    </div>
+                    <div className="text-slate-500 text-xs mt-1">
+                      {formatAmount(m.totalReceived, USDC_DECIMALS)} USDC received ·{' '}
+                      {m.txCount.toString()} payments
                     </div>
                   </div>
-                  <button className="btn-arc px-4 py-2 text-sm">Pay</button>
+                  <button
+                    className="btn-arc px-4 py-2 text-sm shrink-0 ml-3"
+                    onClick={() => {
+                      setMerchantAddr(m.wallet);
+                      setTab('pay');
+                    }}
+                  >
+                    Pay
+                  </button>
                 </div>
               ))}
             </div>
@@ -121,5 +234,13 @@ export default function MerchantPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function MerchantPage() {
+  return (
+    <WalletGuard configured={isConfigured.pay} featureName="Merchant Pay">
+      <MerchantView />
+    </WalletGuard>
   );
 }

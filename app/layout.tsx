@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Navbar } from '@/components/Navbar';
+import { WalletProvider } from '@/lib/WalletProvider';
 
 export const metadata: Metadata = {
-  title: 'ArcFlow — Stablecoin SuperApp',
-  description: 'Send, Swap, Bridge, Pay & Manage your stablecoins on ARC.',
+  title: 'ArcFlow — Multichain Stablecoin Platform',
+  description:
+    'Send, swap, bridge and pay with stablecoins across Arc and every chain supported by Circle App Kit.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -15,8 +17,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-arc-500/5 rounded-full blur-[128px]" />
           <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-mint-500/5 rounded-full blur-[128px]" />
         </div>
-        <Navbar />
-        <main>{children}</main>
+        {/* One wallet session shared by every page, so switching networks in
+            the navbar is immediately reflected everywhere. */}
+        <WalletProvider>
+          <Navbar />
+          <main>{children}</main>
+        </WalletProvider>
       </body>
     </html>
   );

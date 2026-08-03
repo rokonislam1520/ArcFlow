@@ -1,101 +1,198 @@
 'use client';
-import { useState } from 'react';
-
-const tokens = [
-  { symbol: 'USDC', name: 'USD Coin', balance: '8,425.50', price: 1.00 },
-  { symbol: 'EURC', name: 'Euro Coin', balance: '1,200.00', price: 1.09 },
-  { symbol: 'USDT', name: 'Tether', balance: '500.00', price: 1.00 },
-  { symbol: 'DAI', name: 'Dai', balance: '320.00', price: 1.00 },
-];
+/**
+ * Swap — same-chain token swap through App Kit's routing.
+ *
+ * Chains come from `getSupportedChains('swap')`, so this page never offers a
+ * swap on a chain that has no route. The previous version priced swaps from a
+ * hardcoded table; quotes now come from `estimateSwap`.
+ */
+import { useMemo, useState } from 'react';
+import { parseUnits, type Address } from 'viem';
+import { getChainTokens, getEnvChains } from '@/lib/chains';
+import { useWallet, useActiveChain } from '@/lib/WalletProvider';
+import { useChainBalances } from '@/lib/useBalances';
+import { useAppKitOps } from '@/lib/useAppKitOps';
+import { OpStatus } from '@/components/OpStatus';
 
 export default function SwapPage() {
-  const [from, setFrom] = useState(tokens[0]);
-  const [to, setTo] = useState(tokens[1]);
-  const [fromAmt, setFromAmt] = useState('');
-  const [slippage, setSlippage] = useState(0.5);
+  const { address, adapter, switchChain } = useWallet();
+  const activeChain = useActiveChain();
+  const { state, isBusy, swap, reset } = useAppKitOps();
 
-  const flipTokens = () => { const t = from; setFrom(to); setTo(t); };
+  // Only chains App Kit can actually swap on.
+  const swapChains = useMemo(() => getEnvChains('swap'), []);
+  const canSwapHere = swapChains.some((c) => c.id === activeChain.id);
 
-  const toAmt = fromAmt ? (parseFloat(fromAmt) * from.price / to.price).toFixed(6) : '';
+  const { balances, refresh } = useChainBalances(activeChain, address as Address | null);
+
+  const tokens = useMemo(
+    () => getChainTokens(activeChain).filter((t) => t !== 'NATIVE'),
+    [activeChain]
+  );
+
+  const [tokenIn, setTokenIn] = useState('USDC');
+  const [tokenOut, setTokenOut] = useState('EURC');
+  const [amountIn, setAmountIn] = useState('');
+
+  const inToken = tokens.includes(tokenIn as never) ? tokenIn : tokens[0] ?? 'USDC';
+  const outToken =
+    tokens.find((t) => t === tokenOut && t !== inToken) ?? tokens.find((t) => t !== inToken) ?? '';
+
+  const balance = balances.find((b) => b.symbol === inToken);
+
+  const validationError = useMemo(() => {
+    if (!address) return 'Connect your wallet.';
+    if (!canSwapHere) return `Swaps are not available on ${activeChain.label}.`;
+    if (!outToken) return 'This chain has only one swappable token.';
+    if (!amountIn) return null;
+    const n = Number(amountIn);
+    if (!Number.isFinite(n) || n <= 0) return 'Enter an amount greater than zero.';
+    if (balance) {
+      try {
+        if (parseUnits(amountIn, balance.decimals) > balance.raw) {
+          return `Insufficient ${inToken}. You have ${balance.formatted}.`;
+        }
+      } catch {
+        return 'Too many decimal places.';
+      }
+    }
+    return null;
+  }, [address, canSwapHere, activeChain.label, outToken, amountIn, balance, inToken]);
+
+  const canSubmit = !!address && !!adapter && !!amountIn && !validationError && !isBusy;
+
+  async function onSubmit() {
+    if (!canSubmit) return;
+    const result = await swap({
+      chain: activeChain,
+      tokenIn: inToken,
+      tokenOut: outToken,
+      amountIn,
+    });
+    if (result) {
+      setAmountIn('');
+      void refresh();
+    }
+  }
 
   return (
-    <div className="min-h-screen py-8 animate-in">
-      <div className="max-w-lg mx-auto px-4">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Smart Swap</h1>
-          <p className="text-slate-400">AI-powered routing for the best stablecoin rates</p>
+    <div className="max-w-lg mx-auto px-4 py-12">
+      <h1 className="text-3xl font-bold mb-1">Swap</h1>
+      <p className="text-slate-400 text-sm mb-8">
+        Swapping on <span className="text-arc-400">{activeChain.label}</span>
+      </p>
+
+      {!canSwapHere && (
+        <div className="glass p-4 mb-6 text-sm">
+          <p className="text-amber-300 mb-3">
+            App Kit has no swap routes on {activeChain.label}. Switch to a chain that supports
+            swaps:
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {swapChains.slice(0, 6).map((c) => (
+              <button
+                key={c.id}
+                onClick={() => void switchChain(c)}
+                className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-xs"
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="glass p-6 space-y-5">
+        <div>
+          <div className="flex justify-between text-sm text-slate-400 mb-2">
+            <label>From</label>
+            {balance && (
+              <button
+                onClick={() => setAmountIn(balance.formatted.replace(/,/g, ''))}
+                className="text-arc-400 hover:underline"
+              >
+                Max: {balance.formatted}
+              </button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <input
+              value={amountIn}
+              onChange={(e) => setAmountIn(e.target.value.replace(/[^0-9.]/g, ''))}
+              inputMode="decimal"
+              placeholder="0.00"
+              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-lg focus:border-arc-500 outline-none"
+            />
+            <select
+              value={inToken}
+              onChange={(e) => setTokenIn(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-sm outline-none focus:border-arc-500"
+            >
+              {tokens.map((t) => (
+                <option key={t} value={t} className="bg-arc-dark">
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        <div className="glass p-6">
-          {/* Slippage */}
-          <div className="flex justify-between items-center mb-6">
-            <span className="text-sm text-slate-400">Slippage</span>
-            <div className="flex gap-2">
-              {[0.1, 0.5, 1.0].map((v) => (
-                <button key={v} onClick={() => setSlippage(v)}
-                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${slippage === v ? 'bg-arc-500 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}>
-                  {v}%
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* From */}
-          <div className="rounded-2xl bg-white/[0.03] p-4 mb-2">
-            <div className="flex justify-between mb-2">
-              <span className="text-sm text-slate-400">You Pay</span>
-              <span className="text-sm text-slate-500">Balance: {from.balance}</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <input type="number" value={fromAmt} onChange={(e) => setFromAmt(e.target.value)} placeholder="0.0"
-                className="bg-transparent text-3xl font-bold outline-none flex-1 min-w-0 text-white" />
-              <select value={from.symbol} onChange={(e) => setFrom(tokens.find(t => t.symbol === e.target.value)!)}
-                className="bg-white/10 text-white rounded-xl px-4 py-2 font-semibold outline-none cursor-pointer appearance-none pr-8"
-                style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2314b8a6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.2em' }}>
-                {tokens.map((t) => <option key={t.symbol} value={t.symbol}>{t.symbol}</option>)}
-              </select>
-            </div>
-            <div className="text-sm text-slate-500 mt-2">≈ ${(parseFloat(fromAmt || '0') * from.price).toFixed(2)}</div>
-          </div>
-
-          {/* Flip */}
-          <div className="flex justify-center -my-3 relative z-10">
-            <button onClick={flipTokens} className="bg-slate-850 border-4 border-slate-950 rounded-xl p-2 hover:bg-arc-500/20 transition-all">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-              </svg>
-            </button>
-          </div>
-
-          {/* To */}
-          <div className="rounded-2xl bg-white/[0.03] p-4 mt-2 mb-6">
-            <div className="flex justify-between mb-2">
-              <span className="text-sm text-slate-400">You Receive</span>
-              <span className="text-sm text-slate-500">Balance: {to.balance}</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <input type="text" value={toAmt} readOnly placeholder="0.0"
-                className="bg-transparent text-3xl font-bold outline-none flex-1 min-w-0 text-white" />
-              <select value={to.symbol} onChange={(e) => setTo(tokens.find(t => t.symbol === e.target.value)!)}
-                className="bg-white/10 text-white rounded-xl px-4 py-2 font-semibold outline-none cursor-pointer appearance-none pr-8"
-                style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2314b8a6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.2em' }}>
-                {tokens.map((t) => <option key={t.symbol} value={t.symbol}>{t.symbol}</option>)}
-              </select>
-            </div>
-            <div className="text-sm text-slate-500 mt-2">≈ ${(parseFloat(toAmt || '0') * to.price).toFixed(2)}</div>
-          </div>
-
-          {/* Route */}
-          <div className="space-y-2 mb-6 text-sm">
-            <div className="flex justify-between"><span className="text-slate-400">Route</span><span>{from.symbol} → {to.symbol} <span className="text-mint-400 text-xs ml-1">Best Rate</span></span></div>
-            <div className="flex justify-between"><span className="text-slate-400">Price Impact</span><span className="text-mint-400">&lt;0.01%</span></div>
-            <div className="flex justify-between"><span className="text-slate-400">Network Fee</span><span className="text-mint-400">$0.00</span></div>
-          </div>
-
-          <button className="w-full btn-arc py-4 text-lg" disabled={!fromAmt}>
-            {!fromAmt ? 'Enter Amount' : 'Swap'}
+        <div className="flex justify-center">
+          <button
+            onClick={() => {
+              // Swap both sides so the pair stays valid.
+              setTokenIn(outToken);
+              setTokenOut(inToken);
+            }}
+            disabled={!outToken}
+            className="w-9 h-9 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 flex items-center justify-center disabled:opacity-40"
+            aria-label="Reverse tokens"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+            </svg>
           </button>
         </div>
+
+        <div>
+          <label className="block text-sm text-slate-400 mb-2">To</label>
+          <select
+            value={outToken}
+            onChange={(e) => setTokenOut(e.target.value)}
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-arc-500"
+          >
+            {tokens
+              .filter((t) => t !== inToken)
+              .map((t) => (
+                <option key={t} value={t} className="bg-arc-dark">
+                  {t}
+                </option>
+              ))}
+          </select>
+          {/* No fabricated output estimate: the real quote comes from App Kit
+              during estimation, and is reported in the status panel. */}
+          <p className="text-xs text-slate-500 mt-2">
+            The exact rate is quoted by App Kit before you sign.
+          </p>
+        </div>
+
+        {validationError && amountIn && <p className="text-sm text-amber-400">{validationError}</p>}
+
+        <button
+          onClick={onSubmit}
+          disabled={!canSubmit}
+          className="btn-arc w-full py-3 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {isBusy ? 'Processing…' : 'Swap'}
+        </button>
+
+        <OpStatus state={state} chain={activeChain} />
+
+        {state.stage !== 'idle' && !isBusy && (
+          <button onClick={reset} className="w-full text-sm text-slate-400 hover:text-white">
+            New swap
+          </button>
+        )}
       </div>
     </div>
   );
