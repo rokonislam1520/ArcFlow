@@ -68,7 +68,11 @@ export interface ArcFlowSendInterface extends Interface {
   ): FunctionFragment;
 
   getEvent(
-    nameOrSignatureOrTopic: "FeeUpdated" | "RelayerUpdated" | "Sent"
+    nameOrSignatureOrTopic:
+      | "FeeCollectorUpdated"
+      | "FeeUpdated"
+      | "RelayerUpdated"
+      | "Sent"
   ): EventFragment;
 
   encodeFunctionData(
@@ -147,6 +151,18 @@ export interface ArcFlowSendInterface extends Interface {
   decodeFunctionResult(functionFragment: "setRelayer", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "usdc", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
+}
+
+export namespace FeeCollectorUpdatedEvent {
+  export type InputTuple = [newCollector: AddressLike];
+  export type OutputTuple = [newCollector: string];
+  export interface OutputObject {
+    newCollector: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace FeeUpdatedEvent {
@@ -351,6 +367,13 @@ export interface ArcFlowSend extends BaseContract {
   ): TypedContractMethod<[], [void], "nonpayable">;
 
   getEvent(
+    key: "FeeCollectorUpdated"
+  ): TypedContractEvent<
+    FeeCollectorUpdatedEvent.InputTuple,
+    FeeCollectorUpdatedEvent.OutputTuple,
+    FeeCollectorUpdatedEvent.OutputObject
+  >;
+  getEvent(
     key: "FeeUpdated"
   ): TypedContractEvent<
     FeeUpdatedEvent.InputTuple,
@@ -373,6 +396,17 @@ export interface ArcFlowSend extends BaseContract {
   >;
 
   filters: {
+    "FeeCollectorUpdated(address)": TypedContractEvent<
+      FeeCollectorUpdatedEvent.InputTuple,
+      FeeCollectorUpdatedEvent.OutputTuple,
+      FeeCollectorUpdatedEvent.OutputObject
+    >;
+    FeeCollectorUpdated: TypedContractEvent<
+      FeeCollectorUpdatedEvent.InputTuple,
+      FeeCollectorUpdatedEvent.OutputTuple,
+      FeeCollectorUpdatedEvent.OutputObject
+    >;
+
     "FeeUpdated(uint256)": TypedContractEvent<
       FeeUpdatedEvent.InputTuple,
       FeeUpdatedEvent.OutputTuple,

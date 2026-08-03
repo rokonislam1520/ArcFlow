@@ -31,6 +31,9 @@ contract ArcFlowPay {
     event MerchantRegistered(address indexed merchant, string name);
     event Payment(address indexed from, address indexed merchant, uint256 amount, uint256 fee);
     event MerchantDeactivated(address indexed merchant);
+    event MerchantReactivated(address indexed merchant);
+    event FeeUpdated(uint256 newFeeBps);
+    event FeeCollectorUpdated(address indexed newCollector);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Not owner");
@@ -43,14 +46,21 @@ contract ArcFlowPay {
     }
 
     constructor(address _usdc, address _feeCollector) {
+        require(_usdc != address(0), "Zero USDC address");
+        require(_feeCollector != address(0), "Zero fee collector");
         owner = msg.sender;
         usdc = IERC20(_usdc);
         feeCollector = _feeCollector;
     }
 
     // ========== Merchant Registration ==========
+    /**
+     * @dev Registration is keyed on `wallet` (not `active`) so a merchant that
+     *      was deactivated cannot register a second time and be appended to
+     *      `merchantList` again. Use {reactivateMerchant} to come back online.
+     */
     function registerMerchant(string calldata name, string calldata category) external {
-        require(!merchants[msg.sender].active, "Already registered");
+        require(merchants[msg.sender].wallet == address(0), "Already registered");
         require(bytes(name).length > 0, "Empty name");
 
         merchants[msg.sender] = Merchant({
@@ -68,8 +78,21 @@ contract ArcFlowPay {
 
     function deactivateMerchant(address merchant) external {
         require(msg.sender == owner || msg.sender == merchant, "Not authorized");
+        require(merchants[merchant].wallet != address(0), "Not registered");
+        require(merchants[merchant].active, "Already inactive");
+
         merchants[merchant].active = false;
         emit MerchantDeactivated(merchant);
+    }
+
+    /// @notice Restores a previously deactivated merchant without duplicating `merchantList`.
+    function reactivateMerchant() external {
+        Merchant storage m = merchants[msg.sender];
+        require(m.wallet != address(0), "Not registered");
+        require(!m.active, "Already active");
+
+        m.active = true;
+        emit MerchantReactivated(msg.sender);
     }
 
     // ========== Payment ==========
@@ -80,6 +103,10 @@ contract ArcFlowPay {
         uint256 fee = (amount * feeBps) / 10000;
         uint256 netAmount = amount - fee;
 
+        // Effects before interactions (checks-effects-interactions)
+        merchants[merchant].totalReceived += netAmount;
+        merchants[merchant].txCount++;
+
         // Transfer to merchant
         require(usdc.transferFrom(msg.sender, merchant, netAmount), "Transfer failed");
 
@@ -87,9 +114,6 @@ contract ArcFlowPay {
         if (fee > 0) {
             require(usdc.transferFrom(msg.sender, feeCollector, fee), "Fee failed");
         }
-
-        merchants[merchant].totalReceived += netAmount;
-        merchants[merchant].txCount++;
 
         emit Payment(msg.sender, merchant, amount, fee);
     }
@@ -104,9 +128,20 @@ contract ArcFlowPay {
         return merchantList.length;
     }
 
+    function isRegistered(address wallet) external view returns (bool) {
+        return merchants[wallet].wallet != address(0);
+    }
+
     // ========== Admin ==========
     function setFee(uint256 _feeBps) external onlyOwner {
         require(_feeBps <= 500, "Too high");
         feeBps = _feeBps;
+        emit FeeUpdated(_feeBps);
+    }
+
+    function setFeeCollector(address _collector) external onlyOwner {
+        require(_collector != address(0), "Zero fee collector");
+        feeCollector = _collector;
+        emit FeeCollectorUpdated(_collector);
     }
 }

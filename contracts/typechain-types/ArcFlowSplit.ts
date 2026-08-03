@@ -30,6 +30,8 @@ export interface ArcFlowSplitInterface extends Interface {
       | "getGroup"
       | "getGroupCount"
       | "getGroupMembers"
+      | "getGroupRecipient"
+      | "getOutstandingShare"
       | "getUserGroups"
       | "groupMembers"
       | "groups"
@@ -64,6 +66,14 @@ export interface ArcFlowSplitInterface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "getGroupRecipient",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getOutstandingShare",
+    values: [BigNumberish, AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getUserGroups",
     values: [AddressLike]
   ): string;
@@ -82,7 +92,7 @@ export interface ArcFlowSplitInterface extends Interface {
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "settleShare",
-    values: [BigNumberish, AddressLike]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "usdc", values?: undefined): string;
 
@@ -97,6 +107,14 @@ export interface ArcFlowSplitInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getGroupMembers",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getGroupRecipient",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getOutstandingShare",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -273,6 +291,18 @@ export interface ArcFlowSplit extends BaseContract {
     "view"
   >;
 
+  getGroupRecipient: TypedContractMethod<
+    [groupId: BigNumberish],
+    [string],
+    "view"
+  >;
+
+  getOutstandingShare: TypedContractMethod<
+    [groupId: BigNumberish, user: AddressLike],
+    [bigint],
+    "view"
+  >;
+
   getUserGroups: TypedContractMethod<[user: AddressLike], [bigint[]], "view">;
 
   groupMembers: TypedContractMethod<
@@ -291,8 +321,9 @@ export interface ArcFlowSplit extends BaseContract {
   groups: TypedContractMethod<
     [arg0: BigNumberish],
     [
-      [string, string, bigint, bigint, bigint, bigint, bigint] & {
+      [string, string, string, bigint, bigint, bigint, bigint, bigint] & {
         creator: string;
+        recipient: string;
         name: string;
         totalAmount: bigint;
         memberCount: bigint;
@@ -313,7 +344,7 @@ export interface ArcFlowSplit extends BaseContract {
   owner: TypedContractMethod<[], [string], "view">;
 
   settleShare: TypedContractMethod<
-    [groupId: BigNumberish, recipient: AddressLike],
+    [groupId: BigNumberish],
     [void],
     "nonpayable"
   >;
@@ -369,6 +400,16 @@ export interface ArcFlowSplit extends BaseContract {
     "view"
   >;
   getFunction(
+    nameOrSignature: "getGroupRecipient"
+  ): TypedContractMethod<[groupId: BigNumberish], [string], "view">;
+  getFunction(
+    nameOrSignature: "getOutstandingShare"
+  ): TypedContractMethod<
+    [groupId: BigNumberish, user: AddressLike],
+    [bigint],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "getUserGroups"
   ): TypedContractMethod<[user: AddressLike], [bigint[]], "view">;
   getFunction(
@@ -390,8 +431,9 @@ export interface ArcFlowSplit extends BaseContract {
   ): TypedContractMethod<
     [arg0: BigNumberish],
     [
-      [string, string, bigint, bigint, bigint, bigint, bigint] & {
+      [string, string, string, bigint, bigint, bigint, bigint, bigint] & {
         creator: string;
+        recipient: string;
         name: string;
         totalAmount: bigint;
         memberCount: bigint;
@@ -414,11 +456,7 @@ export interface ArcFlowSplit extends BaseContract {
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "settleShare"
-  ): TypedContractMethod<
-    [groupId: BigNumberish, recipient: AddressLike],
-    [void],
-    "nonpayable"
-  >;
+  ): TypedContractMethod<[groupId: BigNumberish], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "usdc"
   ): TypedContractMethod<[], [string], "view">;

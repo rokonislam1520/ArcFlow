@@ -1,16 +1,33 @@
 import { ethers } from "hardhat";
 
+const ZERO = "0x0000000000000000000000000000000000000000";
+
 async function main() {
   const [deployer] = await ethers.getSigners();
   console.log("Deploying contracts with:", deployer.address);
   console.log("Balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)));
 
   // ========== Configuration ==========
-  // Replace with actual USDC address on ARC Testnet
-  const USDC_ADDRESS = process.env.USDC_ADDRESS || "0x0000000000000000000000000000000000000000";
-  const FEE_COLLECTOR = deployer.address; // Fee collector = deployer for now
+  // Every USDC-based contract now reverts on a zero address, so validate up
+  // front instead of deploying five permanently broken contracts.
+  const USDC_ADDRESS = process.env.USDC_ADDRESS;
+  if (!USDC_ADDRESS || USDC_ADDRESS === ZERO || !ethers.isAddress(USDC_ADDRESS)) {
+    throw new Error(
+      "USDC_ADDRESS must be set to a valid non-zero token address (see contracts/.env.example)"
+    );
+  }
+
+  const FEE_COLLECTOR = process.env.FEE_COLLECTOR || deployer.address;
+  if (!ethers.isAddress(FEE_COLLECTOR) || FEE_COLLECTOR === ZERO) {
+    throw new Error("FEE_COLLECTOR must be a valid non-zero address");
+  }
+
+  console.log("USDC:", USDC_ADDRESS);
+  console.log("Fee collector:", FEE_COLLECTOR);
 
   const deployed: Record<string, string> = {};
+  // Constructor args are tracked so the printed verify commands actually work.
+  const constructorArgs: Record<string, string[]> = {};
 
   // ========== 1. Deploy ArcFlowSend ==========
   console.log("\n1. Deploying ArcFlowSend...");
@@ -18,6 +35,7 @@ async function main() {
   const send = await ArcFlowSend.deploy(USDC_ADDRESS, FEE_COLLECTOR);
   await send.waitForDeployment();
   deployed["ArcFlowSend"] = await send.getAddress();
+  constructorArgs["ArcFlowSend"] = [USDC_ADDRESS, FEE_COLLECTOR];
   console.log("   ArcFlowSend:", deployed["ArcFlowSend"]);
 
   // ========== 2. Deploy ArcFlowSwap ==========
@@ -26,6 +44,7 @@ async function main() {
   const swap = await ArcFlowSwap.deploy();
   await swap.waitForDeployment();
   deployed["ArcFlowSwap"] = await swap.getAddress();
+  constructorArgs["ArcFlowSwap"] = [];
   console.log("   ArcFlowSwap:", deployed["ArcFlowSwap"]);
 
   // ========== 3. Deploy ArcFlowPay ==========
@@ -34,6 +53,7 @@ async function main() {
   const pay = await ArcFlowPay.deploy(USDC_ADDRESS, FEE_COLLECTOR);
   await pay.waitForDeployment();
   deployed["ArcFlowPay"] = await pay.getAddress();
+  constructorArgs["ArcFlowPay"] = [USDC_ADDRESS, FEE_COLLECTOR];
   console.log("   ArcFlowPay:", deployed["ArcFlowPay"]);
 
   // ========== 4. Deploy ArcFlowRecurring ==========
@@ -42,6 +62,7 @@ async function main() {
   const recurring = await ArcFlowRecurring.deploy(USDC_ADDRESS);
   await recurring.waitForDeployment();
   deployed["ArcFlowRecurring"] = await recurring.getAddress();
+  constructorArgs["ArcFlowRecurring"] = [USDC_ADDRESS];
   console.log("   ArcFlowRecurring:", deployed["ArcFlowRecurring"]);
 
   // ========== 5. Deploy ArcFlowSplit ==========
@@ -50,12 +71,14 @@ async function main() {
   const split = await ArcFlowSplit.deploy(USDC_ADDRESS);
   await split.waitForDeployment();
   deployed["ArcFlowSplit"] = await split.getAddress();
+  constructorArgs["ArcFlowSplit"] = [USDC_ADDRESS];
   console.log("   ArcFlowSplit:", deployed["ArcFlowSplit"]);
 
   // ========== Summary ==========
+  const network = await ethers.provider.getNetwork();
   console.log("\n========== Deployment Complete ==========");
-  console.log("Network:", (await ethers.provider.getNetwork()).name);
-  console.log("Chain ID:", (await ethers.provider.getNetwork()).chainId);
+  console.log("Network:", network.name);
+  console.log("Chain ID:", network.chainId);
   console.log("Deployer:", deployer.address);
   console.log("\nContract Addresses:");
   for (const [name, addr] of Object.entries(deployed)) {
@@ -64,24 +87,37 @@ async function main() {
 
   // ========== Save to file ==========
   const fs = require("fs");
+  const path = require("path");
   const output = {
-    network: (await ethers.provider.getNetwork()).name,
-    chainId: (await ethers.provider.getNetwork()).chainId.toString(),
+    network: network.name,
+    chainId: network.chainId.toString(),
     deployer: deployer.address,
+    usdc: USDC_ADDRESS,
+    feeCollector: FEE_COLLECTOR,
     timestamp: new Date().toISOString(),
     contracts: deployed,
   };
 
-  fs.writeFileSync(
-    "./deployments.json",
-    JSON.stringify(output, null, 2)
-  );
-  console.log("\nSaved to deployments.json");
+  // Resolve relative to this script so the output lands in contracts/ no
+  // matter which directory hardhat was invoked from.
+  const outPath = path.join(__dirname, "..", "deployments.json");
+  fs.writeFileSync(outPath, JSON.stringify(output, null, 2));
+  console.log("\nSaved to", outPath);
 
   // ========== Verify Commands ==========
   console.log("\n========== Verification Commands ==========");
   for (const [name, addr] of Object.entries(deployed)) {
-    console.log(`npx hardhat verify --network arcTestnet ${addr}`);
+    const args = constructorArgs[name].join(" ");
+    console.log(`npx hardhat verify --network ${network.name} ${addr}${args ? " " + args : ""}`);
+  }
+
+  // ========== Frontend env ==========
+  console.log("\n========== Frontend .env.local ==========");
+  console.log(`NEXT_PUBLIC_CHAIN_ID=${network.chainId}`);
+  console.log(`NEXT_PUBLIC_USDC_ADDRESS=${USDC_ADDRESS}`);
+  for (const [name, addr] of Object.entries(deployed)) {
+    const key = name.replace("ArcFlow", "").toUpperCase();
+    console.log(`NEXT_PUBLIC_${key}_ADDRESS=${addr}`);
   }
 }
 

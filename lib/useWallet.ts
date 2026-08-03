@@ -43,13 +43,18 @@ export function useWallet() {
     const eth = getEth();
     if (!eth) return;
 
-    eth.request({ method: 'eth_accounts' }).then((accounts: string[]) => {
-      if (accounts.length > 0) {
-        setAddress(accounts[0]);
-        setIsConnected(true);
-        eth.request({ method: 'eth_chainId' }).then((chain: string) => setChainId(chain));
-      }
-    });
+    // Restore session if already connected
+    eth.request({ method: 'eth_accounts' })
+      .then((accounts: string[]) => {
+        if (accounts.length > 0) {
+          setAddress(accounts[0]);
+          setIsConnected(true);
+          eth.request({ method: 'eth_chainId' })
+            .then((chain: string) => setChainId(chain))
+            .catch(() => {});
+        }
+      })
+      .catch(() => {}); // MetaMask may throw if locked; ignore silently
 
     const handleAccounts = (accounts: string[]) => {
       if (accounts.length > 0) {
@@ -58,10 +63,12 @@ export function useWallet() {
       } else {
         setAddress('');
         setIsConnected(false);
+        setChainId('');
       }
     };
 
-    const handleChain = (chain: string) => setChainId(chain);
+    // MetaMask docs: reload on chainChanged to avoid stale contract state
+    const handleChain = () => window.location.reload();
 
     eth.on('accountsChanged', handleAccounts);
     eth.on('chainChanged', handleChain);

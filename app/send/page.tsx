@@ -1,18 +1,38 @@
 'use client';
 import { useState } from 'react';
+import { useWallet } from '@/lib/useWallet';
+import { useUsdcBalance } from '@/lib/useUsdcBalance';
 
 const recentContacts = [
-  { name: 'Alice', address: '0x1a2b...3c4d', avatar: 'A' },
-  { name: 'Bob', address: '0x5e6f...7g8h', avatar: 'B' },
-  { name: 'Carol', address: '0x9i0j...1k2l', avatar: 'C' },
-  { name: 'Dave', address: '0x3m4n...5o6p', avatar: 'D' },
+  { name: 'Alice', address: '0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b', avatar: 'A' },
+  { name: 'Bob',   address: '0x2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c', avatar: 'B' },
+  { name: 'Carol', address: '0x3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d', avatar: 'C' },
+  { name: 'Dave',  address: '0x4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e', avatar: 'D' },
 ];
 
 export default function SendPage() {
+  const { isConnected, connect, address } = useWallet();
+  const { formatted: balance, isLoading: balanceLoading } = useUsdcBalance(address);
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [step, setStep] = useState<'form' | 'confirm' | 'done'>('form');
+
+  // Wallet guard — show connect prompt instead of the form
+  if (!isConnected) {
+    return (
+      <div className="min-h-screen py-8 animate-in">
+        <div className="max-w-lg mx-auto px-4 text-center">
+          <div className="glass p-10">
+            <div className="text-5xl mb-4">🔒</div>
+            <h2 className="text-2xl font-bold mb-2">Wallet Not Connected</h2>
+            <p className="text-slate-400 mb-6">Connect your wallet to send USDC.</p>
+            <button onClick={connect} className="btn-arc px-8 py-3 text-lg">Connect Wallet</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen py-8 animate-in">
@@ -55,7 +75,9 @@ export default function SendPage() {
             <div className="mb-4">
               <div className="flex justify-between mb-2">
                 <label className="text-sm text-slate-400">Amount</label>
-                <span className="text-sm text-slate-500">Balance: 8,425.50 USDC</span>
+                <span className="text-sm text-slate-500">
+                  Balance: {balanceLoading ? '…' : (balance ?? '—')} USDC
+                </span>
               </div>
               <div className="relative">
                 <input
@@ -66,7 +88,15 @@ export default function SendPage() {
                   className="input-arc text-3xl font-bold pr-20"
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                  <button onClick={() => setAmount('8425.50')} className="text-xs text-arc-400 font-medium hover:text-arc-300">MAX</button>
+                  {balance !== null && (
+                    <button
+                      type="button"
+                      onClick={() => setAmount(balance)}
+                      className="text-xs text-arc-400 font-medium hover:text-arc-300"
+                    >
+                      MAX
+                    </button>
+                  )}
                   <span className="text-slate-400 font-semibold">USDC</span>
                 </div>
               </div>
@@ -80,7 +110,7 @@ export default function SendPage() {
                 type="text"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="What's this for?"
+                placeholder="What&apos;s this for?"
                 className="input-arc text-base"
               />
             </div>
@@ -108,7 +138,7 @@ export default function SendPage() {
             <div className="space-y-4 mb-6">
               <div className="flex justify-between p-4 rounded-xl bg-white/[0.03]">
                 <span className="text-slate-400">To</span>
-                <span className="font-mono text-sm">{recipient}</span>
+                <span className="font-mono text-sm break-all">{recipient}</span>
               </div>
               <div className="flex justify-between p-4 rounded-xl bg-white/[0.03]">
                 <span className="text-slate-400">Amount</span>
@@ -138,7 +168,7 @@ export default function SendPage() {
             <div className="text-6xl mb-4">✅</div>
             <h2 className="text-2xl font-bold mb-2">Sent Successfully!</h2>
             <p className="text-slate-400 mb-2">{amount} USDC sent to</p>
-            <p className="font-mono text-sm text-arc-400 mb-6">{recipient}</p>
+            <p className="font-mono text-sm text-arc-400 mb-6 break-all">{recipient}</p>
             <div className="flex gap-3 justify-center">
               <button className="btn-outline px-6 py-3" onClick={() => { setStep('form'); setAmount(''); setRecipient(''); setNote(''); }}>Send Again</button>
               <a href="/dashboard" className="btn-arc px-6 py-3">Go to Dashboard</a>

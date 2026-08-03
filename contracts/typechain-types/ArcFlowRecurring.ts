@@ -29,11 +29,13 @@ export interface ArcFlowRecurringInterface extends Interface {
       | "cancelRecurring"
       | "createRecurring"
       | "executePayment"
+      | "getPayeePayments"
       | "getPayment"
       | "getPaymentCount"
       | "getUserPayments"
       | "isDue"
       | "owner"
+      | "payeePayments"
       | "payments"
       | "usdc"
       | "userPayments"
@@ -59,6 +61,10 @@ export interface ArcFlowRecurringInterface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "getPayeePayments",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getPayment",
     values: [BigNumberish]
   ): string;
@@ -72,6 +78,10 @@ export interface ArcFlowRecurringInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "isDue", values: [BigNumberish]): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "payeePayments",
+    values: [AddressLike, BigNumberish]
+  ): string;
   encodeFunctionData(
     functionFragment: "payments",
     values: [BigNumberish]
@@ -94,6 +104,10 @@ export interface ArcFlowRecurringInterface extends Interface {
     functionFragment: "executePayment",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "getPayeePayments",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "getPayment", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getPaymentCount",
@@ -105,6 +119,10 @@ export interface ArcFlowRecurringInterface extends Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "isDue", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "payeePayments",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "payments", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "usdc", data: BytesLike): Result;
   decodeFunctionResult(
@@ -242,6 +260,12 @@ export interface ArcFlowRecurring extends BaseContract {
     "nonpayable"
   >;
 
+  getPayeePayments: TypedContractMethod<
+    [user: AddressLike],
+    [bigint[]],
+    "view"
+  >;
+
   getPayment: TypedContractMethod<
     [paymentId: BigNumberish],
     [
@@ -278,32 +302,38 @@ export interface ArcFlowRecurring extends BaseContract {
 
   owner: TypedContractMethod<[], [string], "view">;
 
+  payeePayments: TypedContractMethod<
+    [arg0: AddressLike, arg1: BigNumberish],
+    [bigint],
+    "view"
+  >;
+
   payments: TypedContractMethod<
     [arg0: BigNumberish],
     [
       [
         string,
+        bigint,
+        bigint,
+        bigint,
+        boolean,
         string,
         bigint,
         bigint,
         bigint,
         bigint,
-        bigint,
-        bigint,
-        bigint,
-        boolean,
         string
       ] & {
         payer: string;
-        payee: string;
-        amount: bigint;
         frequency: bigint;
-        startTime: bigint;
-        nextPayment: bigint;
-        totalPaid: bigint;
         maxExecutions: bigint;
         executions: bigint;
         active: boolean;
+        payee: string;
+        amount: bigint;
+        startTime: bigint;
+        nextPayment: bigint;
+        totalPaid: bigint;
         name: string;
       }
     ],
@@ -341,6 +371,9 @@ export interface ArcFlowRecurring extends BaseContract {
   getFunction(
     nameOrSignature: "executePayment"
   ): TypedContractMethod<[paymentId: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "getPayeePayments"
+  ): TypedContractMethod<[user: AddressLike], [bigint[]], "view">;
   getFunction(
     nameOrSignature: "getPayment"
   ): TypedContractMethod<
@@ -383,33 +416,40 @@ export interface ArcFlowRecurring extends BaseContract {
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "payeePayments"
+  ): TypedContractMethod<
+    [arg0: AddressLike, arg1: BigNumberish],
+    [bigint],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "payments"
   ): TypedContractMethod<
     [arg0: BigNumberish],
     [
       [
         string,
+        bigint,
+        bigint,
+        bigint,
+        boolean,
         string,
         bigint,
         bigint,
         bigint,
         bigint,
-        bigint,
-        bigint,
-        bigint,
-        boolean,
         string
       ] & {
         payer: string;
-        payee: string;
-        amount: bigint;
         frequency: bigint;
-        startTime: bigint;
-        nextPayment: bigint;
-        totalPaid: bigint;
         maxExecutions: bigint;
         executions: bigint;
         active: boolean;
+        payee: string;
+        amount: bigint;
+        startTime: bigint;
+        nextPayment: bigint;
+        totalPaid: bigint;
         name: string;
       }
     ],

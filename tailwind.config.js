@@ -10,8 +10,12 @@ module.exports = {
           800: '#115e59', 900: '#134e4a',
         },
         mint: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
+        // Only add shades that don't exist in Tailwind's default palette.
+        // 900 and 950 are already defined by Tailwind; redefining them here
+        // would silently override them with different values (#19 fix).
         slate: {
-          750: '#1e293b', 850: '#111827', 900: '#0f172a', 950: '#020617',
+          750: '#1e293b',
+          850: '#111827',
         },
       },
       animation: {

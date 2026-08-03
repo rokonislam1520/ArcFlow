@@ -32,6 +32,7 @@ export interface ArcFlowSwapInterface extends Interface {
       | "createPool"
       | "getAmountOut"
       | "getLPBalance"
+      | "getPoolId"
       | "getReserves"
       | "lpBalances"
       | "owner"
@@ -48,6 +49,7 @@ export interface ArcFlowSwapInterface extends Interface {
       | "LiquidityRemoved"
       | "PoolCreated"
       | "Swap"
+      | "TokenWhitelisted"
   ): EventFragment;
 
   encodeFunctionData(functionFragment: "FEE_BPS", values?: undefined): string;
@@ -57,7 +59,15 @@ export interface ArcFlowSwapInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "addLiquidity",
-    values: [AddressLike, AddressLike, BigNumberish, BigNumberish]
+    values: [
+      AddressLike,
+      AddressLike,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "createPool",
@@ -72,6 +82,10 @@ export interface ArcFlowSwapInterface extends Interface {
     values: [AddressLike, AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "getPoolId",
+    values: [AddressLike, AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getReserves",
     values: [AddressLike, AddressLike]
   ): string;
@@ -83,11 +97,18 @@ export interface ArcFlowSwapInterface extends Interface {
   encodeFunctionData(functionFragment: "pools", values: [BytesLike]): string;
   encodeFunctionData(
     functionFragment: "removeLiquidity",
-    values: [AddressLike, AddressLike, BigNumberish]
+    values: [
+      AddressLike,
+      AddressLike,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "swap",
-    values: [AddressLike, AddressLike, BigNumberish]
+    values: [AddressLike, AddressLike, BigNumberish, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "whitelistToken",
@@ -116,6 +137,7 @@ export interface ArcFlowSwapInterface extends Interface {
     functionFragment: "getLPBalance",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "getPoolId", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getReserves",
     data: BytesLike
@@ -237,6 +259,19 @@ export namespace SwapEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace TokenWhitelistedEvent {
+  export type InputTuple = [token: AddressLike, status: boolean];
+  export type OutputTuple = [token: string, status: boolean];
+  export interface OutputObject {
+    token: string;
+    status: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export interface ArcFlowSwap extends BaseContract {
   connect(runner?: ContractRunner | null): ArcFlowSwap;
   waitForDeployment(): Promise<this>;
@@ -288,10 +323,19 @@ export interface ArcFlowSwap extends BaseContract {
     [
       tokenA: AddressLike,
       tokenB: AddressLike,
-      amountA: BigNumberish,
-      amountB: BigNumberish
+      amountADesired: BigNumberish,
+      amountBDesired: BigNumberish,
+      amountAMin: BigNumberish,
+      amountBMin: BigNumberish,
+      deadline: BigNumberish
     ],
-    [bigint],
+    [
+      [bigint, bigint, bigint] & {
+        amountA: bigint;
+        amountB: bigint;
+        liquidity: bigint;
+      }
+    ],
     "nonpayable"
   >;
 
@@ -313,9 +357,15 @@ export interface ArcFlowSwap extends BaseContract {
     "view"
   >;
 
+  getPoolId: TypedContractMethod<
+    [tokenA: AddressLike, tokenB: AddressLike],
+    [string],
+    "view"
+  >;
+
   getReserves: TypedContractMethod<
     [tokenA: AddressLike, tokenB: AddressLike],
-    [[bigint, bigint]],
+    [[bigint, bigint] & { reserveA: bigint; reserveB: bigint }],
     "view"
   >;
 
@@ -330,9 +380,11 @@ export interface ArcFlowSwap extends BaseContract {
   pools: TypedContractMethod<
     [arg0: BytesLike],
     [
-      [bigint, bigint, bigint, boolean] & {
-        reserveA: bigint;
-        reserveB: bigint;
+      [string, string, bigint, bigint, bigint, boolean] & {
+        token0: string;
+        token1: string;
+        reserve0: bigint;
+        reserve1: bigint;
         totalLP: bigint;
         exists: boolean;
       }
@@ -341,13 +393,26 @@ export interface ArcFlowSwap extends BaseContract {
   >;
 
   removeLiquidity: TypedContractMethod<
-    [tokenA: AddressLike, tokenB: AddressLike, liquidity: BigNumberish],
+    [
+      tokenA: AddressLike,
+      tokenB: AddressLike,
+      liquidity: BigNumberish,
+      amountAMin: BigNumberish,
+      amountBMin: BigNumberish,
+      deadline: BigNumberish
+    ],
     [[bigint, bigint] & { amountA: bigint; amountB: bigint }],
     "nonpayable"
   >;
 
   swap: TypedContractMethod<
-    [tokenIn: AddressLike, tokenOut: AddressLike, amountIn: BigNumberish],
+    [
+      tokenIn: AddressLike,
+      tokenOut: AddressLike,
+      amountIn: BigNumberish,
+      minAmountOut: BigNumberish,
+      deadline: BigNumberish
+    ],
     [bigint],
     "nonpayable"
   >;
@@ -376,10 +441,19 @@ export interface ArcFlowSwap extends BaseContract {
     [
       tokenA: AddressLike,
       tokenB: AddressLike,
-      amountA: BigNumberish,
-      amountB: BigNumberish
+      amountADesired: BigNumberish,
+      amountBDesired: BigNumberish,
+      amountAMin: BigNumberish,
+      amountBMin: BigNumberish,
+      deadline: BigNumberish
     ],
-    [bigint],
+    [
+      [bigint, bigint, bigint] & {
+        amountA: bigint;
+        amountB: bigint;
+        liquidity: bigint;
+      }
+    ],
     "nonpayable"
   >;
   getFunction(
@@ -404,10 +478,17 @@ export interface ArcFlowSwap extends BaseContract {
     "view"
   >;
   getFunction(
+    nameOrSignature: "getPoolId"
+  ): TypedContractMethod<
+    [tokenA: AddressLike, tokenB: AddressLike],
+    [string],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "getReserves"
   ): TypedContractMethod<
     [tokenA: AddressLike, tokenB: AddressLike],
-    [[bigint, bigint]],
+    [[bigint, bigint] & { reserveA: bigint; reserveB: bigint }],
     "view"
   >;
   getFunction(
@@ -425,9 +506,11 @@ export interface ArcFlowSwap extends BaseContract {
   ): TypedContractMethod<
     [arg0: BytesLike],
     [
-      [bigint, bigint, bigint, boolean] & {
-        reserveA: bigint;
-        reserveB: bigint;
+      [string, string, bigint, bigint, bigint, boolean] & {
+        token0: string;
+        token1: string;
+        reserve0: bigint;
+        reserve1: bigint;
         totalLP: bigint;
         exists: boolean;
       }
@@ -437,14 +520,27 @@ export interface ArcFlowSwap extends BaseContract {
   getFunction(
     nameOrSignature: "removeLiquidity"
   ): TypedContractMethod<
-    [tokenA: AddressLike, tokenB: AddressLike, liquidity: BigNumberish],
+    [
+      tokenA: AddressLike,
+      tokenB: AddressLike,
+      liquidity: BigNumberish,
+      amountAMin: BigNumberish,
+      amountBMin: BigNumberish,
+      deadline: BigNumberish
+    ],
     [[bigint, bigint] & { amountA: bigint; amountB: bigint }],
     "nonpayable"
   >;
   getFunction(
     nameOrSignature: "swap"
   ): TypedContractMethod<
-    [tokenIn: AddressLike, tokenOut: AddressLike, amountIn: BigNumberish],
+    [
+      tokenIn: AddressLike,
+      tokenOut: AddressLike,
+      amountIn: BigNumberish,
+      minAmountOut: BigNumberish,
+      deadline: BigNumberish
+    ],
     [bigint],
     "nonpayable"
   >;
@@ -482,6 +578,13 @@ export interface ArcFlowSwap extends BaseContract {
     SwapEvent.InputTuple,
     SwapEvent.OutputTuple,
     SwapEvent.OutputObject
+  >;
+  getEvent(
+    key: "TokenWhitelisted"
+  ): TypedContractEvent<
+    TokenWhitelistedEvent.InputTuple,
+    TokenWhitelistedEvent.OutputTuple,
+    TokenWhitelistedEvent.OutputObject
   >;
 
   filters: {
@@ -527,6 +630,17 @@ export interface ArcFlowSwap extends BaseContract {
       SwapEvent.InputTuple,
       SwapEvent.OutputTuple,
       SwapEvent.OutputObject
+    >;
+
+    "TokenWhitelisted(address,bool)": TypedContractEvent<
+      TokenWhitelistedEvent.InputTuple,
+      TokenWhitelistedEvent.OutputTuple,
+      TokenWhitelistedEvent.OutputObject
+    >;
+    TokenWhitelisted: TypedContractEvent<
+      TokenWhitelistedEvent.InputTuple,
+      TokenWhitelistedEvent.OutputTuple,
+      TokenWhitelistedEvent.OutputObject
     >;
   };
 }

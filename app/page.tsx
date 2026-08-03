@@ -1,5 +1,6 @@
 'use client';
 import { FeatureCard } from '@/components/FeatureCard';
+import { useWallet } from '@/lib/useWallet';
 
 const features = [
   { icon: '💸', title: 'Send Money', description: 'Send USDC instantly to anyone, anywhere. Zero gas fees on ARC.', href: '/send' },
@@ -20,6 +21,7 @@ const stats = [
 ];
 
 export default function HomePage() {
+  const { connect } = useWallet();
   return (
     <div className="min-h-screen">
       {/* Hero */}
@@ -125,7 +127,7 @@ export default function HomePage() {
             <div className="relative">
               <h2 className="text-3xl font-bold mb-4">Ready to Flow?</h2>
               <p className="text-slate-400 mb-8">Join thousands using ArcFlow for everyday stablecoin finance.</p>
-              <button className="btn-arc px-10 py-4 text-lg">Connect Wallet & Start</button>
+              <button onClick={connect} className="btn-arc px-10 py-4 text-lg">Connect Wallet & Start</button>
             </div>
           </div>
         </div>

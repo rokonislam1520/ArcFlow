@@ -38,9 +38,21 @@ contract ArcFlowSend {
         "SendRequest(address from,address to,uint256 amount,uint256 nonce,uint256 deadline)"
     );
 
+    // Pre-computed EIP-712 domain constants (saves gas vs. hashing on every call)
+    bytes32 private constant _EIP712_DOMAIN_TYPEHASH = keccak256(
+        "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+    );
+    bytes32 private constant _NAME_HASH = keccak256("ArcFlowSend");
+    bytes32 private constant _VERSION_HASH = keccak256("1");
+
+    // Upper bound of a valid ECDSA `s` value (EIP-2) - guards signature malleability
+    uint256 private constant _MAX_SIG_S =
+        0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0;
+
     event Sent(address indexed from, address indexed to, uint256 amount, uint256 fee);
     event RelayerUpdated(address indexed relayer, bool status);
     event FeeUpdated(uint256 newFeeBps);
+    event FeeCollectorUpdated(address indexed newCollector);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Not owner");
@@ -53,6 +65,8 @@ contract ArcFlowSend {
     }
 
     constructor(address _usdc, address _feeCollector) {
+        require(_usdc != address(0), "Zero USDC address");
+        require(_feeCollector != address(0), "Zero fee collector");
         owner = msg.sender;
         usdc = IERC20(_usdc);
         feeCollector = _feeCollector;
@@ -63,6 +77,7 @@ contract ArcFlowSend {
         SendRequest calldata req,
         bytes calldata signature
     ) external onlyRelayer {
+        require(req.to != address(0), "Zero address");
         require(block.timestamp <= req.deadline, "Expired");
         require(req.nonce == nonces[req.from], "Invalid nonce");
         require(req.amount >= minTransfer, "Below minimum");
@@ -78,7 +93,7 @@ contract ArcFlowSend {
         ));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", _domainSeparator(), structHash));
         address signer = _recoverSigner(digest, signature);
-        require(signer == req.from, "Invalid signature");
+        require(signer != address(0) && signer == req.from, "Invalid signature");
 
         nonces[req.from]++;
 
@@ -98,6 +113,7 @@ contract ArcFlowSend {
 
     // ========== Direct Send (user pays gas) ==========
     function send(address to, uint256 amount) external {
+        require(to != address(0), "Zero address");
         require(amount >= minTransfer, "Below minimum");
 
         uint256 fee = (amount * feeBps) / 10000;
@@ -125,7 +141,9 @@ contract ArcFlowSend {
     }
 
     function setFeeCollector(address _collector) external onlyOwner {
+        require(_collector != address(0), "Zero fee collector");
         feeCollector = _collector;
+        emit FeeCollectorUpdated(_collector);
     }
 
     function withdraw() external onlyOwner {
@@ -141,9 +159,9 @@ contract ArcFlowSend {
 
     function _domainSeparator() internal view returns (bytes32) {
         return keccak256(abi.encode(
-            keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-            keccak256("ArcFlowSend"),
-            keccak256("1"),
+            _EIP712_DOMAIN_TYPEHASH,
+            _NAME_HASH,
+            _VERSION_HASH,
             block.chainid,
             address(this)
         ));
@@ -161,6 +179,7 @@ contract ArcFlowSend {
         }
         if (v < 27) v += 27;
         require(v == 27 || v == 28, "Invalid v");
+        require(uint256(s) <= _MAX_SIG_S, "Invalid sig s");
         return ecrecover(digest, v, r, s);
     }
 }
