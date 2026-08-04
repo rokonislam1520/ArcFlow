@@ -9,6 +9,7 @@
 import { useMemo, useState } from 'react';
 import { parseUnits, type Address } from 'viem';
 import { getChainTokens, getEnvChains } from '@/lib/chains';
+import { useNetworkMode } from '@/lib/network';
 import { useWallet, useActiveChain } from '@/lib/WalletProvider';
 import { useChainBalances } from '@/lib/useBalances';
 import { useAppKitOps } from '@/lib/useAppKitOps';
@@ -17,10 +18,11 @@ import { OpStatus } from '@/components/OpStatus';
 export default function SwapPage() {
   const { address, adapter, switchChain } = useWallet();
   const activeChain = useActiveChain();
-  const { state, isBusy, swap, reset } = useAppKitOps();
+  const { isTestnet } = useNetworkMode();
+  const { state, isBusy, hasQuote, quoteSwap, submit, cancelQuote, reset } = useAppKitOps();
 
   // Only chains App Kit can actually swap on.
-  const swapChains = useMemo(() => getEnvChains('swap'), []);
+  const swapChains = useMemo(() => getEnvChains(isTestnet, 'swap'), [isTestnet]);
   const canSwapHere = swapChains.some((c) => c.id === activeChain.id);
 
   const { balances, refresh } = useChainBalances(activeChain, address as Address | null);
@@ -59,16 +61,17 @@ export default function SwapPage() {
     return null;
   }, [address, canSwapHere, activeChain.label, outToken, amountIn, balance, inToken]);
 
-  const canSubmit = !!address && !!adapter && !!amountIn && !validationError && !isBusy;
+  const canSubmit =
+    !!address && !!adapter && !!amountIn && !validationError && !isBusy && !hasQuote;
 
-  async function onSubmit() {
+  /** Step 1: real quote from App Kit, including the minimum received. */
+  async function onQuote() {
     if (!canSubmit) return;
-    const result = await swap({
-      chain: activeChain,
-      tokenIn: inToken,
-      tokenOut: outToken,
-      amountIn,
-    });
+    await quoteSwap({ chain: activeChain, tokenIn: inToken, tokenOut: outToken, amountIn });
+  }
+
+  async function onConfirm() {
+    const result = await submit();
     if (result) {
       setAmountIn('');
       void refresh();
@@ -170,25 +173,32 @@ export default function SwapPage() {
               ))}
           </select>
           {/* No fabricated output estimate: the real quote comes from App Kit
-              during estimation, and is reported in the status panel. */}
+              and is shown for approval before anything is signed. */}
           <p className="text-xs text-slate-500 mt-2">
-            The exact rate is quoted by App Kit before you sign.
+            The exact rate and fees are quoted before you sign.
           </p>
         </div>
 
         {validationError && amountIn && <p className="text-sm text-amber-400">{validationError}</p>}
 
-        <button
-          onClick={onSubmit}
-          disabled={!canSubmit}
-          className="btn-arc w-full py-3 disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          {isBusy ? 'Processing…' : 'Swap'}
-        </button>
+        {!hasQuote && state.stage !== 'success' && (
+          <button
+            onClick={onQuote}
+            disabled={!canSubmit}
+            className="btn-arc w-full py-3 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {isBusy ? 'Working…' : 'Get quote'}
+          </button>
+        )}
 
-        <OpStatus state={state} chain={activeChain} />
+        <OpStatus
+          state={state}
+          chain={activeChain}
+          onConfirm={onConfirm}
+          onCancel={cancelQuote}
+        />
 
-        {state.stage !== 'idle' && !isBusy && (
+        {(state.stage === 'success' || state.stage === 'error') && !isBusy && (
           <button onClick={reset} className="w-full text-sm text-slate-400 hover:text-white">
             New swap
           </button>

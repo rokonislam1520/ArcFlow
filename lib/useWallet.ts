@@ -82,7 +82,9 @@ export function useWallet() {
     });
   }, [wallet, address, chain]);
 
-  const defaultChain = getDefaultChain();
+  // Contract flows target the configured deployment chain, which defaults to
+  // testnet since those contracts are unaudited.
+  const defaultChain = getDefaultChain(true);
 
   return {
     address: (address ?? '') as `0x${string}` | '',

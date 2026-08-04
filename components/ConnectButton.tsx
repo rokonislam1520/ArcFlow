@@ -8,6 +8,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { getEnvChains } from '@/lib/chains';
+import { useNetworkMode } from '@/lib/network';
 import { useWallet } from '@/lib/WalletProvider';
 
 function shorten(address: string) {
@@ -29,6 +30,7 @@ export function ConnectButton() {
     switchChain,
   } = useWallet();
 
+  const { isTestnet } = useNetworkMode();
   const [showWallets, setShowWallets] = useState(false);
   const [showChains, setShowChains] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -45,7 +47,7 @@ export function ConnectButton() {
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
 
-  const chains = getEnvChains();
+  const chains = getEnvChains(isTestnet);
 
   if (!address) {
     return (
@@ -96,7 +98,15 @@ export function ConnectButton() {
         }`}
       >
         {/* Naming the unsupported network beats a generic "wrong network". */}
-        {isUnsupportedChain ? `Unsupported (${chainId})` : chain?.label ?? 'Select network'}
+        {isUnsupportedChain
+          ? `Unsupported (${chainId})`
+          : chain
+            ? // Flag a chain that is supported but in the other network mode:
+              // acting on it would mix test and real funds.
+              chain.isTestnet === isTestnet
+              ? chain.label
+              : `${chain.label} — switch`
+            : 'Select network'}
       </button>
 
       <button

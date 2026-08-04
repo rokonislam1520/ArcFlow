@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { erc20Abi, formatUnits, type Address } from 'viem';
 import { getPublicClient } from './clients';
 import { getEnvChains, getKit, type ArcChain } from './chains';
+import { useNetworkMode } from './network';
 
 export interface TokenBalance {
   symbol: string;
@@ -144,7 +145,11 @@ export interface ChainBalanceSummary {
  * misrepresent where the money actually sits.
  */
 export function useMultichainUsdc(address: Address | null) {
-  const chains = useMemo(() => getEnvChains().filter((c) => c.type === 'evm' && c.tokens.USDC), []);
+  const { isTestnet } = useNetworkMode();
+  const chains = useMemo(
+    () => getEnvChains(isTestnet).filter((c) => c.type === 'evm' && c.tokens.USDC),
+    [isTestnet]
+  );
   const [results, setResults] = useState<ChainBalanceSummary[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 

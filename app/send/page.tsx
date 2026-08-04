@@ -17,7 +17,7 @@ export default function SendPage() {
   const { address, adapter, isUnsupportedChain } = useWallet();
   const chain = useActiveChain();
   const { balances, refresh } = useChainBalances(chain, address as Address | null);
-  const { state, isBusy, send, reset } = useAppKitOps();
+  const { state, isBusy, hasQuote, quoteSend, submit, cancelQuote, reset } = useAppKitOps();
 
   const tokens = useMemo(() => getChainTokens(chain), [chain]);
   const [token, setToken] = useState<string>('USDC');
@@ -36,6 +36,10 @@ export default function SendPage() {
     if (!address) return 'Connect your wallet to continue.';
     if (isUnsupportedChain) return 'Switch to a supported network.';
     if (to && !isAddress(to)) return 'Recipient is not a valid address.';
+    // The SDK rejects self-transfers outright, so say so before quoting.
+    if (to && address && to.toLowerCase() === address.toLowerCase()) {
+      return 'That is your own address.';
+    }
     if (!amount) return null;
 
     const numeric = Number(amount);
@@ -55,16 +59,17 @@ export default function SendPage() {
   }, [address, isUnsupportedChain, to, amount, balance]);
 
   const canSubmit =
-    !!address && !!adapter && !!to && !!amount && !validationError && !isBusy;
+    !!address && !!adapter && !!to && !!amount && !validationError && !isBusy && !hasQuote;
 
-  async function onSubmit() {
+  /** Step 1: fetch a real quote. Nothing is signed here. */
+  async function onQuote() {
     if (!canSubmit) return;
-    const result = await send({
-      chain,
-      to,
-      amount,
-      token: activeToken,
-    });
+    await quoteSend({ chain, to, amount, token: activeToken });
+  }
+
+  /** Step 2: submit what was quoted, then clear the form on success. */
+  async function onConfirm() {
+    const result = await submit();
     if (result) {
       setAmount('');
       setTo('');
@@ -134,17 +139,25 @@ export default function SendPage() {
 
         {validationError && to && <p className="text-sm text-amber-400">{validationError}</p>}
 
-        <button
-          onClick={onSubmit}
-          disabled={!canSubmit}
-          className="btn-arc w-full py-3 disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          {isBusy ? 'Processing…' : 'Send'}
-        </button>
+        {/* Hidden while a quote is on screen: the confirm action lives there. */}
+        {!hasQuote && state.stage !== 'success' && (
+          <button
+            onClick={onQuote}
+            disabled={!canSubmit}
+            className="btn-arc w-full py-3 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {isBusy ? 'Working…' : 'Review transfer'}
+          </button>
+        )}
 
-        <OpStatus state={state} chain={chain} />
+        <OpStatus
+          state={state}
+          chain={chain}
+          onConfirm={onConfirm}
+          onCancel={cancelQuote}
+        />
 
-        {state.stage !== 'idle' && !isBusy && (
+        {(state.stage === 'success' || state.stage === 'error') && !isBusy && (
           <button onClick={reset} className="w-full text-sm text-slate-400 hover:text-white">
             Start another transfer
           </button>
