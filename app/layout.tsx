@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Navbar } from '@/components/Navbar';
 import { WalletProvider } from '@/lib/WalletProvider';
+import { SessionProvider } from '@/lib/SessionProvider';
 
 export const metadata: Metadata = {
   title: 'ArcFlow — Multichain Stablecoin Platform',
@@ -20,8 +21,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* One wallet session shared by every page, so switching networks in
             the navbar is immediately reflected everywhere. */}
         <WalletProvider>
-          <Navbar />
-          <main>{children}</main>
+          {/* Inside WalletProvider: the SIWE session signs with that wallet
+              and must end when the account changes. */}
+          <SessionProvider>
+            <Navbar />
+            <main>{children}</main>
+          </SessionProvider>
         </WalletProvider>
       </body>
     </html>

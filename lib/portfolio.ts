@@ -19,6 +19,7 @@ import { erc20Abi, formatUnits, type Address } from 'viem';
 import { getEnvChains, type ArcChain } from './chains';
 import { getPublicClient } from './clients';
 import { fetchRates, rateFor } from './rates';
+import { useRefreshSignal } from './refresh';
 
 /** One token holding on one chain. */
 export interface Holding {
@@ -224,6 +225,7 @@ export function usePortfolio(
   const [loading, setLoading] = useState(false);
   // Discards responses from a superseded address/network selection.
   const requestId = useRef(0);
+  const refreshSignal = useRefreshSignal();
 
   const refresh = useCallback(async () => {
     if (!owner) {
@@ -257,7 +259,9 @@ export function usePortfolio(
 
   useEffect(() => {
     void refresh();
-  }, [refresh]);
+    // Also re-reads on the app-wide signal, so a transfer made on another page
+    // is reflected here immediately rather than at the next poll.
+  }, [refresh, refreshSignal]);
 
   useEffect(() => {
     if (!owner || pollMs <= 0) return;

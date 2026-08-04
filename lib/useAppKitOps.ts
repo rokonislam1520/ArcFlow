@@ -18,6 +18,7 @@ import { useCallback, useRef, useState } from 'react';
 import { getKit, type ArcChain } from './chains';
 import { useWallet } from './WalletProvider';
 import { collectHashes, normalizeQuote, type OpKind, type Quote } from './quote';
+import { publishRefresh } from './refresh';
 
 export type { OpKind, FeeLine, Quote } from './quote';
 
@@ -168,6 +169,11 @@ export function useAppKitOps() {
         result,
         error: null,
       }));
+
+      // Funds have actually moved: tell the rest of the app to re-read. Without
+      // this the dashboard and portfolio keep showing pre-transfer balances,
+      // which next to a success message reads as money having disappeared.
+      publishRefresh();
 
       pending.current = null;
       return result;

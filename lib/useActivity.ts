@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ADDRESSES, arcFlowSendAbi } from './config';
 import { publicClient } from './useWallet';
+import { useRefreshSignal } from './refresh';
 
 export interface Activity {
   direction: 'sent' | 'received';
@@ -26,6 +27,8 @@ export function useActivity(address: `0x${string}` | '', limit = 10) {
   const [activity, setActivity] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A confirmed transfer must appear in history without a manual reload.
+  const refreshSignal = useRefreshSignal();
 
   const refresh = useCallback(async () => {
     if (!address || !ADDRESSES.send) {
@@ -91,7 +94,7 @@ export function useActivity(address: `0x${string}` | '', limit = 10) {
 
   useEffect(() => {
     void refresh();
-  }, [refresh]);
+  }, [refresh, refreshSignal]);
 
   return { activity, isLoading, error, refresh };
 }

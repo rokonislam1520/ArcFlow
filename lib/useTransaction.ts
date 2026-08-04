@@ -10,6 +10,7 @@ import {
 } from 'viem';
 import { arcChain, erc20Abi } from './config';
 import { publicClient } from './useWallet';
+import { publishRefresh } from './refresh';
 
 export type TxPhase =
   | 'idle'
@@ -200,6 +201,10 @@ export function useTransaction(onConfirmed?: () => void) {
         }
 
         setState({ phase: 'confirmed', hash, approvalHash, error: null });
+        // Announced only after the receipt confirms. Publishing on submission
+        // would re-read pre-transaction state and contradict the success just
+        // shown to the user.
+        publishRefresh();
         onConfirmed?.();
         return true;
       } catch (err) {

@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getEnvChains } from '@/lib/chains';
 import { useNetworkMode } from '@/lib/network';
 import { useWallet } from '@/lib/WalletProvider';
+import { useSession } from '@/lib/SessionProvider';
 
 function shorten(address: string) {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
@@ -31,6 +32,7 @@ export function ConnectButton() {
   } = useWallet();
 
   const { isTestnet } = useNetworkMode();
+  const session = useSession();
   const [showWallets, setShowWallets] = useState(false);
   const [showChains, setShowChains] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -109,8 +111,41 @@ export function ConnectButton() {
             : 'Select network'}
       </button>
 
+      {/* Sign-in is offered, not forced: reading balances needs no signature,
+          so demanding one up front would be theatre. It appears as an explicit
+          action, with its state visible, once a wallet is connected. */}
+      {session.status === 'signed-in' ? (
+        <span
+          title={`Signed in as ${session.address}`}
+          className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-xs border border-mint-500/30 bg-mint-500/10 text-mint-300"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-mint-400" />
+          Verified
+        </span>
+      ) : (
+        <button
+          onClick={() => void session.signIn()}
+          disabled={
+            session.status === 'awaiting-signature' || session.status === 'verifying'
+          }
+          title="Prove you control this address (gasless signature)"
+          className="hidden sm:inline-block px-3 py-2 rounded-xl text-xs border border-white/10 bg-white/5 hover:bg-white/10 disabled:opacity-60"
+        >
+          {session.status === 'awaiting-signature'
+            ? 'Check wallet…'
+            : session.status === 'verifying'
+              ? 'Verifying…'
+              : 'Sign in'}
+        </button>
+      )}
+
       <button
-        onClick={disconnect}
+        onClick={() => {
+          // End the server session too; leaving it alive after the user
+          // disconnects would keep the address authenticated behind their back.
+          if (session.status === 'signed-in') void session.signOut();
+          disconnect();
+        }}
         title="Click to disconnect"
         className="px-3 py-2 rounded-xl text-sm bg-white/5 border border-white/10 hover:bg-white/10 font-mono"
       >
@@ -136,6 +171,12 @@ export function ConnectButton() {
               {c.type !== 'evm' && <span className="text-[10px] text-slate-500">non-EVM</span>}
             </button>
           ))}
+        </div>
+      )}
+
+      {(error || session.error) && (
+        <div className="absolute right-0 top-full mt-2 w-64 glass p-3 text-xs text-red-300 z-50">
+          {error ?? session.error}
         </div>
       )}
     </div>

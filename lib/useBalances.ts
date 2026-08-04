@@ -11,6 +11,7 @@ import { erc20Abi, formatUnits, type Address } from 'viem';
 import { getPublicClient } from './clients';
 import { getEnvChains, getKit, type ArcChain } from './chains';
 import { useNetworkMode } from './network';
+import { useRefreshSignal } from './refresh';
 
 export interface TokenBalance {
   symbol: string;
@@ -38,6 +39,8 @@ export function useChainBalances(chain: ArcChain | null, address: Address | null
   const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Re-reads after any confirmed transaction, wherever in the app it happened.
+  const refreshSignal = useRefreshSignal();
 
   // Guards against a slow earlier request overwriting a newer result.
   const requestId = useRef(0);
@@ -126,7 +129,7 @@ export function useChainBalances(chain: ArcChain | null, address: Address | null
 
   useEffect(() => {
     void load();
-  }, [load]);
+  }, [load, refreshSignal]);
 
   return { balances, isLoading, error, refresh: load };
 }
@@ -146,6 +149,7 @@ export interface ChainBalanceSummary {
  */
 export function useMultichainUsdc(address: Address | null) {
   const { isTestnet } = useNetworkMode();
+  const refreshSignal = useRefreshSignal();
   const chains = useMemo(
     () => getEnvChains(isTestnet).filter((c) => c.type === 'evm' && c.tokens.USDC),
     [isTestnet]
@@ -205,7 +209,7 @@ export function useMultichainUsdc(address: Address | null) {
 
   useEffect(() => {
     void load();
-  }, [load]);
+  }, [load, refreshSignal]);
 
   /** Total USDC in base units. Safe to sum: USDC decimals match across chains. */
   const totalUsdc = useMemo(
