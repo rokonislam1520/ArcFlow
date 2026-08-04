@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { isAddress, parseUnits, type Address } from 'viem';
 import { getEnvChains, type ArcChain } from '@/lib/chains';
+import { useNetworkMode } from '@/lib/network';
 import { useWallet, useActiveChain } from '@/lib/WalletProvider';
 import { useChainBalances } from '@/lib/useBalances';
 import { useAppKitOps } from '@/lib/useAppKitOps';
@@ -17,12 +18,13 @@ import { OpStatus } from '@/components/OpStatus';
 export default function BridgePage() {
   const { address, adapter, switchChain } = useWallet();
   const activeChain = useActiveChain();
-  const { state, isBusy, bridge, reset } = useAppKitOps();
+  const { isTestnet } = useNetworkMode();
+  const { state, isBusy, hasQuote, quoteBridge, submit, cancelQuote, reset } = useAppKitOps();
 
   // Bridge requires USDC on both ends.
   const bridgeChains = useMemo(
-    () => getEnvChains('bridge').filter((c) => c.type === 'evm' && c.tokens.USDC),
-    []
+    () => getEnvChains(isTestnet, 'bridge').filter((c) => c.type === 'evm' && c.tokens.USDC),
+    [isTestnet]
   );
 
   const [destination, setDestination] = useState<ArcChain | null>(null);
@@ -74,17 +76,31 @@ export default function BridgePage() {
   ]);
 
   const canSubmit =
-    !!address && !!adapter && !!destination && !!amount && !validationError && !isBusy;
+    !!address &&
+    !!adapter &&
+    !!destination &&
+    !!amount &&
+    !validationError &&
+    !isBusy &&
+    !hasQuote;
 
-  async function onSubmit() {
+  /**
+   * Step 1: quote the route. This reveals gas on both chains, which is the
+   * whole point of quoting a bridge before committing.
+   */
+  async function onQuote() {
     if (!canSubmit || !destination) return;
-    const result = await bridge({
+    await quoteBridge({
       from: activeChain,
       to: destination,
       amount,
       // Omitted when unchecked so App Kit defaults to the sender's own address.
       recipient: useCustomRecipient && recipient ? recipient : undefined,
     });
+  }
+
+  async function onConfirm() {
+    const result = await submit();
     if (result) {
       setAmount('');
       void refresh();
@@ -190,24 +206,32 @@ export default function BridgePage() {
 
         {validationError && amount && <p className="text-sm text-amber-400">{validationError}</p>}
 
-        <button
-          onClick={onSubmit}
-          disabled={!canSubmit}
-          className="btn-arc w-full py-3 disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          {isBusy ? 'Processing…' : 'Bridge USDC'}
-        </button>
+        {!hasQuote && state.stage !== 'success' && (
+          <button
+            onClick={onQuote}
+            disabled={!canSubmit}
+            className="btn-arc w-full py-3 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {isBusy ? 'Working…' : 'Review bridge'}
+          </button>
+        )}
 
-        {/* Attestation takes time; saying so avoids the impression of failure. */}
+        {/* Attestation takes time; saying so avoids the impression of failure.
+            App Kit's bridge() waits for it, so the call itself is long-running. */}
         <p className="text-xs text-slate-500">
           Bridging burns USDC on {activeChain.label} and mints it on{' '}
-          {destination?.label ?? 'the destination'} after Circle attests the transfer. This can take
-          several minutes.
+          {destination?.label ?? 'the destination'} after Circle attests the transfer. Keep this tab
+          open: the whole sequence can take several minutes.
         </p>
 
-        <OpStatus state={state} chain={activeChain} />
+        <OpStatus
+          state={state}
+          chain={activeChain}
+          onConfirm={onConfirm}
+          onCancel={cancelQuote}
+        />
 
-        {state.stage !== 'idle' && !isBusy && (
+        {(state.stage === 'success' || state.stage === 'error') && !isBusy && (
           <button onClick={reset} className="w-full text-sm text-slate-400 hover:text-white">
             New bridge
           </button>

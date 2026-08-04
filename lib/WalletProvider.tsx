@@ -30,6 +30,7 @@ import {
   toAddChainParams,
   type ArcChain,
 } from './chains';
+import { useNetworkMode } from './network';
 
 export interface DiscoveredWallet {
   uuid: string;
@@ -349,8 +350,43 @@ export function useWallet(): WalletState {
   return ctx;
 }
 
-/** Chain to operate on: the wallet's chain when supported, else the default. */
+/**
+ * Chain to operate on: the wallet's chain when it is both supported and in the
+ * selected network mode, otherwise that mode's default chain.
+ *
+ * The mode check matters. A wallet sitting on Ethereum mainnet while the app is
+ * in testnet mode is on a chain App Kit supports, but acting on it would mean
+ * quoting testnet routes against real funds. Treating that as a mismatch keeps
+ * test money and real money strictly apart.
+ */
 export function useActiveChain(): ArcChain {
   const { chain } = useWallet();
-  return chain ?? getDefaultChain();
+  const { isTestnet } = useNetworkMode();
+
+  if (chain && chain.isTestnet === isTestnet) return chain;
+  return getDefaultChain(isTestnet);
+}
+
+/**
+ * Whether the wallet needs to move networks before it can transact, and where.
+ *
+ * Returns null when the wallet is already on a usable chain. `target` is the
+ * chain to switch to, so callers can offer a one-click fix rather than telling
+ * the user to go hunting in their wallet.
+ */
+export function useChainMismatch(): {
+  reason: 'unsupported' | 'wrong-network-mode';
+  target: ArcChain;
+} | null {
+  const { chain, chainId, address } = useWallet();
+  const { isTestnet } = useNetworkMode();
+
+  // Nothing to fix before a wallet is connected.
+  if (!address || chainId === null) return null;
+
+  if (!chain) return { reason: 'unsupported', target: getDefaultChain(isTestnet) };
+  if (chain.isTestnet !== isTestnet) {
+    return { reason: 'wrong-network-mode', target: getDefaultChain(isTestnet) };
+  }
+  return null;
 }

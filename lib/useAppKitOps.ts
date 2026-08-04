@@ -1,134 +1,122 @@
 'use client';
 /**
- * Send / Swap / Bridge via Arc App Kit.
+ * Send / Swap / Bridge via Arc App Kit, as an explicit two-step flow:
+ * quote first, submit only after the user accepts what they saw.
  *
- * App Kit owns the hard parts: ERC-20 approvals, CCTP burn/attest/mint for
- * bridging, routing for swaps. Reimplementing those with custom contracts would
- * be strictly worse, so the only custom Solidity left in this project is the
- * business logic App Kit does not cover (bill splitting, merchant invoices,
- * recurring schedules).
+ * This shape is deliberate. The previous version estimated and submitted in a
+ * single click, which meant fees were never shown before signing, and a failed
+ * estimate was swallowed (`.catch(() => null)`) so the user was still walked
+ * into the wallet for a transaction that could not succeed. Verified against
+ * the live SDK, `estimateSend` throws "Insufficient token balance" — exactly
+ * the case that must stop the flow rather than be ignored.
  *
- * A single lifecycle model is shared by all three operations so the UI can show
- * accurate progress instead of a fake success screen.
+ * App Kit owns the hard parts: ERC-20 approvals, CCTP burn/attest/mint, swap
+ * routing. The only custom Solidity in this project is the business logic App
+ * Kit does not cover (splitting, invoices, schedules).
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { getKit, type ArcChain } from './chains';
 import { useWallet } from './WalletProvider';
+import { collectHashes, normalizeQuote, type OpKind, type Quote } from './quote';
 
-export type OpStage = 'idle' | 'estimating' | 'awaitingSignature' | 'pending' | 'success' | 'error';
+export type { OpKind, FeeLine, Quote } from './quote';
+
+export type OpStage =
+  | 'idle'
+  | 'quoting'
+  | 'quoted'
+  | 'awaitingSignature'
+  | 'pending'
+  | 'success'
+  | 'error';
 
 export interface OpState {
+  kind: OpKind | null;
   stage: OpStage;
-  /** Human-readable description of the current stage. */
   message: string;
-  /** Populated once a hash is known. Bridges produce several. */
   hashes: string[];
   error: string | null;
-  /** Fee/route estimate returned before submission. */
-  estimate: unknown | null;
+  quote: Quote | null;
   result: unknown | null;
 }
 
 const IDLE: OpState = {
+  kind: null,
   stage: 'idle',
   message: '',
   hashes: [],
   error: null,
-  estimate: null,
+  quote: null,
   result: null,
 };
 
-/** Extract transaction hashes from App Kit results without assuming a shape. */
-function collectHashes(value: unknown, depth = 0): string[] {
-  if (depth > 4 || value === null || typeof value !== 'object') return [];
-  const out: string[] = [];
-  for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
-    if (
-      typeof val === 'string' &&
-      /^0x[0-9a-fA-F]{64}$/.test(val) &&
-      /hash|tx/i.test(key)
-    ) {
-      out.push(val);
-    } else if (typeof val === 'object') {
-      out.push(...collectHashes(val, depth + 1));
-    }
-  }
-  return [...new Set(out)];
-}
-
 /**
- * Turn SDK/wallet errors into something a user can act on. App Kit ships
- * `isUserCancellationError`, so a decline is reported as a cancel rather than
- * a scary failure.
+ * Turn SDK/wallet errors into something actionable. App Kit ships
+ * `isUserCancellationError`, so a decline reads as a cancel, not a failure.
  */
 async function describeError(err: unknown): Promise<string> {
   try {
     const kitModule = await import('@circle-fin/app-kit');
-    if (kitModule.isUserCancellationError?.(err)) {
-      return 'Cancelled in wallet.';
-    }
+    if (kitModule.isUserCancellationError?.(err)) return 'Cancelled in wallet.';
     const message = kitModule.getErrorMessage?.(err);
     if (typeof message === 'string' && message) return message;
   } catch {
-    // Fall through to generic handling if the helpers are unavailable.
+    // Fall through if the helpers are unavailable.
   }
   if (err instanceof Error && err.message) return err.message;
   return 'Operation failed.';
 }
 
-export function useAppKitOps() {
-  const { adapter } = useWallet();
-  const [state, setState] = useState<OpState>(IDLE);
+/** Parameters for each operation, kept between quote and submit. */
+type PendingOp = {
+  kind: OpKind;
+  chain: ArcChain;
+  params: Record<string, unknown>;
+};
 
-  const reset = useCallback(() => setState(IDLE), []);
+export function useAppKitOps() {
+  const { adapter, address } = useWallet();
+  const [state, setState] = useState<OpState>(IDLE);
+  // Held so submit uses byte-identical params to those quoted.
+  const pending = useRef<PendingOp | null>(null);
+
+  const reset = useCallback(() => {
+    pending.current = null;
+    setState(IDLE);
+  }, []);
 
   /**
-   * Shared driver: estimate, submit, then surface hashes.
-   * `estimateFn` is optional because not every capability exposes one.
+   * Step 1: ask App Kit what this will cost.
+   *
+   * An estimate failure is terminal here. That is the point: it is how
+   * insufficient balance and dead routes are caught before the wallet opens.
    */
-  const run = useCallback(
-    async (
-      params: Record<string, unknown>,
-      estimateFn: ((p: never) => Promise<unknown>) | null,
-      submitFn: (p: never) => Promise<unknown>,
-      pendingMessage: string
-    ) => {
+  const quote = useCallback(
+    async (op: PendingOp, estimateFn: (p: never) => Promise<unknown>) => {
       if (!adapter) {
         setState({ ...IDLE, stage: 'error', error: 'Connect a wallet first.' });
         return null;
       }
 
+      pending.current = op;
+      setState({ ...IDLE, kind: op.kind, stage: 'quoting', message: 'Fetching quote…' });
+
       try {
-        let estimate: unknown = null;
-        if (estimateFn) {
-          setState({ ...IDLE, stage: 'estimating', message: 'Estimating fees…' });
-          // A failed estimate should not block the attempt; some routes only
-          // reveal problems at submission time.
-          estimate = await estimateFn(params as never).catch(() => null);
-        }
-
+        const raw = await estimateFn(op.params as never);
+        const parsed = normalizeQuote(op.kind, raw);
         setState({
           ...IDLE,
-          stage: 'awaitingSignature',
-          message: 'Confirm in your wallet…',
-          estimate,
+          kind: op.kind,
+          stage: 'quoted',
+          message: 'Review and confirm.',
+          quote: parsed,
         });
-
-        const result = await submitFn(params as never);
-        const hashes = collectHashes(result);
-
-        setState({
-          stage: 'success',
-          message: pendingMessage,
-          hashes,
-          error: null,
-          estimate,
-          result,
-        });
-        return result;
+        return parsed;
       } catch (err) {
+        pending.current = null;
         setState({
           ...IDLE,
+          kind: op.kind,
           stage: 'error',
           error: await describeError(err),
         });
@@ -138,70 +126,168 @@ export function useAppKitOps() {
     [adapter]
   );
 
-  /** Same-chain transfer of any supported token. */
-  const send = useCallback(
+  /** Step 2: submit exactly what was quoted. */
+  const submit = useCallback(async () => {
+    const op = pending.current;
+    if (!op || !adapter) return null;
+
+    const kit = getKit();
+    const submitFn =
+      op.kind === 'send'
+        ? kit.send.bind(kit)
+        : op.kind === 'swap'
+          ? kit.swap.bind(kit)
+          : kit.bridge.bind(kit);
+
+    setState((s) => ({
+      ...s,
+      stage: 'awaitingSignature',
+      message:
+        op.kind === 'bridge'
+          ? 'Approve and confirm in your wallet…'
+          : 'Confirm in your wallet…',
+      error: null,
+    }));
+
+    try {
+      // Bridges need several signatures (approve, burn, then mint), so the
+      // wallet may prompt more than once before this resolves.
+      const result = await submitFn(op.params as never);
+      const hashes = collectHashes(result);
+
+      setState((s) => ({
+        ...s,
+        stage: 'success',
+        message:
+          op.kind === 'bridge'
+            ? 'Bridge complete. USDC minted on the destination chain.'
+            : op.kind === 'swap'
+              ? 'Swap confirmed.'
+              : 'Transfer confirmed.',
+        hashes,
+        result,
+        error: null,
+      }));
+
+      pending.current = null;
+      return result;
+    } catch (err) {
+      // Resolved before setState: the updater callback cannot be async.
+      const message = await describeError(err);
+      setState((s) => ({
+        ...s,
+        // Stay on 'error' but keep the quote, so the user can retry without
+        // re-quoting after, say, declining in the wallet by mistake.
+        stage: 'error',
+        error: message,
+      }));
+      return null;
+    }
+  }, [adapter]);
+
+  /** Discard a quote without submitting. */
+  const cancelQuote = useCallback(() => {
+    pending.current = null;
+    setState(IDLE);
+  }, []);
+
+  /** Same-chain transfer. Quote only; call `submit` to execute. */
+  const quoteSend = useCallback(
     (args: { chain: ArcChain; to: string; amount: string; token: string }) => {
       const kit = getKit();
-      return run(
+      // The SDK rejects self-transfers, so catch it here with a clearer message.
+      if (address && args.to.toLowerCase() === address.toLowerCase()) {
+        setState({
+          ...IDLE,
+          kind: 'send',
+          stage: 'error',
+          error: 'Recipient is your own address.',
+        });
+        return Promise.resolve(null);
+      }
+      return quote(
         {
-          from: { adapter, chain: args.chain.id },
-          to: args.to,
-          amount: args.amount,
-          token: args.token,
+          kind: 'send',
+          chain: args.chain,
+          params: {
+            from: { adapter, chain: args.chain.id },
+            to: args.to,
+            amount: args.amount,
+            token: args.token,
+          },
         },
-        kit.estimateSend.bind(kit),
-        kit.send.bind(kit),
-        'Transfer confirmed.'
+        kit.estimateSend.bind(kit)
       );
     },
-    [adapter, run]
+    [adapter, address, quote]
   );
 
   /** Same-chain swap. On Arc Testnet only USDC/EURC/cirBTC have liquidity. */
-  const swap = useCallback(
+  const quoteSwap = useCallback(
     (args: { chain: ArcChain; tokenIn: string; tokenOut: string; amountIn: string }) => {
       const kit = getKit();
-      return run(
+      return quote(
         {
-          from: { adapter, chain: args.chain.id },
-          tokenIn: args.tokenIn,
-          tokenOut: args.tokenOut,
-          amountIn: args.amountIn,
+          kind: 'swap',
+          chain: args.chain,
+          params: {
+            from: { adapter, chain: args.chain.id },
+            tokenIn: args.tokenIn,
+            tokenOut: args.tokenOut,
+            amountIn: args.amountIn,
+          },
         },
-        kit.estimateSwap.bind(kit),
-        kit.swap.bind(kit),
-        'Swap submitted.'
+        kit.estimateSwap.bind(kit)
       );
     },
-    [adapter, run]
+    [adapter, quote]
   );
 
-  /** Cross-chain USDC via CCTP. Bridge supports USDC only. */
-  const bridge = useCallback(
+  /**
+   * Cross-chain USDC via CCTP.
+   *
+   * Both ends need an adapter: verified against the SDK, passing only
+   * `{ chain, recipientAddress }` for the destination fails validation with
+   * "to: Invalid input".
+   */
+  const quoteBridge = useCallback(
     (args: { from: ArcChain; to: ArcChain; amount: string; recipient?: string }) => {
       const kit = getKit();
-      return run(
+      return quote(
         {
-          from: { adapter, chain: args.from.id },
-          to: {
-            adapter,
-            chain: args.to.id,
-            ...(args.recipient ? { recipientAddress: args.recipient } : {}),
+          kind: 'bridge',
+          chain: args.from,
+          params: {
+            from: { adapter, chain: args.from.id },
+            to: {
+              adapter,
+              chain: args.to.id,
+              ...(args.recipient ? { recipientAddress: args.recipient } : {}),
+            },
+            amount: args.amount,
           },
-          amount: args.amount,
         },
-        kit.estimateBridge.bind(kit),
-        kit.bridge.bind(kit),
-        'Bridge initiated. Funds arrive after attestation.'
+        kit.estimateBridge.bind(kit)
       );
     },
-    [adapter, run]
+    [adapter, quote]
   );
 
   const isBusy =
-    state.stage === 'estimating' ||
+    state.stage === 'quoting' ||
     state.stage === 'awaitingSignature' ||
     state.stage === 'pending';
 
-  return { state, isBusy, send, swap, bridge, reset };
+  return {
+    state,
+    isBusy,
+    /** True when a quote is on screen awaiting the user's decision. */
+    hasQuote: state.stage === 'quoted',
+    quoteSend,
+    quoteSwap,
+    quoteBridge,
+    submit,
+    cancelQuote,
+    reset,
+  };
 }

@@ -111,23 +111,55 @@ export function getChainsFor(capability: Capability): ArcChain[] {
 }
 
 /**
- * Whether to show mainnets or testnets. Arc is testnet-only today, so a build
- * targeting Arc must run in testnet mode; mixing the two would offer routes
- * that cannot settle.
+ * Chains for a network mode, Arc first since it is the flagship.
+ *
+ * The mode is passed in rather than read from a build-time constant so the user
+ * can switch between mainnet and testnet at runtime. Mixing the two would offer
+ * routes that cannot settle, so exactly one network type is ever returned.
  */
-export const IS_TESTNET = process.env.NEXT_PUBLIC_USE_TESTNET !== 'false';
-
-/** Chains for the active environment, Arc first since it is the flagship. */
-export function getEnvChains(capability?: Capability): ArcChain[] {
+export function getEnvChains(
+  isTestnet: boolean,
+  capability?: Capability
+): ArcChain[] {
   const list = capability ? getChainsFor(capability) : getAllChains();
   return list
-    .filter((c) => c.isTestnet === IS_TESTNET)
+    .filter((c) => c.isTestnet === isTestnet)
     .sort((a, b) => {
       const aArc = a.id.startsWith('Arc') ? 0 : 1;
       const bArc = b.id.startsWith('Arc') ? 0 : 1;
       return aArc - bArc || a.label.localeCompare(b.label);
     });
 }
+
+/**
+ * Whether Arc itself is available in a given mode.
+ *
+ * Arc ships as a testnet only at the time of writing, so mainnet mode contains
+ * no Arc chain. Callers use this to explain the absence instead of silently
+ * dropping the flagship network from a list.
+ */
+export function hasArcSupport(isTestnet: boolean): boolean {
+  return getEnvChains(isTestnet).some((c) => c.id.startsWith('Arc'));
+}
+
+/**
+ * Networks users often expect that App Kit cannot route today.
+ *
+ * BNB Chain is not a CCTP domain and is absent from the registry entirely, so
+ * there is no Circle path to it. Surfacing this as data lets the UI say so
+ * plainly rather than leaving users to wonder why a chain is missing.
+ */
+export const UNSUPPORTED_NETWORKS: ReadonlyArray<{
+  name: string;
+  reason: string;
+}> = [
+  {
+    name: 'BNB Chain',
+    reason:
+      'Not supported by Circle CCTP or App Kit. Routing to it would require a third-party bridge with a different trust model.',
+  },
+];
+
 
 export function getChainById(id: string): ArcChain | undefined {
   return getAllChains().find((c) => c.id === id);
@@ -138,12 +170,19 @@ export function getChainByEvmId(chainId: number): ArcChain | undefined {
   return getAllChains().find((c) => c.chainId === chainId);
 }
 
-/** The flagship chain. Falls back gracefully if Arc naming ever changes. */
-export function getDefaultChain(): ArcChain {
-  const chains = getEnvChains();
+/**
+ * The chain to preselect: Arc when present, otherwise the first available.
+ * Falls back gracefully if Arc naming ever changes.
+ */
+export function getDefaultChain(isTestnet: boolean): ArcChain {
+  const chains = getEnvChains(isTestnet);
   const arc = chains.find((c) => c.id.startsWith('Arc'));
   const chain = arc ?? chains[0];
-  if (!chain) throw new Error('App Kit returned no chains for this environment');
+  if (!chain) {
+    throw new Error(
+      `App Kit returned no ${isTestnet ? 'testnet' : 'mainnet'} chains`
+    );
+  }
   return chain;
 }
 

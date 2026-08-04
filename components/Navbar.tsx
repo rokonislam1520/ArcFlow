@@ -2,10 +2,12 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { ConnectButton } from '@/components/ConnectButton';
+import { NetworkSwitcher } from '@/components/NetworkSwitcher';
 
 const links = [
   { name: 'Dashboard', href: '/dashboard' },
   { name: 'Send', href: '/send' },
+  { name: 'Receive', href: '/receive' },
   { name: 'Swap', href: '/swap' },
   { name: 'Bridge', href: '/bridge' },
   { name: 'Split', href: '/split' },
@@ -43,8 +45,10 @@ export function Navbar() {
           </div>
 
           {/* Wallet + network selection live in one shared control so every
-              page sees the same session. */}
+              page sees the same session. The mainnet/testnet switch sits
+              alongside it because it changes what every other control means. */}
           <div className="hidden lg:flex items-center gap-3">
+            <NetworkSwitcher />
             <ConnectButton />
           </div>
 
@@ -72,7 +76,8 @@ export function Navbar() {
               {l.name}
             </Link>
           ))}
-          <div className="pt-3 border-t border-white/10">
+          <div className="pt-3 border-t border-white/10 space-y-3">
+            <NetworkSwitcher />
             <ConnectButton />
           </div>
         </div>

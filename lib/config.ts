@@ -16,8 +16,13 @@ import { getDefaultChain } from './chains';
  * production build with a missing env var previously pointed at
  * `http://127.0.0.1:8545`, so every contract read failed with a confusing
  * network error instead of surfacing the misconfiguration.
+ *
+ * Testnet is the default because these contracts are unaudited and live at a
+ * single deployment address. Pointing them at mainnet has to be a deliberate
+ * act (an explicit NEXT_PUBLIC_CHAIN_ID), never something that happens because
+ * a variable was left unset.
  */
-const deploymentDefault = getDefaultChain();
+const deploymentDefault = getDefaultChain(true);
 
 export const CHAIN_ID = Number(
   process.env.NEXT_PUBLIC_CHAIN_ID ?? deploymentDefault.chainId
