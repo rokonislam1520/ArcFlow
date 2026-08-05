@@ -50,28 +50,36 @@ async function main() {
   // ========== 3. Deploy ArcFlowPay ==========
   console.log("\n3. Deploying ArcFlowPay...");
   const ArcFlowPay = await ethers.getContractFactory("ArcFlowPay");
-  const pay = await ArcFlowPay.deploy(USDC_ADDRESS, FEE_COLLECTOR);
+  // ArcFlowPay's constructor takes only the fee collector. It previously also
+  // took a USDC address, and this call still passed one — as the *first*
+  // argument, which meant the token address was being deployed as the fee
+  // collector. Every fee would have been sent to the USDC contract itself and
+  // been unrecoverable.
+  const pay = await ArcFlowPay.deploy(FEE_COLLECTOR);
   await pay.waitForDeployment();
   deployed["ArcFlowPay"] = await pay.getAddress();
-  constructorArgs["ArcFlowPay"] = [USDC_ADDRESS, FEE_COLLECTOR];
+  constructorArgs["ArcFlowPay"] = [FEE_COLLECTOR];
   console.log("   ArcFlowPay:", deployed["ArcFlowPay"]);
 
   // ========== 4. Deploy ArcFlowRecurring ==========
   console.log("\n4. Deploying ArcFlowRecurring...");
   const ArcFlowRecurring = await ethers.getContractFactory("ArcFlowRecurring");
-  const recurring = await ArcFlowRecurring.deploy(USDC_ADDRESS);
+  // Takes no constructor arguments: the token is supplied per subscription
+  // rather than fixed at deployment.
+  const recurring = await ArcFlowRecurring.deploy();
   await recurring.waitForDeployment();
   deployed["ArcFlowRecurring"] = await recurring.getAddress();
-  constructorArgs["ArcFlowRecurring"] = [USDC_ADDRESS];
+  constructorArgs["ArcFlowRecurring"] = [];
   console.log("   ArcFlowRecurring:", deployed["ArcFlowRecurring"]);
 
   // ========== 5. Deploy ArcFlowSplit ==========
   console.log("\n5. Deploying ArcFlowSplit...");
   const ArcFlowSplit = await ethers.getContractFactory("ArcFlowSplit");
-  const split = await ArcFlowSplit.deploy(USDC_ADDRESS);
+  // Takes no constructor arguments: the token is supplied per split.
+  const split = await ArcFlowSplit.deploy();
   await split.waitForDeployment();
   deployed["ArcFlowSplit"] = await split.getAddress();
-  constructorArgs["ArcFlowSplit"] = [USDC_ADDRESS];
+  constructorArgs["ArcFlowSplit"] = [];
   console.log("   ArcFlowSplit:", deployed["ArcFlowSplit"]);
 
   // ========== Summary ==========

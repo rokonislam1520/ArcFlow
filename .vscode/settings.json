@@ -1,0 +1,21 @@
+{
+  // Use the TypeScript installed in node_modules rather than the copy bundled
+  // with VS Code, so the Problems panel and `npm run typecheck` run the same
+  // compiler.
+  //
+  // This is the reason the editor reported errors the CLI did not: VS Code ships
+  // its own TypeScript, and when it is newer than the project's it applies
+  // checks the project's compiler does not have. Error 2882 ("no type
+  // declarations for side-effect import") was one of those — it does not exist
+  // in the version resolved in node_modules, so `tsc` could never have produced
+  // it no matter how the project was configured.
+  //
+  // Pinning here means upgrading TypeScript is a deliberate package.json change
+  // that shows up in review, instead of arriving silently with an editor update
+  // and only affecting whoever updated.
+  "typescript.tsdk": "node_modules/typescript/lib",
+
+  // Prompt to adopt the workspace version instead of silently falling back to
+  // the bundled one.
+  "typescript.enablePromptUseWorkspaceTsdk": true
+}

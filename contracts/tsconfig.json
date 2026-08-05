@@ -6,6 +6,28 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true
-  }
+    "resolveJsonModule": true,
+
+    // Hardhat runs Mocha, so `describe`/`it`/`beforeEach` are globals injected
+    // by the test runner rather than imported. Without listing the types here,
+    // TypeScript has no reason to know they exist and reports "Cannot find name
+    // 'describe'" on every test.
+    //
+    // Naming the packages explicitly rather than relying on the automatic scan
+    // of node_modules/@types keeps this deterministic: it documents what the
+    // test environment actually provides, and does not silently change when an
+    // unrelated dependency adds a @types package.
+    "types": ["node", "mocha", "chai"]
+  },
+  // The root tsconfig excludes this directory, so these files need a project of
+  // their own to be type-checked at all. Listing them explicitly is what makes
+  // the editor pick up this config for the tests instead of falling back to the
+  // root project, which has no Mocha types and reported spurious errors.
+  "include": [
+    "./scripts/**/*.ts",
+    "./test/**/*.ts",
+    "./typechain-types/**/*.ts",
+    "./hardhat.config.ts"
+  ],
+  "exclude": ["node_modules", "artifacts", "cache"]
 }
