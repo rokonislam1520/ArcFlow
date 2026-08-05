@@ -13,6 +13,7 @@ import { useNetworkMode } from '@/lib/network';
 import { useWallet, useActiveChain } from '@/lib/WalletProvider';
 import { useChainBalances } from '@/lib/useBalances';
 import { useAppKitOps } from '@/lib/useAppKitOps';
+import { useOpNotifications } from '@/lib/notifications';
 import { OpStatus } from '@/components/OpStatus';
 
 export default function SwapPage() {
@@ -20,6 +21,10 @@ export default function SwapPage() {
   const activeChain = useActiveChain();
   const { isTestnet } = useNetworkMode();
   const { state, isBusy, hasQuote, quoteSwap, submit, cancelQuote, reset } = useAppKitOps();
+
+  // Surface the swap in the notification feed once broadcast, so it survives
+  // navigating away from this page.
+  useOpNotifications(state, activeChain);
 
   // Only chains App Kit can actually swap on.
   const swapChains = useMemo(() => getEnvChains(isTestnet, 'swap'), [isTestnet]);

@@ -13,6 +13,7 @@ import { useNetworkMode } from '@/lib/network';
 import { useWallet, useActiveChain } from '@/lib/WalletProvider';
 import { useChainBalances } from '@/lib/useBalances';
 import { useAppKitOps } from '@/lib/useAppKitOps';
+import { useOpNotifications } from '@/lib/notifications';
 import { OpStatus } from '@/components/OpStatus';
 
 export default function BridgePage() {
@@ -20,6 +21,12 @@ export default function BridgePage() {
   const activeChain = useActiveChain();
   const { isTestnet } = useNetworkMode();
   const { state, isBusy, hasQuote, quoteBridge, submit, cancelQuote, reset } = useAppKitOps();
+
+  // Track the burn on the source chain through to its receipt. The destination
+  // mint is a separate transaction App Kit performs after attestation; it is
+  // not tracked here, so this notification means "burn confirmed", not
+  // "funds have arrived".
+  useOpNotifications(state, activeChain);
 
   // Bridge requires USDC on both ends.
   const bridgeChains = useMemo(

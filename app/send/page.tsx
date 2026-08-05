@@ -11,6 +11,7 @@ import { getChainTokens } from '@/lib/chains';
 import { useWallet, useActiveChain } from '@/lib/WalletProvider';
 import { useChainBalances } from '@/lib/useBalances';
 import { useAppKitOps } from '@/lib/useAppKitOps';
+import { useOpNotifications } from '@/lib/notifications';
 import { OpStatus } from '@/components/OpStatus';
 
 export default function SendPage() {
@@ -18,6 +19,10 @@ export default function SendPage() {
   const chain = useActiveChain();
   const { balances, refresh } = useChainBalances(chain, address as Address | null);
   const { state, isBusy, hasQuote, quoteSend, submit, cancelQuote, reset } = useAppKitOps();
+
+  // Surface this transfer in the notification feed once it is broadcast, so it
+  // is still visible after navigating away from the success screen.
+  useOpNotifications(state, chain);
 
   const tokens = useMemo(() => getChainTokens(chain), [chain]);
   const [token, setToken] = useState<string>('USDC');

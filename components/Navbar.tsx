@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { ConnectButton } from '@/components/ConnectButton';
 import { NetworkSwitcher } from '@/components/NetworkSwitcher';
+import { NotificationBell } from '@/components/NotificationBell';
 
 const links = [
   { name: 'Dashboard', href: '/dashboard' },
@@ -13,6 +14,7 @@ const links = [
   { name: 'Split', href: '/split' },
   { name: 'Recurring', href: '/recurring' },
   { name: 'Portfolio', href: '/portfolio' },
+  { name: 'History', href: '/history' },
   { name: 'Pay', href: '/merchant' },
 ];
 
@@ -48,6 +50,7 @@ export function Navbar() {
               page sees the same session. The mainnet/testnet switch sits
               alongside it because it changes what every other control means. */}
           <div className="hidden lg:flex items-center gap-3">
+            <NotificationBell />
             <NetworkSwitcher />
             <ConnectButton />
           </div>
@@ -77,6 +80,7 @@ export function Navbar() {
             </Link>
           ))}
           <div className="pt-3 border-t border-white/10 space-y-3">
+            <NotificationBell />
             <NetworkSwitcher />
             <ConnectButton />
           </div>

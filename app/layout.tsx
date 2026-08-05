@@ -3,6 +3,7 @@ import './globals.css';
 import { Navbar } from '@/components/Navbar';
 import { WalletProvider } from '@/lib/WalletProvider';
 import { SessionProvider } from '@/lib/SessionProvider';
+import { WalletNotificationProvider, ActivityWatcher } from '@/lib/notifications';
 
 export const metadata: Metadata = {
   title: 'ArcFlow — Multichain Stablecoin Platform',
@@ -24,8 +25,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* Inside WalletProvider: the SIWE session signs with that wallet
               and must end when the account changes. */}
           <SessionProvider>
-            <Navbar />
-            <main>{children}</main>
+            {/* Notifications bind to the connected address and watch for
+                incoming transfers and submitted-transaction confirmations. */}
+            <WalletNotificationProvider>
+              <ActivityWatcher />
+              <Navbar />
+              <main>{children}</main>
+            </WalletNotificationProvider>
           </SessionProvider>
         </WalletProvider>
       </body>
