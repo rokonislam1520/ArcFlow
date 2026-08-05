@@ -276,17 +276,40 @@ export function usePortfolio(
   return { ...state, loading, refresh };
 }
 
+/** One token's total across every chain that holds it. */
+export interface TokenTotal {
+  symbol: string;
+  amount: number;
+  /**
+   * Null when no part of this holding could be priced, so the UI can say
+   * "unpriced" instead of "$0.00". A zero here means genuinely worth nothing.
+   */
+  valueUSD: number | null;
+  /** How many chains hold it, so a spread balance is visible. */
+  chains: number;
+  /** True when at least one chain's amount had no quote; the value is a floor. */
+  hasUnpriced: boolean;
+}
+
 /** Aggregate holdings by token symbol across all chains. */
-export function byToken(
-  chains: ChainPortfolio[]
-): Array<{ symbol: string; amount: number; valueUSD: number; chains: number }> {
-  const map = new Map<string, { amount: number; valueUSD: number; chains: Set<string> }>();
+export function byToken(chains: ChainPortfolio[]): TokenTotal[] {
+  const map = new Map<
+    string,
+    { amount: number; valueUSD: number; priced: boolean; unpriced: boolean; chains: Set<string> }
+  >();
 
   for (const c of chains) {
     for (const h of c.holdings) {
-      const entry = map.get(h.symbol) ?? { amount: 0, valueUSD: 0, chains: new Set<string>() };
+      const entry =
+        map.get(h.symbol) ??
+        { amount: 0, valueUSD: 0, priced: false, unpriced: false, chains: new Set<string>() };
       entry.amount += Number(h.amount);
-      entry.valueUSD += h.valueUSD ?? 0;
+      if (h.valueUSD === null) {
+        entry.unpriced = true;
+      } else {
+        entry.valueUSD += h.valueUSD;
+        entry.priced = true;
+      }
       entry.chains.add(h.chainId);
       map.set(h.symbol, entry);
     }
@@ -296,8 +319,30 @@ export function byToken(
     .map(([symbol, v]) => ({
       symbol,
       amount: v.amount,
-      valueUSD: v.valueUSD,
+      // Distinguish "priced at zero" from "never priced at all".
+      valueUSD: v.priced ? v.valueUSD : null,
       chains: v.chains.size,
+      hasUnpriced: v.unpriced,
+    }))
+    .sort((a, b) => (b.valueUSD ?? -1) - (a.valueUSD ?? -1));
+}
+
+/**
+ * Share of total value per chain, for the allocation breakdown.
+ *
+ * Chains that errored are carried through with a null share: their weight is
+ * genuinely unknown, and assigning them 0% would imply we had checked.
+ */
+export function chainAllocation(
+  chains: ChainPortfolio[],
+  totalUSD: number
+): Array<{ chain: ArcChain; valueUSD: number; sharePct: number | null; error?: string }> {
+  return chains
+    .map((c) => ({
+      chain: c.chain,
+      valueUSD: c.valueUSD,
+      sharePct: c.error ? null : totalUSD > 0 ? (c.valueUSD / totalUSD) * 100 : 0,
+      error: c.error,
     }))
     .sort((a, b) => b.valueUSD - a.valueUSD);
 }
