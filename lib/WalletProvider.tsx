@@ -72,7 +72,8 @@ interface WalletState {
   isUnsupportedChain: boolean;
   connect: (uuid?: string) => Promise<void>;
   disconnect: () => void;
-  switchChain: (chain: ArcChain) => Promise<void>;
+  /** Resolves true when the wallet ends up on `chain`, false if it did not. */
+  switchChain: (chain: ArcChain) => Promise<boolean>;
   clearError: () => void;
 }
 
@@ -212,16 +213,23 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     window.localStorage.removeItem('arcflow.wallet');
   }, []);
 
-  /** Switch networks, adding the chain first if the wallet lacks it. */
+  /**
+   * Switch networks, adding the chain first if the wallet lacks it.
+   *
+   * Returns whether the switch happened. Errors are reported through `error`
+   * rather than thrown, but callers still need to know the outcome: a UI that
+   * pre-selected the target has to roll back when the user declines, otherwise
+   * it claims to be on a network the wallet never moved to.
+   */
   const switchChain = useCallback(
-    async (target: ArcChain) => {
+    async (target: ArcChain): Promise<boolean> => {
       if (!wallet) {
         setError('Connect a wallet first.');
-        return;
+        return false;
       }
       if (target.chainId === undefined) {
         setError(`${target.label} is not an EVM chain.`);
-        return;
+        return false;
       }
 
       const hexId = `0x${target.chainId.toString(16)}`;
@@ -242,14 +250,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             });
           } catch (addErr) {
             setError(errorMessage(addErr));
-            return;
+            return false;
           }
         } else {
           setError(errorMessage(err));
-          return;
+          return false;
         }
       }
       await refreshAdapter(wallet.provider);
+      return true;
     },
     [wallet, refreshAdapter]
   );
