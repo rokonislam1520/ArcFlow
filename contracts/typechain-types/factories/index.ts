@@ -2,6 +2,8 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as interfaces from "./interfaces";
+export * as lib from "./lib";
+export * as test from "./test";
 export { ArcFlowPay__factory } from "./ArcFlowPay__factory";
 export { ArcFlowRecurring__factory } from "./ArcFlowRecurring__factory";
 export { ArcFlowSend__factory } from "./ArcFlowSend__factory";

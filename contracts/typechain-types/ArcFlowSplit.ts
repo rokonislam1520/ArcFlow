@@ -26,32 +26,67 @@ import type {
 export interface ArcFlowSplitInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "MAX_MEMBERS"
+      | "acceptOwnership"
+      | "cancelSplit"
       | "createSplit"
       | "getGroup"
       | "getGroupCount"
       | "getGroupMembers"
-      | "getGroupRecipient"
       | "getOutstandingShare"
+      | "getRefundable"
       | "getUserGroups"
-      | "groupMembers"
-      | "groups"
       | "isMember"
+      | "joinSplit"
+      | "lockGroup"
       | "owner"
-      | "settleShare"
-      | "usdc"
+      | "paused"
+      | "payShare"
+      | "pendingOwner"
+      | "setPaused"
+      | "settle"
+      | "transferOwnership"
+      | "withdrawRefund"
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
+      | "GroupCancelled"
       | "GroupCreated"
+      | "GroupLocked"
       | "GroupSettled"
       | "MemberAdded"
-      | "Settled"
+      | "MemberJoined"
+      | "OwnershipTransferStarted"
+      | "OwnershipTransferred"
+      | "Paused"
+      | "Refunded"
+      | "SharePaid"
+      | "Unpaused"
   ): EventFragment;
 
   encodeFunctionData(
+    functionFragment: "MAX_MEMBERS",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "acceptOwnership",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "cancelSplit",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "createSplit",
-    values: [string, AddressLike[], BigNumberish[], AddressLike]
+    values: [
+      string,
+      AddressLike,
+      AddressLike,
+      AddressLike[],
+      BigNumberish[],
+      boolean
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "getGroup",
@@ -66,11 +101,11 @@ export interface ArcFlowSplitInterface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "getGroupRecipient",
-    values: [BigNumberish]
+    functionFragment: "getOutstandingShare",
+    values: [BigNumberish, AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "getOutstandingShare",
+    functionFragment: "getRefundable",
     values: [BigNumberish, AddressLike]
   ): string;
   encodeFunctionData(
@@ -78,24 +113,53 @@ export interface ArcFlowSplitInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "groupMembers",
-    values: [BigNumberish, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "groups",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "isMember",
     values: [BigNumberish, AddressLike]
   ): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "settleShare",
+    functionFragment: "joinSplit",
+    values: [BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "lockGroup",
     values: [BigNumberish]
   ): string;
-  encodeFunctionData(functionFragment: "usdc", values?: undefined): string;
+  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(functionFragment: "paused", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "payShare",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "pendingOwner",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "setPaused", values: [boolean]): string;
+  encodeFunctionData(
+    functionFragment: "settle",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "transferOwnership",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "withdrawRefund",
+    values: [BigNumberish]
+  ): string;
 
+  decodeFunctionResult(
+    functionFragment: "MAX_MEMBERS",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "acceptOwnership",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "cancelSplit",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "createSplit",
     data: BytesLike
@@ -110,49 +174,88 @@ export interface ArcFlowSplitInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getGroupRecipient",
+    functionFragment: "getOutstandingShare",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getOutstandingShare",
+    functionFragment: "getRefundable",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "getUserGroups",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "groupMembers",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "groups", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "isMember", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "joinSplit", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "lockGroup", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "paused", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "payShare", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "settleShare",
+    functionFragment: "pendingOwner",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "usdc", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "setPaused", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "settle", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "transferOwnership",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "withdrawRefund",
+    data: BytesLike
+  ): Result;
+}
+
+export namespace GroupCancelledEvent {
+  export type InputTuple = [groupId: BigNumberish];
+  export type OutputTuple = [groupId: bigint];
+  export interface OutputObject {
+    groupId: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace GroupCreatedEvent {
   export type InputTuple = [
     groupId: BigNumberish,
     creator: AddressLike,
+    token: AddressLike,
+    recipient: AddressLike,
     name: string,
-    totalAmount: BigNumberish
+    openJoin: boolean
   ];
   export type OutputTuple = [
     groupId: bigint,
     creator: string,
+    token: string,
+    recipient: string,
     name: string,
-    totalAmount: bigint
+    openJoin: boolean
   ];
   export interface OutputObject {
     groupId: bigint;
     creator: string;
+    token: string;
+    recipient: string;
     name: string;
-    totalAmount: bigint;
+    openJoin: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace GroupLockedEvent {
+  export type InputTuple = [groupId: BigNumberish, committed: BigNumberish];
+  export type OutputTuple = [groupId: bigint, committed: bigint];
+  export interface OutputObject {
+    groupId: bigint;
+    committed: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -161,10 +264,20 @@ export namespace GroupCreatedEvent {
 }
 
 export namespace GroupSettledEvent {
-  export type InputTuple = [groupId: BigNumberish];
-  export type OutputTuple = [groupId: bigint];
+  export type InputTuple = [
+    groupId: BigNumberish,
+    recipient: AddressLike,
+    amount: BigNumberish
+  ];
+  export type OutputTuple = [
+    groupId: bigint,
+    recipient: string,
+    amount: bigint
+  ];
   export interface OutputObject {
     groupId: bigint;
+    recipient: string;
+    amount: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -190,7 +303,63 @@ export namespace MemberAddedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace SettledEvent {
+export namespace MemberJoinedEvent {
+  export type InputTuple = [
+    groupId: BigNumberish,
+    member: AddressLike,
+    share: BigNumberish
+  ];
+  export type OutputTuple = [groupId: bigint, member: string, share: bigint];
+  export interface OutputObject {
+    groupId: bigint;
+    member: string;
+    share: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace OwnershipTransferStartedEvent {
+  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
+  export type OutputTuple = [previousOwner: string, newOwner: string];
+  export interface OutputObject {
+    previousOwner: string;
+    newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace OwnershipTransferredEvent {
+  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
+  export type OutputTuple = [previousOwner: string, newOwner: string];
+  export interface OutputObject {
+    previousOwner: string;
+    newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace PausedEvent {
+  export type InputTuple = [by: AddressLike];
+  export type OutputTuple = [by: string];
+  export interface OutputObject {
+    by: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace RefundedEvent {
   export type InputTuple = [
     groupId: BigNumberish,
     member: AddressLike,
@@ -201,6 +370,36 @@ export namespace SettledEvent {
     groupId: bigint;
     member: string;
     amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace SharePaidEvent {
+  export type InputTuple = [
+    groupId: BigNumberish,
+    member: AddressLike,
+    amount: BigNumberish
+  ];
+  export type OutputTuple = [groupId: bigint, member: string, amount: bigint];
+  export interface OutputObject {
+    groupId: bigint;
+    member: string;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace UnpausedEvent {
+  export type InputTuple = [by: AddressLike];
+  export type OutputTuple = [by: string];
+  export interface OutputObject {
+    by: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -251,12 +450,24 @@ export interface ArcFlowSplit extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  MAX_MEMBERS: TypedContractMethod<[], [bigint], "view">;
+
+  acceptOwnership: TypedContractMethod<[], [void], "nonpayable">;
+
+  cancelSplit: TypedContractMethod<
+    [groupId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
   createSplit: TypedContractMethod<
     [
       name: string,
+      token: AddressLike,
+      recipient: AddressLike,
       members: AddressLike[],
       shares: BigNumberish[],
-      recipient: AddressLike
+      openJoin: boolean
     ],
     [bigint],
     "nonpayable"
@@ -265,13 +476,30 @@ export interface ArcFlowSplit extends BaseContract {
   getGroup: TypedContractMethod<
     [groupId: BigNumberish],
     [
-      [string, string, bigint, bigint, bigint, bigint] & {
+      [
+        string,
+        string,
+        string,
+        string,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        boolean,
+        bigint
+      ] & {
         creator: string;
+        recipient: string;
+        token: string;
         name: string;
-        totalAmount: bigint;
+        committed: bigint;
+        collected: bigint;
         memberCount: bigint;
-        settledCount: bigint;
+        paidCount: bigint;
         status: bigint;
+        openJoin: boolean;
+        createdAt: bigint;
       }
     ],
     "view"
@@ -282,18 +510,13 @@ export interface ArcFlowSplit extends BaseContract {
   getGroupMembers: TypedContractMethod<
     [groupId: BigNumberish],
     [
-      [string[], bigint[], boolean[]] & {
+      [string[], bigint[], bigint[], boolean[]] & {
         wallets: string[];
         shares: bigint[];
+        paidAmounts: bigint[];
         paid: boolean[];
       }
     ],
-    "view"
-  >;
-
-  getGroupRecipient: TypedContractMethod<
-    [groupId: BigNumberish],
-    [string],
     "view"
   >;
 
@@ -303,37 +526,13 @@ export interface ArcFlowSplit extends BaseContract {
     "view"
   >;
 
+  getRefundable: TypedContractMethod<
+    [groupId: BigNumberish, user: AddressLike],
+    [bigint],
+    "view"
+  >;
+
   getUserGroups: TypedContractMethod<[user: AddressLike], [bigint[]], "view">;
-
-  groupMembers: TypedContractMethod<
-    [arg0: BigNumberish, arg1: BigNumberish],
-    [
-      [string, bigint, boolean, bigint] & {
-        wallet: string;
-        share: bigint;
-        paid: boolean;
-        paidAt: bigint;
-      }
-    ],
-    "view"
-  >;
-
-  groups: TypedContractMethod<
-    [arg0: BigNumberish],
-    [
-      [string, string, string, bigint, bigint, bigint, bigint, bigint] & {
-        creator: string;
-        recipient: string;
-        name: string;
-        totalAmount: bigint;
-        memberCount: bigint;
-        settledCount: bigint;
-        status: bigint;
-        createdAt: bigint;
-      }
-    ],
-    "view"
-  >;
 
   isMember: TypedContractMethod<
     [arg0: BigNumberish, arg1: AddressLike],
@@ -341,28 +540,61 @@ export interface ArcFlowSplit extends BaseContract {
     "view"
   >;
 
-  owner: TypedContractMethod<[], [string], "view">;
-
-  settleShare: TypedContractMethod<
-    [groupId: BigNumberish],
+  joinSplit: TypedContractMethod<
+    [groupId: BigNumberish, share: BigNumberish],
     [void],
     "nonpayable"
   >;
 
-  usdc: TypedContractMethod<[], [string], "view">;
+  lockGroup: TypedContractMethod<[groupId: BigNumberish], [void], "nonpayable">;
+
+  owner: TypedContractMethod<[], [string], "view">;
+
+  paused: TypedContractMethod<[], [boolean], "view">;
+
+  payShare: TypedContractMethod<[groupId: BigNumberish], [void], "nonpayable">;
+
+  pendingOwner: TypedContractMethod<[], [string], "view">;
+
+  setPaused: TypedContractMethod<[value: boolean], [void], "nonpayable">;
+
+  settle: TypedContractMethod<[groupId: BigNumberish], [void], "nonpayable">;
+
+  transferOwnership: TypedContractMethod<
+    [newOwner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  withdrawRefund: TypedContractMethod<
+    [groupId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
   getFunction(
+    nameOrSignature: "MAX_MEMBERS"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "acceptOwnership"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "cancelSplit"
+  ): TypedContractMethod<[groupId: BigNumberish], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "createSplit"
   ): TypedContractMethod<
     [
       name: string,
+      token: AddressLike,
+      recipient: AddressLike,
       members: AddressLike[],
       shares: BigNumberish[],
-      recipient: AddressLike
+      openJoin: boolean
     ],
     [bigint],
     "nonpayable"
@@ -372,13 +604,30 @@ export interface ArcFlowSplit extends BaseContract {
   ): TypedContractMethod<
     [groupId: BigNumberish],
     [
-      [string, string, bigint, bigint, bigint, bigint] & {
+      [
+        string,
+        string,
+        string,
+        string,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        boolean,
+        bigint
+      ] & {
         creator: string;
+        recipient: string;
+        token: string;
         name: string;
-        totalAmount: bigint;
+        committed: bigint;
+        collected: bigint;
         memberCount: bigint;
-        settledCount: bigint;
+        paidCount: bigint;
         status: bigint;
+        openJoin: boolean;
+        createdAt: bigint;
       }
     ],
     "view"
@@ -391,19 +640,24 @@ export interface ArcFlowSplit extends BaseContract {
   ): TypedContractMethod<
     [groupId: BigNumberish],
     [
-      [string[], bigint[], boolean[]] & {
+      [string[], bigint[], bigint[], boolean[]] & {
         wallets: string[];
         shares: bigint[];
+        paidAmounts: bigint[];
         paid: boolean[];
       }
     ],
     "view"
   >;
   getFunction(
-    nameOrSignature: "getGroupRecipient"
-  ): TypedContractMethod<[groupId: BigNumberish], [string], "view">;
-  getFunction(
     nameOrSignature: "getOutstandingShare"
+  ): TypedContractMethod<
+    [groupId: BigNumberish, user: AddressLike],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getRefundable"
   ): TypedContractMethod<
     [groupId: BigNumberish, user: AddressLike],
     [bigint],
@@ -413,38 +667,6 @@ export interface ArcFlowSplit extends BaseContract {
     nameOrSignature: "getUserGroups"
   ): TypedContractMethod<[user: AddressLike], [bigint[]], "view">;
   getFunction(
-    nameOrSignature: "groupMembers"
-  ): TypedContractMethod<
-    [arg0: BigNumberish, arg1: BigNumberish],
-    [
-      [string, bigint, boolean, bigint] & {
-        wallet: string;
-        share: bigint;
-        paid: boolean;
-        paidAt: bigint;
-      }
-    ],
-    "view"
-  >;
-  getFunction(
-    nameOrSignature: "groups"
-  ): TypedContractMethod<
-    [arg0: BigNumberish],
-    [
-      [string, string, string, bigint, bigint, bigint, bigint, bigint] & {
-        creator: string;
-        recipient: string;
-        name: string;
-        totalAmount: bigint;
-        memberCount: bigint;
-        settledCount: bigint;
-        status: bigint;
-        createdAt: bigint;
-      }
-    ],
-    "view"
-  >;
-  getFunction(
     nameOrSignature: "isMember"
   ): TypedContractMethod<
     [arg0: BigNumberish, arg1: AddressLike],
@@ -452,21 +674,60 @@ export interface ArcFlowSplit extends BaseContract {
     "view"
   >;
   getFunction(
+    nameOrSignature: "joinSplit"
+  ): TypedContractMethod<
+    [groupId: BigNumberish, share: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "lockGroup"
+  ): TypedContractMethod<[groupId: BigNumberish], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "settleShare"
+    nameOrSignature: "paused"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "payShare"
   ): TypedContractMethod<[groupId: BigNumberish], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "usdc"
+    nameOrSignature: "pendingOwner"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "setPaused"
+  ): TypedContractMethod<[value: boolean], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "settle"
+  ): TypedContractMethod<[groupId: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "transferOwnership"
+  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "withdrawRefund"
+  ): TypedContractMethod<[groupId: BigNumberish], [void], "nonpayable">;
 
+  getEvent(
+    key: "GroupCancelled"
+  ): TypedContractEvent<
+    GroupCancelledEvent.InputTuple,
+    GroupCancelledEvent.OutputTuple,
+    GroupCancelledEvent.OutputObject
+  >;
   getEvent(
     key: "GroupCreated"
   ): TypedContractEvent<
     GroupCreatedEvent.InputTuple,
     GroupCreatedEvent.OutputTuple,
     GroupCreatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "GroupLocked"
+  ): TypedContractEvent<
+    GroupLockedEvent.InputTuple,
+    GroupLockedEvent.OutputTuple,
+    GroupLockedEvent.OutputObject
   >;
   getEvent(
     key: "GroupSettled"
@@ -483,15 +744,68 @@ export interface ArcFlowSplit extends BaseContract {
     MemberAddedEvent.OutputObject
   >;
   getEvent(
-    key: "Settled"
+    key: "MemberJoined"
   ): TypedContractEvent<
-    SettledEvent.InputTuple,
-    SettledEvent.OutputTuple,
-    SettledEvent.OutputObject
+    MemberJoinedEvent.InputTuple,
+    MemberJoinedEvent.OutputTuple,
+    MemberJoinedEvent.OutputObject
+  >;
+  getEvent(
+    key: "OwnershipTransferStarted"
+  ): TypedContractEvent<
+    OwnershipTransferStartedEvent.InputTuple,
+    OwnershipTransferStartedEvent.OutputTuple,
+    OwnershipTransferStartedEvent.OutputObject
+  >;
+  getEvent(
+    key: "OwnershipTransferred"
+  ): TypedContractEvent<
+    OwnershipTransferredEvent.InputTuple,
+    OwnershipTransferredEvent.OutputTuple,
+    OwnershipTransferredEvent.OutputObject
+  >;
+  getEvent(
+    key: "Paused"
+  ): TypedContractEvent<
+    PausedEvent.InputTuple,
+    PausedEvent.OutputTuple,
+    PausedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Refunded"
+  ): TypedContractEvent<
+    RefundedEvent.InputTuple,
+    RefundedEvent.OutputTuple,
+    RefundedEvent.OutputObject
+  >;
+  getEvent(
+    key: "SharePaid"
+  ): TypedContractEvent<
+    SharePaidEvent.InputTuple,
+    SharePaidEvent.OutputTuple,
+    SharePaidEvent.OutputObject
+  >;
+  getEvent(
+    key: "Unpaused"
+  ): TypedContractEvent<
+    UnpausedEvent.InputTuple,
+    UnpausedEvent.OutputTuple,
+    UnpausedEvent.OutputObject
   >;
 
   filters: {
-    "GroupCreated(uint256,address,string,uint256)": TypedContractEvent<
+    "GroupCancelled(uint256)": TypedContractEvent<
+      GroupCancelledEvent.InputTuple,
+      GroupCancelledEvent.OutputTuple,
+      GroupCancelledEvent.OutputObject
+    >;
+    GroupCancelled: TypedContractEvent<
+      GroupCancelledEvent.InputTuple,
+      GroupCancelledEvent.OutputTuple,
+      GroupCancelledEvent.OutputObject
+    >;
+
+    "GroupCreated(uint256,address,address,address,string,bool)": TypedContractEvent<
       GroupCreatedEvent.InputTuple,
       GroupCreatedEvent.OutputTuple,
       GroupCreatedEvent.OutputObject
@@ -502,7 +816,18 @@ export interface ArcFlowSplit extends BaseContract {
       GroupCreatedEvent.OutputObject
     >;
 
-    "GroupSettled(uint256)": TypedContractEvent<
+    "GroupLocked(uint256,uint256)": TypedContractEvent<
+      GroupLockedEvent.InputTuple,
+      GroupLockedEvent.OutputTuple,
+      GroupLockedEvent.OutputObject
+    >;
+    GroupLocked: TypedContractEvent<
+      GroupLockedEvent.InputTuple,
+      GroupLockedEvent.OutputTuple,
+      GroupLockedEvent.OutputObject
+    >;
+
+    "GroupSettled(uint256,address,uint256)": TypedContractEvent<
       GroupSettledEvent.InputTuple,
       GroupSettledEvent.OutputTuple,
       GroupSettledEvent.OutputObject
@@ -524,15 +849,81 @@ export interface ArcFlowSplit extends BaseContract {
       MemberAddedEvent.OutputObject
     >;
 
-    "Settled(uint256,address,uint256)": TypedContractEvent<
-      SettledEvent.InputTuple,
-      SettledEvent.OutputTuple,
-      SettledEvent.OutputObject
+    "MemberJoined(uint256,address,uint256)": TypedContractEvent<
+      MemberJoinedEvent.InputTuple,
+      MemberJoinedEvent.OutputTuple,
+      MemberJoinedEvent.OutputObject
     >;
-    Settled: TypedContractEvent<
-      SettledEvent.InputTuple,
-      SettledEvent.OutputTuple,
-      SettledEvent.OutputObject
+    MemberJoined: TypedContractEvent<
+      MemberJoinedEvent.InputTuple,
+      MemberJoinedEvent.OutputTuple,
+      MemberJoinedEvent.OutputObject
+    >;
+
+    "OwnershipTransferStarted(address,address)": TypedContractEvent<
+      OwnershipTransferStartedEvent.InputTuple,
+      OwnershipTransferStartedEvent.OutputTuple,
+      OwnershipTransferStartedEvent.OutputObject
+    >;
+    OwnershipTransferStarted: TypedContractEvent<
+      OwnershipTransferStartedEvent.InputTuple,
+      OwnershipTransferStartedEvent.OutputTuple,
+      OwnershipTransferStartedEvent.OutputObject
+    >;
+
+    "OwnershipTransferred(address,address)": TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+    OwnershipTransferred: TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+
+    "Paused(address)": TypedContractEvent<
+      PausedEvent.InputTuple,
+      PausedEvent.OutputTuple,
+      PausedEvent.OutputObject
+    >;
+    Paused: TypedContractEvent<
+      PausedEvent.InputTuple,
+      PausedEvent.OutputTuple,
+      PausedEvent.OutputObject
+    >;
+
+    "Refunded(uint256,address,uint256)": TypedContractEvent<
+      RefundedEvent.InputTuple,
+      RefundedEvent.OutputTuple,
+      RefundedEvent.OutputObject
+    >;
+    Refunded: TypedContractEvent<
+      RefundedEvent.InputTuple,
+      RefundedEvent.OutputTuple,
+      RefundedEvent.OutputObject
+    >;
+
+    "SharePaid(uint256,address,uint256)": TypedContractEvent<
+      SharePaidEvent.InputTuple,
+      SharePaidEvent.OutputTuple,
+      SharePaidEvent.OutputObject
+    >;
+    SharePaid: TypedContractEvent<
+      SharePaidEvent.InputTuple,
+      SharePaidEvent.OutputTuple,
+      SharePaidEvent.OutputObject
+    >;
+
+    "Unpaused(address)": TypedContractEvent<
+      UnpausedEvent.InputTuple,
+      UnpausedEvent.OutputTuple,
+      UnpausedEvent.OutputObject
+    >;
+    Unpaused: TypedContractEvent<
+      UnpausedEvent.InputTuple,
+      UnpausedEvent.OutputTuple,
+      UnpausedEvent.OutputObject
     >;
   };
 }

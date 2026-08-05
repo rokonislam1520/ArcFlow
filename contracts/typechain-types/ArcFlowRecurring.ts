@@ -26,72 +26,104 @@ import type {
 export interface ArcFlowRecurringInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "MAX_KEEPER_REWARD_BPS"
+      | "acceptOwnership"
       | "cancelRecurring"
       | "createRecurring"
       | "executePayment"
+      | "getGrossAmount"
+      | "getNextPaymentId"
       | "getPayeePayments"
+      | "getPayerPayments"
       | "getPayment"
-      | "getPaymentCount"
-      | "getUserPayments"
       | "isDue"
       | "owner"
-      | "payeePayments"
-      | "payments"
-      | "usdc"
-      | "userPayments"
+      | "paused"
+      | "pendingOwner"
+      | "setPaused"
+      | "transferOwnership"
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
+      | "OwnershipTransferStarted"
+      | "OwnershipTransferred"
+      | "Paused"
       | "RecurringCancelled"
       | "RecurringCreated"
       | "RecurringExecuted"
+      | "Unpaused"
   ): EventFragment;
 
+  encodeFunctionData(
+    functionFragment: "MAX_KEEPER_REWARD_BPS",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "acceptOwnership",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "cancelRecurring",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "createRecurring",
-    values: [AddressLike, BigNumberish, BigNumberish, BigNumberish, string]
+    values: [
+      AddressLike,
+      AddressLike,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      string
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "executePayment",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "getGrossAmount",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getNextPaymentId",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "getPayeePayments",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getPayerPayments",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getPayment",
     values: [BigNumberish]
   ): string;
-  encodeFunctionData(
-    functionFragment: "getPaymentCount",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getUserPayments",
-    values: [AddressLike]
-  ): string;
   encodeFunctionData(functionFragment: "isDue", values: [BigNumberish]): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(functionFragment: "paused", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "payeePayments",
-    values: [AddressLike, BigNumberish]
+    functionFragment: "pendingOwner",
+    values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "setPaused", values: [boolean]): string;
   encodeFunctionData(
-    functionFragment: "payments",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(functionFragment: "usdc", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "userPayments",
-    values: [AddressLike, BigNumberish]
+    functionFragment: "transferOwnership",
+    values: [AddressLike]
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "MAX_KEEPER_REWARD_BPS",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "acceptOwnership",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "cancelRecurring",
     data: BytesLike
@@ -105,30 +137,72 @@ export interface ArcFlowRecurringInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getGrossAmount",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getNextPaymentId",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getPayeePayments",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "getPayerPayments",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "getPayment", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "getPaymentCount",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getUserPayments",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "isDue", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "paused", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "payeePayments",
+    functionFragment: "pendingOwner",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "payments", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "usdc", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "setPaused", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "userPayments",
+    functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
+}
+
+export namespace OwnershipTransferStartedEvent {
+  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
+  export type OutputTuple = [previousOwner: string, newOwner: string];
+  export interface OutputObject {
+    previousOwner: string;
+    newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace OwnershipTransferredEvent {
+  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
+  export type OutputTuple = [previousOwner: string, newOwner: string];
+  export interface OutputObject {
+    previousOwner: string;
+    newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace PausedEvent {
+  export type InputTuple = [by: AddressLike];
+  export type OutputTuple = [by: string];
+  export interface OutputObject {
+    by: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace RecurringCancelledEvent {
@@ -148,19 +222,28 @@ export namespace RecurringCreatedEvent {
     paymentId: BigNumberish,
     payer: AddressLike,
     payee: AddressLike,
-    amount: BigNumberish
+    token: AddressLike,
+    baseAmount: BigNumberish,
+    frequency: BigNumberish,
+    keeperRewardBps: BigNumberish
   ];
   export type OutputTuple = [
     paymentId: bigint,
     payer: string,
     payee: string,
-    amount: bigint
+    token: string,
+    baseAmount: bigint,
+    frequency: bigint,
+    keeperRewardBps: bigint
   ];
   export interface OutputObject {
     paymentId: bigint;
     payer: string;
     payee: string;
-    amount: bigint;
+    token: string;
+    baseAmount: bigint;
+    frequency: bigint;
+    keeperRewardBps: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -171,21 +254,33 @@ export namespace RecurringCreatedEvent {
 export namespace RecurringExecutedEvent {
   export type InputTuple = [
     paymentId: BigNumberish,
-    payer: AddressLike,
-    payee: AddressLike,
-    amount: BigNumberish
+    executor: AddressLike,
+    baseAmount: BigNumberish,
+    keeperReward: BigNumberish
   ];
   export type OutputTuple = [
     paymentId: bigint,
-    payer: string,
-    payee: string,
-    amount: bigint
+    executor: string,
+    baseAmount: bigint,
+    keeperReward: bigint
   ];
   export interface OutputObject {
     paymentId: bigint;
-    payer: string;
-    payee: string;
-    amount: bigint;
+    executor: string;
+    baseAmount: bigint;
+    keeperReward: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace UnpausedEvent {
+  export type InputTuple = [by: AddressLike];
+  export type OutputTuple = [by: string];
+  export interface OutputObject {
+    by: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -236,6 +331,10 @@ export interface ArcFlowRecurring extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  MAX_KEEPER_REWARD_BPS: TypedContractMethod<[], [bigint], "view">;
+
+  acceptOwnership: TypedContractMethod<[], [void], "nonpayable">;
+
   cancelRecurring: TypedContractMethod<
     [paymentId: BigNumberish],
     [void],
@@ -245,9 +344,11 @@ export interface ArcFlowRecurring extends BaseContract {
   createRecurring: TypedContractMethod<
     [
       payee: AddressLike,
-      amount: BigNumberish,
+      token: AddressLike,
+      baseAmount: BigNumberish,
       frequency: BigNumberish,
       maxExecutions: BigNumberish,
+      keeperRewardBps: BigNumberish,
       name: string
     ],
     [bigint],
@@ -260,7 +361,21 @@ export interface ArcFlowRecurring extends BaseContract {
     "nonpayable"
   >;
 
+  getGrossAmount: TypedContractMethod<
+    [paymentId: BigNumberish],
+    [bigint],
+    "view"
+  >;
+
+  getNextPaymentId: TypedContractMethod<[], [bigint], "view">;
+
   getPayeePayments: TypedContractMethod<
+    [user: AddressLike],
+    [bigint[]],
+    "view"
+  >;
+
+  getPayerPayments: TypedContractMethod<
     [user: AddressLike],
     [bigint[]],
     "view"
@@ -272,6 +387,9 @@ export interface ArcFlowRecurring extends BaseContract {
       [
         string,
         string,
+        string,
+        bigint,
+        bigint,
         bigint,
         bigint,
         bigint,
@@ -282,76 +400,47 @@ export interface ArcFlowRecurring extends BaseContract {
       ] & {
         payer: string;
         payee: string;
-        amount: bigint;
+        token: string;
+        baseAmount: bigint;
+        keeperRewardBps: bigint;
         frequency: bigint;
         nextPayment: bigint;
         totalPaid: bigint;
         executions: bigint;
+        maxExecutions: bigint;
         active: boolean;
         name: string;
       }
     ],
     "view"
   >;
-
-  getPaymentCount: TypedContractMethod<[], [bigint], "view">;
-
-  getUserPayments: TypedContractMethod<[user: AddressLike], [bigint[]], "view">;
 
   isDue: TypedContractMethod<[paymentId: BigNumberish], [boolean], "view">;
 
   owner: TypedContractMethod<[], [string], "view">;
 
-  payeePayments: TypedContractMethod<
-    [arg0: AddressLike, arg1: BigNumberish],
-    [bigint],
-    "view"
-  >;
+  paused: TypedContractMethod<[], [boolean], "view">;
 
-  payments: TypedContractMethod<
-    [arg0: BigNumberish],
-    [
-      [
-        string,
-        bigint,
-        bigint,
-        bigint,
-        boolean,
-        string,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        string
-      ] & {
-        payer: string;
-        frequency: bigint;
-        maxExecutions: bigint;
-        executions: bigint;
-        active: boolean;
-        payee: string;
-        amount: bigint;
-        startTime: bigint;
-        nextPayment: bigint;
-        totalPaid: bigint;
-        name: string;
-      }
-    ],
-    "view"
-  >;
+  pendingOwner: TypedContractMethod<[], [string], "view">;
 
-  usdc: TypedContractMethod<[], [string], "view">;
+  setPaused: TypedContractMethod<[value: boolean], [void], "nonpayable">;
 
-  userPayments: TypedContractMethod<
-    [arg0: AddressLike, arg1: BigNumberish],
-    [bigint],
-    "view"
+  transferOwnership: TypedContractMethod<
+    [newOwner: AddressLike],
+    [void],
+    "nonpayable"
   >;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
+  getFunction(
+    nameOrSignature: "MAX_KEEPER_REWARD_BPS"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "acceptOwnership"
+  ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "cancelRecurring"
   ): TypedContractMethod<[paymentId: BigNumberish], [void], "nonpayable">;
@@ -360,9 +449,11 @@ export interface ArcFlowRecurring extends BaseContract {
   ): TypedContractMethod<
     [
       payee: AddressLike,
-      amount: BigNumberish,
+      token: AddressLike,
+      baseAmount: BigNumberish,
       frequency: BigNumberish,
       maxExecutions: BigNumberish,
+      keeperRewardBps: BigNumberish,
       name: string
     ],
     [bigint],
@@ -372,7 +463,16 @@ export interface ArcFlowRecurring extends BaseContract {
     nameOrSignature: "executePayment"
   ): TypedContractMethod<[paymentId: BigNumberish], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "getGrossAmount"
+  ): TypedContractMethod<[paymentId: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getNextPaymentId"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "getPayeePayments"
+  ): TypedContractMethod<[user: AddressLike], [bigint[]], "view">;
+  getFunction(
+    nameOrSignature: "getPayerPayments"
   ): TypedContractMethod<[user: AddressLike], [bigint[]], "view">;
   getFunction(
     nameOrSignature: "getPayment"
@@ -382,6 +482,9 @@ export interface ArcFlowRecurring extends BaseContract {
       [
         string,
         string,
+        string,
+        bigint,
+        bigint,
         bigint,
         bigint,
         bigint,
@@ -392,23 +495,20 @@ export interface ArcFlowRecurring extends BaseContract {
       ] & {
         payer: string;
         payee: string;
-        amount: bigint;
+        token: string;
+        baseAmount: bigint;
+        keeperRewardBps: bigint;
         frequency: bigint;
         nextPayment: bigint;
         totalPaid: bigint;
         executions: bigint;
+        maxExecutions: bigint;
         active: boolean;
         name: string;
       }
     ],
     "view"
   >;
-  getFunction(
-    nameOrSignature: "getPaymentCount"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "getUserPayments"
-  ): TypedContractMethod<[user: AddressLike], [bigint[]], "view">;
   getFunction(
     nameOrSignature: "isDue"
   ): TypedContractMethod<[paymentId: BigNumberish], [boolean], "view">;
@@ -416,56 +516,39 @@ export interface ArcFlowRecurring extends BaseContract {
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "payeePayments"
-  ): TypedContractMethod<
-    [arg0: AddressLike, arg1: BigNumberish],
-    [bigint],
-    "view"
-  >;
+    nameOrSignature: "paused"
+  ): TypedContractMethod<[], [boolean], "view">;
   getFunction(
-    nameOrSignature: "payments"
-  ): TypedContractMethod<
-    [arg0: BigNumberish],
-    [
-      [
-        string,
-        bigint,
-        bigint,
-        bigint,
-        boolean,
-        string,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        string
-      ] & {
-        payer: string;
-        frequency: bigint;
-        maxExecutions: bigint;
-        executions: bigint;
-        active: boolean;
-        payee: string;
-        amount: bigint;
-        startTime: bigint;
-        nextPayment: bigint;
-        totalPaid: bigint;
-        name: string;
-      }
-    ],
-    "view"
-  >;
-  getFunction(
-    nameOrSignature: "usdc"
+    nameOrSignature: "pendingOwner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "userPayments"
-  ): TypedContractMethod<
-    [arg0: AddressLike, arg1: BigNumberish],
-    [bigint],
-    "view"
-  >;
+    nameOrSignature: "setPaused"
+  ): TypedContractMethod<[value: boolean], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "transferOwnership"
+  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
 
+  getEvent(
+    key: "OwnershipTransferStarted"
+  ): TypedContractEvent<
+    OwnershipTransferStartedEvent.InputTuple,
+    OwnershipTransferStartedEvent.OutputTuple,
+    OwnershipTransferStartedEvent.OutputObject
+  >;
+  getEvent(
+    key: "OwnershipTransferred"
+  ): TypedContractEvent<
+    OwnershipTransferredEvent.InputTuple,
+    OwnershipTransferredEvent.OutputTuple,
+    OwnershipTransferredEvent.OutputObject
+  >;
+  getEvent(
+    key: "Paused"
+  ): TypedContractEvent<
+    PausedEvent.InputTuple,
+    PausedEvent.OutputTuple,
+    PausedEvent.OutputObject
+  >;
   getEvent(
     key: "RecurringCancelled"
   ): TypedContractEvent<
@@ -487,8 +570,48 @@ export interface ArcFlowRecurring extends BaseContract {
     RecurringExecutedEvent.OutputTuple,
     RecurringExecutedEvent.OutputObject
   >;
+  getEvent(
+    key: "Unpaused"
+  ): TypedContractEvent<
+    UnpausedEvent.InputTuple,
+    UnpausedEvent.OutputTuple,
+    UnpausedEvent.OutputObject
+  >;
 
   filters: {
+    "OwnershipTransferStarted(address,address)": TypedContractEvent<
+      OwnershipTransferStartedEvent.InputTuple,
+      OwnershipTransferStartedEvent.OutputTuple,
+      OwnershipTransferStartedEvent.OutputObject
+    >;
+    OwnershipTransferStarted: TypedContractEvent<
+      OwnershipTransferStartedEvent.InputTuple,
+      OwnershipTransferStartedEvent.OutputTuple,
+      OwnershipTransferStartedEvent.OutputObject
+    >;
+
+    "OwnershipTransferred(address,address)": TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+    OwnershipTransferred: TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+
+    "Paused(address)": TypedContractEvent<
+      PausedEvent.InputTuple,
+      PausedEvent.OutputTuple,
+      PausedEvent.OutputObject
+    >;
+    Paused: TypedContractEvent<
+      PausedEvent.InputTuple,
+      PausedEvent.OutputTuple,
+      PausedEvent.OutputObject
+    >;
+
     "RecurringCancelled(uint256)": TypedContractEvent<
       RecurringCancelledEvent.InputTuple,
       RecurringCancelledEvent.OutputTuple,
@@ -500,7 +623,7 @@ export interface ArcFlowRecurring extends BaseContract {
       RecurringCancelledEvent.OutputObject
     >;
 
-    "RecurringCreated(uint256,address,address,uint256)": TypedContractEvent<
+    "RecurringCreated(uint256,address,address,address,uint256,uint8,uint256)": TypedContractEvent<
       RecurringCreatedEvent.InputTuple,
       RecurringCreatedEvent.OutputTuple,
       RecurringCreatedEvent.OutputObject
@@ -511,7 +634,7 @@ export interface ArcFlowRecurring extends BaseContract {
       RecurringCreatedEvent.OutputObject
     >;
 
-    "RecurringExecuted(uint256,address,address,uint256)": TypedContractEvent<
+    "RecurringExecuted(uint256,address,uint256,uint256)": TypedContractEvent<
       RecurringExecutedEvent.InputTuple,
       RecurringExecutedEvent.OutputTuple,
       RecurringExecutedEvent.OutputObject
@@ -520,6 +643,17 @@ export interface ArcFlowRecurring extends BaseContract {
       RecurringExecutedEvent.InputTuple,
       RecurringExecutedEvent.OutputTuple,
       RecurringExecutedEvent.OutputObject
+    >;
+
+    "Unpaused(address)": TypedContractEvent<
+      UnpausedEvent.InputTuple,
+      UnpausedEvent.OutputTuple,
+      UnpausedEvent.OutputObject
+    >;
+    Unpaused: TypedContractEvent<
+      UnpausedEvent.InputTuple,
+      UnpausedEvent.OutputTuple,
+      UnpausedEvent.OutputObject
     >;
   };
 }

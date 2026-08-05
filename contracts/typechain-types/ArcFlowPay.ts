@@ -26,21 +26,29 @@ import type {
 export interface ArcFlowPayInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "acceptOwnership"
       | "deactivateMerchant"
       | "feeBps"
       | "feeCollector"
+      | "getCustomerPayments"
       | "getMerchant"
       | "getMerchantCount"
+      | "getMerchantList"
+      | "getMerchantPayments"
+      | "getMerchantTotalByToken"
+      | "getNextPaymentId"
+      | "getPayment"
       | "isRegistered"
-      | "merchantList"
-      | "merchants"
       | "owner"
+      | "paused"
       | "pay"
+      | "pendingOwner"
       | "reactivateMerchant"
       | "registerMerchant"
       | "setFee"
       | "setFeeCollector"
-      | "usdc"
+      | "setPaused"
+      | "transferOwnership"
   ): FunctionFragment;
 
   getEvent(
@@ -50,9 +58,17 @@ export interface ArcFlowPayInterface extends Interface {
       | "MerchantDeactivated"
       | "MerchantReactivated"
       | "MerchantRegistered"
-      | "Payment"
+      | "OwnershipTransferStarted"
+      | "OwnershipTransferred"
+      | "Paused"
+      | "PaymentMade"
+      | "Unpaused"
   ): EventFragment;
 
+  encodeFunctionData(
+    functionFragment: "acceptOwnership",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "deactivateMerchant",
     values: [AddressLike]
@@ -63,6 +79,10 @@ export interface ArcFlowPayInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "getCustomerPayments",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getMerchant",
     values: [AddressLike]
   ): string;
@@ -71,21 +91,38 @@ export interface ArcFlowPayInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "isRegistered",
+    functionFragment: "getMerchantList",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getMerchantPayments",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "merchantList",
+    functionFragment: "getMerchantTotalByToken",
+    values: [AddressLike, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getNextPaymentId",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getPayment",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "merchants",
+    functionFragment: "isRegistered",
     values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(functionFragment: "paused", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "pay",
-    values: [AddressLike, BigNumberish]
+    values: [AddressLike, AddressLike, BigNumberish, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "pendingOwner",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "reactivateMerchant",
@@ -103,8 +140,16 @@ export interface ArcFlowPayInterface extends Interface {
     functionFragment: "setFeeCollector",
     values: [AddressLike]
   ): string;
-  encodeFunctionData(functionFragment: "usdc", values?: undefined): string;
+  encodeFunctionData(functionFragment: "setPaused", values: [boolean]): string;
+  encodeFunctionData(
+    functionFragment: "transferOwnership",
+    values: [AddressLike]
+  ): string;
 
+  decodeFunctionResult(
+    functionFragment: "acceptOwnership",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "deactivateMerchant",
     data: BytesLike
@@ -112,6 +157,10 @@ export interface ArcFlowPayInterface extends Interface {
   decodeFunctionResult(functionFragment: "feeBps", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "feeCollector",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getCustomerPayments",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -123,16 +172,33 @@ export interface ArcFlowPayInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "isRegistered",
+    functionFragment: "getMerchantList",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "merchantList",
+    functionFragment: "getMerchantPayments",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "merchants", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getMerchantTotalByToken",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getNextPaymentId",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "getPayment", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "isRegistered",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "paused", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "pay", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "pendingOwner",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "reactivateMerchant",
     data: BytesLike
@@ -146,7 +212,11 @@ export interface ArcFlowPayInterface extends Interface {
     functionFragment: "setFeeCollector",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "usdc", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "setPaused", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "transferOwnership",
+    data: BytesLike
+  ): Result;
 }
 
 export namespace FeeCollectorUpdatedEvent {
@@ -198,11 +268,16 @@ export namespace MerchantReactivatedEvent {
 }
 
 export namespace MerchantRegisteredEvent {
-  export type InputTuple = [merchant: AddressLike, name: string];
-  export type OutputTuple = [merchant: string, name: string];
+  export type InputTuple = [
+    merchant: AddressLike,
+    name: string,
+    category: string
+  ];
+  export type OutputTuple = [merchant: string, name: string, category: string];
   export interface OutputObject {
     merchant: string;
     name: string;
+    category: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -210,24 +285,83 @@ export namespace MerchantRegisteredEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace PaymentEvent {
+export namespace OwnershipTransferStartedEvent {
+  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
+  export type OutputTuple = [previousOwner: string, newOwner: string];
+  export interface OutputObject {
+    previousOwner: string;
+    newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace OwnershipTransferredEvent {
+  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
+  export type OutputTuple = [previousOwner: string, newOwner: string];
+  export interface OutputObject {
+    previousOwner: string;
+    newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace PausedEvent {
+  export type InputTuple = [by: AddressLike];
+  export type OutputTuple = [by: string];
+  export interface OutputObject {
+    by: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace PaymentMadeEvent {
   export type InputTuple = [
-    from: AddressLike,
+    paymentId: BigNumberish,
+    customer: AddressLike,
     merchant: AddressLike,
-    amount: BigNumberish,
-    fee: BigNumberish
+    token: AddressLike,
+    grossAmount: BigNumberish,
+    fee: BigNumberish,
+    netAmount: BigNumberish
   ];
   export type OutputTuple = [
-    from: string,
+    paymentId: bigint,
+    customer: string,
     merchant: string,
-    amount: bigint,
-    fee: bigint
+    token: string,
+    grossAmount: bigint,
+    fee: bigint,
+    netAmount: bigint
   ];
   export interface OutputObject {
-    from: string;
+    paymentId: bigint;
+    customer: string;
     merchant: string;
-    amount: bigint;
+    token: string;
+    grossAmount: bigint;
     fee: bigint;
+    netAmount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace UnpausedEvent {
+  export type InputTuple = [by: AddressLike];
+  export type OutputTuple = [by: string];
+  export interface OutputObject {
+    by: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -278,6 +412,8 @@ export interface ArcFlowPay extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  acceptOwnership: TypedContractMethod<[], [void], "nonpayable">;
+
   deactivateMerchant: TypedContractMethod<
     [merchant: AddressLike],
     [void],
@@ -288,6 +424,12 @@ export interface ArcFlowPay extends BaseContract {
 
   feeCollector: TypedContractMethod<[], [string], "view">;
 
+  getCustomerPayments: TypedContractMethod<
+    [customer: AddressLike],
+    [bigint[]],
+    "view"
+  >;
+
   getMerchant: TypedContractMethod<
     [wallet: AddressLike],
     [
@@ -295,8 +437,8 @@ export interface ArcFlowPay extends BaseContract {
         name: string;
         category: string;
         active: boolean;
-        totalReceived: bigint;
-        txCount: bigint;
+        registeredAt: bigint;
+        paymentCount: bigint;
       }
     ],
     "view"
@@ -304,32 +446,57 @@ export interface ArcFlowPay extends BaseContract {
 
   getMerchantCount: TypedContractMethod<[], [bigint], "view">;
 
-  isRegistered: TypedContractMethod<[wallet: AddressLike], [boolean], "view">;
+  getMerchantList: TypedContractMethod<[], [string[]], "view">;
 
-  merchantList: TypedContractMethod<[arg0: BigNumberish], [string], "view">;
+  getMerchantPayments: TypedContractMethod<
+    [merchant: AddressLike],
+    [bigint[]],
+    "view"
+  >;
 
-  merchants: TypedContractMethod<
-    [arg0: AddressLike],
+  getMerchantTotalByToken: TypedContractMethod<
+    [merchant: AddressLike, token: AddressLike],
+    [bigint],
+    "view"
+  >;
+
+  getNextPaymentId: TypedContractMethod<[], [bigint], "view">;
+
+  getPayment: TypedContractMethod<
+    [paymentId: BigNumberish],
     [
-      [string, string, string, boolean, bigint, bigint] & {
-        wallet: string;
-        name: string;
-        category: string;
-        active: boolean;
-        totalReceived: bigint;
-        txCount: bigint;
+      [string, string, string, bigint, bigint, bigint, bigint, string] & {
+        customer: string;
+        merchant: string;
+        token: string;
+        grossAmount: bigint;
+        fee: bigint;
+        netAmount: bigint;
+        timestamp: bigint;
+        memo: string;
       }
     ],
     "view"
   >;
 
+  isRegistered: TypedContractMethod<[wallet: AddressLike], [boolean], "view">;
+
   owner: TypedContractMethod<[], [string], "view">;
 
+  paused: TypedContractMethod<[], [boolean], "view">;
+
   pay: TypedContractMethod<
-    [merchant: AddressLike, amount: BigNumberish],
-    [void],
+    [
+      merchant: AddressLike,
+      token: AddressLike,
+      grossAmount: BigNumberish,
+      memo: string
+    ],
+    [bigint],
     "nonpayable"
   >;
+
+  pendingOwner: TypedContractMethod<[], [string], "view">;
 
   reactivateMerchant: TypedContractMethod<[], [void], "nonpayable">;
 
@@ -347,12 +514,21 @@ export interface ArcFlowPay extends BaseContract {
     "nonpayable"
   >;
 
-  usdc: TypedContractMethod<[], [string], "view">;
+  setPaused: TypedContractMethod<[value: boolean], [void], "nonpayable">;
+
+  transferOwnership: TypedContractMethod<
+    [newOwner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
+  getFunction(
+    nameOrSignature: "acceptOwnership"
+  ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "deactivateMerchant"
   ): TypedContractMethod<[merchant: AddressLike], [void], "nonpayable">;
@@ -363,6 +539,9 @@ export interface ArcFlowPay extends BaseContract {
     nameOrSignature: "feeCollector"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "getCustomerPayments"
+  ): TypedContractMethod<[customer: AddressLike], [bigint[]], "view">;
+  getFunction(
     nameOrSignature: "getMerchant"
   ): TypedContractMethod<
     [wallet: AddressLike],
@@ -371,8 +550,8 @@ export interface ArcFlowPay extends BaseContract {
         name: string;
         category: string;
         active: boolean;
-        totalReceived: bigint;
-        txCount: bigint;
+        registeredAt: bigint;
+        paymentCount: bigint;
       }
     ],
     "view"
@@ -381,37 +560,63 @@ export interface ArcFlowPay extends BaseContract {
     nameOrSignature: "getMerchantCount"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
-    nameOrSignature: "isRegistered"
-  ): TypedContractMethod<[wallet: AddressLike], [boolean], "view">;
+    nameOrSignature: "getMerchantList"
+  ): TypedContractMethod<[], [string[]], "view">;
   getFunction(
-    nameOrSignature: "merchantList"
-  ): TypedContractMethod<[arg0: BigNumberish], [string], "view">;
+    nameOrSignature: "getMerchantPayments"
+  ): TypedContractMethod<[merchant: AddressLike], [bigint[]], "view">;
   getFunction(
-    nameOrSignature: "merchants"
+    nameOrSignature: "getMerchantTotalByToken"
   ): TypedContractMethod<
-    [arg0: AddressLike],
+    [merchant: AddressLike, token: AddressLike],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getNextPaymentId"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getPayment"
+  ): TypedContractMethod<
+    [paymentId: BigNumberish],
     [
-      [string, string, string, boolean, bigint, bigint] & {
-        wallet: string;
-        name: string;
-        category: string;
-        active: boolean;
-        totalReceived: bigint;
-        txCount: bigint;
+      [string, string, string, bigint, bigint, bigint, bigint, string] & {
+        customer: string;
+        merchant: string;
+        token: string;
+        grossAmount: bigint;
+        fee: bigint;
+        netAmount: bigint;
+        timestamp: bigint;
+        memo: string;
       }
     ],
     "view"
   >;
   getFunction(
+    nameOrSignature: "isRegistered"
+  ): TypedContractMethod<[wallet: AddressLike], [boolean], "view">;
+  getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "paused"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
     nameOrSignature: "pay"
   ): TypedContractMethod<
-    [merchant: AddressLike, amount: BigNumberish],
-    [void],
+    [
+      merchant: AddressLike,
+      token: AddressLike,
+      grossAmount: BigNumberish,
+      memo: string
+    ],
+    [bigint],
     "nonpayable"
   >;
+  getFunction(
+    nameOrSignature: "pendingOwner"
+  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "reactivateMerchant"
   ): TypedContractMethod<[], [void], "nonpayable">;
@@ -429,8 +634,11 @@ export interface ArcFlowPay extends BaseContract {
     nameOrSignature: "setFeeCollector"
   ): TypedContractMethod<[_collector: AddressLike], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "usdc"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: "setPaused"
+  ): TypedContractMethod<[value: boolean], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "transferOwnership"
+  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
 
   getEvent(
     key: "FeeCollectorUpdated"
@@ -468,11 +676,39 @@ export interface ArcFlowPay extends BaseContract {
     MerchantRegisteredEvent.OutputObject
   >;
   getEvent(
-    key: "Payment"
+    key: "OwnershipTransferStarted"
   ): TypedContractEvent<
-    PaymentEvent.InputTuple,
-    PaymentEvent.OutputTuple,
-    PaymentEvent.OutputObject
+    OwnershipTransferStartedEvent.InputTuple,
+    OwnershipTransferStartedEvent.OutputTuple,
+    OwnershipTransferStartedEvent.OutputObject
+  >;
+  getEvent(
+    key: "OwnershipTransferred"
+  ): TypedContractEvent<
+    OwnershipTransferredEvent.InputTuple,
+    OwnershipTransferredEvent.OutputTuple,
+    OwnershipTransferredEvent.OutputObject
+  >;
+  getEvent(
+    key: "Paused"
+  ): TypedContractEvent<
+    PausedEvent.InputTuple,
+    PausedEvent.OutputTuple,
+    PausedEvent.OutputObject
+  >;
+  getEvent(
+    key: "PaymentMade"
+  ): TypedContractEvent<
+    PaymentMadeEvent.InputTuple,
+    PaymentMadeEvent.OutputTuple,
+    PaymentMadeEvent.OutputObject
+  >;
+  getEvent(
+    key: "Unpaused"
+  ): TypedContractEvent<
+    UnpausedEvent.InputTuple,
+    UnpausedEvent.OutputTuple,
+    UnpausedEvent.OutputObject
   >;
 
   filters: {
@@ -520,7 +756,7 @@ export interface ArcFlowPay extends BaseContract {
       MerchantReactivatedEvent.OutputObject
     >;
 
-    "MerchantRegistered(address,string)": TypedContractEvent<
+    "MerchantRegistered(address,string,string)": TypedContractEvent<
       MerchantRegisteredEvent.InputTuple,
       MerchantRegisteredEvent.OutputTuple,
       MerchantRegisteredEvent.OutputObject
@@ -531,15 +767,59 @@ export interface ArcFlowPay extends BaseContract {
       MerchantRegisteredEvent.OutputObject
     >;
 
-    "Payment(address,address,uint256,uint256)": TypedContractEvent<
-      PaymentEvent.InputTuple,
-      PaymentEvent.OutputTuple,
-      PaymentEvent.OutputObject
+    "OwnershipTransferStarted(address,address)": TypedContractEvent<
+      OwnershipTransferStartedEvent.InputTuple,
+      OwnershipTransferStartedEvent.OutputTuple,
+      OwnershipTransferStartedEvent.OutputObject
     >;
-    Payment: TypedContractEvent<
-      PaymentEvent.InputTuple,
-      PaymentEvent.OutputTuple,
-      PaymentEvent.OutputObject
+    OwnershipTransferStarted: TypedContractEvent<
+      OwnershipTransferStartedEvent.InputTuple,
+      OwnershipTransferStartedEvent.OutputTuple,
+      OwnershipTransferStartedEvent.OutputObject
+    >;
+
+    "OwnershipTransferred(address,address)": TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+    OwnershipTransferred: TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+
+    "Paused(address)": TypedContractEvent<
+      PausedEvent.InputTuple,
+      PausedEvent.OutputTuple,
+      PausedEvent.OutputObject
+    >;
+    Paused: TypedContractEvent<
+      PausedEvent.InputTuple,
+      PausedEvent.OutputTuple,
+      PausedEvent.OutputObject
+    >;
+
+    "PaymentMade(uint256,address,address,address,uint256,uint256,uint256)": TypedContractEvent<
+      PaymentMadeEvent.InputTuple,
+      PaymentMadeEvent.OutputTuple,
+      PaymentMadeEvent.OutputObject
+    >;
+    PaymentMade: TypedContractEvent<
+      PaymentMadeEvent.InputTuple,
+      PaymentMadeEvent.OutputTuple,
+      PaymentMadeEvent.OutputObject
+    >;
+
+    "Unpaused(address)": TypedContractEvent<
+      UnpausedEvent.InputTuple,
+      UnpausedEvent.OutputTuple,
+      UnpausedEvent.OutputObject
+    >;
+    Unpaused: TypedContractEvent<
+      UnpausedEvent.InputTuple,
+      UnpausedEvent.OutputTuple,
+      UnpausedEvent.OutputObject
     >;
   };
 }
