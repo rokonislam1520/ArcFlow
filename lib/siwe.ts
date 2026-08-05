@@ -49,6 +49,17 @@ export function formatSiweMessage(f: SiweFields): string {
   return lines.join('\n');
 }
 
+/**
+ * Name of the cookie holding the opaque session id.
+ *
+ * Defined here, next to the rest of the SIWE contract, because every route that
+ * reads a session must agree on it byte-for-byte. It previously lived as a
+ * separate literal in each route, and a consumer that guessed a different name
+ * simply saw every request as signed-out — a silent 401 with nothing to
+ * indicate the name was the problem.
+ */
+export const SESSION_COOKIE = 'arcflow.sid';
+
 /** How long a signed session stays valid. */
 export const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 

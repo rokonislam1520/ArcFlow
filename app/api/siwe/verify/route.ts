@@ -9,11 +9,9 @@ import { NextResponse } from 'next/server';
 import { cookies, headers } from 'next/headers';
 import { isAddress } from 'viem';
 import { consumeNonce, createSession, peekNonce } from '@/lib/sessionStore';
-import { SESSION_TTL_MS, verifySiwe, type SiweFields } from '@/lib/siwe';
+import { SESSION_COOKIE, SESSION_TTL_MS, verifySiwe, type SiweFields } from '@/lib/siwe';
 
 export const dynamic = 'force-dynamic';
-
-const SESSION_COOKIE = 'arcflow.sid';
 
 export async function POST(request: Request) {
   const sid = cookies().get(SESSION_COOKIE)?.value;

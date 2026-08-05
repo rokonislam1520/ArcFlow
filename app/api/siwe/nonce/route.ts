@@ -7,12 +7,11 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { issueNonce, newId } from '@/lib/sessionStore';
+import { SESSION_COOKIE } from '@/lib/siwe';
 
 // Nonces are per-request state; caching this route would hand the same nonce
 // to everyone and defeat replay protection entirely.
 export const dynamic = 'force-dynamic';
-
-const SESSION_COOKIE = 'arcflow.sid';
 
 export async function GET() {
   const existing = cookies().get(SESSION_COOKIE)?.value;

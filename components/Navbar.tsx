@@ -16,6 +16,7 @@ const links = [
   { name: 'Portfolio', href: '/portfolio' },
   { name: 'History', href: '/history' },
   { name: 'Pay', href: '/merchant' },
+  { name: 'Profile', href: '/profile' },
 ];
 
 export function Navbar() {

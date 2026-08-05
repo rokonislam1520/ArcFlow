@@ -7,10 +7,9 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { destroySession, readSession } from '@/lib/sessionStore';
+import { SESSION_COOKIE } from '@/lib/siwe';
 
 export const dynamic = 'force-dynamic';
-
-const SESSION_COOKIE = 'arcflow.sid';
 
 export async function GET() {
   const sid = cookies().get(SESSION_COOKIE)?.value;

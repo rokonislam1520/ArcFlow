@@ -1,0 +1,35 @@
+// Prisma schema for ArcFlow user profiles
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  address   String   @unique // Ethereum address (lowercase, checksummed)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Profile fields
+  username    String?  @unique
+  displayName String?
+  email       String?
+  avatar      String? // URL or base64 data URI
+  bio         String?  @db.Text
+  country     String?
+
+  // Social links
+  twitter  String?
+  telegram String?
+  discord  String?
+  github   String?
+  website  String?
+
+  @@index([address])
+  @@index([username])
+}
