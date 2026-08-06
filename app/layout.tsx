@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { Navbar } from '@/components/Navbar';
+import { Chrome } from '@/components/Chrome';
 import { WalletProvider } from '@/lib/WalletProvider';
 import { SessionProvider } from '@/lib/SessionProvider';
 import { WalletNotificationProvider, ActivityWatcher } from '@/lib/notifications';
@@ -29,8 +29,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 incoming transfers and submitted-transaction confirmations. */}
             <WalletNotificationProvider>
               <ActivityWatcher />
-              <Navbar />
-              <main>{children}</main>
+              {/* Chrome picks the navigation for the route: most pages get the
+                  Navbar, the dashboard supplies its own sidebar and header. */}
+              <Chrome>{children}</Chrome>
             </WalletNotificationProvider>
           </SessionProvider>
         </WalletProvider>
