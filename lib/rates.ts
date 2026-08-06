@@ -29,6 +29,27 @@ export interface Rate {
 export type RateMap = Record<string, Rate>;
 
 /**
+ * Keys the pricing service returns for a chain's native asset.
+ *
+ * Native assets have no ERC-20 address, so the service substitutes a sentinel:
+ * 0xeee… on EVM chains and the system program id on Solana. Verified live —
+ * Ethereum returns 0xeee… at $1896.96 and Solana 1111… at $73.89.
+ */
+const NATIVE_PRICE_KEYS = [
+  '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+  '11111111111111111111111111111111',
+];
+
+/** The chain's native asset price (ETH, POL, SOL…), if the service quoted it. */
+export function nativeRate(rates: RateMap): Rate | undefined {
+  for (const key of NATIVE_PRICE_KEYS) {
+    const found = rates[key];
+    if (found) return found;
+  }
+  return undefined;
+}
+
+/**
  * Cache keyed by chain id. Prices move slowly relative to render frequency, so
  * this avoids a network round trip for every component that shows a value.
  */
@@ -48,11 +69,12 @@ export async function fetchRates(chain: ArcChain): Promise<RateMap> {
   const cached = cache.get(chain.id);
   if (cached && Date.now() - cached.at < TTL_MS) return cached.rates;
 
-  const tokens: TokenAlias[] = [];
+  // NATIVE is always requested: every chain has a gas asset, and without it
+  // ETH/POL/SOL balances would be held but never valued.
+  const tokens: TokenAlias[] = ['NATIVE'];
   if (chain.tokens.USDC) tokens.push('USDC');
   if (chain.tokens.EURC) tokens.push('EURC');
   if (chain.tokens.USDT) tokens.push('USDT');
-  if (tokens.length === 0) return {};
 
   try {
     const { rates } = await getKit().getTokenRates({

@@ -18,7 +18,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { erc20Abi, formatUnits, type Address } from 'viem';
 import { getEnvChains, type ArcChain } from './chains';
 import { getPublicClient } from './clients';
-import { fetchRates, rateFor } from './rates';
+import { fetchRates, nativeRate, rateFor } from './rates';
 import { useRefreshSignal } from './refresh';
 
 /** One token holding on one chain. */
@@ -174,10 +174,13 @@ export async function readChainPortfolio(
     if (native !== null && native > 0n) {
       const { decimals, symbol } = chain.nativeCurrency;
       const amount = formatUnits(native, decimals);
-      // On Arc the gas token is USDC, so the native asset is genuinely priced;
-      // elsewhere it is ETH/MATIC/etc. which this rates call does not cover.
-      const nativeRate = rateFor(rates, chain.tokens.USDC);
-      const priced = symbol === 'USDC' && nativeRate ? Number(amount) * nativeRate.priceUSD : null;
+      // The pricing service quotes native assets under a sentinel address, so
+      // ETH/POL/SOL are valued the same as any token. This previously priced
+      // the native asset only when it happened to be USDC (true on Arc), which
+      // left every ETH balance counted as held but worth nothing — understating
+      // the portfolio total on all mainnet chains.
+      const quote = nativeRate(rates);
+      const priced = quote ? Number(amount) * quote.priceUSD : null;
 
       holdings.push({
         chainId: chain.id,
