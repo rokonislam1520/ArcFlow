@@ -30,13 +30,13 @@ import { useRates, rateFor, nativeRate } from '@/lib/rates';
 import { formatUSD } from '@/lib/portfolio';
 import { OpStatus } from '@/components/OpStatus';
 import { TokenSelector } from '@/components/TokenSelector';
+import { TokenMark } from '@/components/BrandMark';
+import { chainDisplayName } from '@/lib/chainBrand';
 import {
   type SwapToken,
   useTokenUniverse,
   tokensForChain,
   defaultPair,
-  tokenAccent,
-  chainAccent,
 } from '@/lib/swapTokens';
 
 export default function SwapPage() {
@@ -238,7 +238,7 @@ export default function SwapPage() {
     if (!sell || !buy) return { label: 'Select Token', action: () => setPicking('sell'), disabled: false };
     if (needsChainSwitch)
       return {
-        label: `Switch to ${pairChain.label}`,
+        label: `Switch to ${chainDisplayName(pairChain)}`,
         action: () => void switchChain(pairChain),
         disabled: false,
       };
@@ -274,7 +274,7 @@ export default function SwapPage() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Swap</h1>
             <p className="text-sm text-slate-500 mt-0.5">
-              Settles on <span className="text-arc-400">{pairChain.label}</span>
+              Settles on <span className="text-arc-400">{chainDisplayName(pairChain)}</span>
             </p>
           </div>
           <WalletChip
@@ -332,7 +332,9 @@ export default function SwapPage() {
                   </button>
                 </div>
               ) : address ? (
-                <span className="text-slate-600">No {sell?.symbol} on {pairChain.label}</span>
+                <span className="text-slate-600">
+                  No {sell?.symbol} on {chainDisplayName(pairChain)}
+                </span>
               ) : null
             }
           />
@@ -434,7 +436,7 @@ export default function SwapPage() {
             </Row>
 
             <Row label="Route">
-              Same-chain on {pairChain.label}
+              Same-chain on {chainDisplayName(pairChain)}
               <span className="text-slate-600"> · venue not disclosed</span>
             </Row>
 
@@ -459,7 +461,7 @@ export default function SwapPage() {
         {/* Warnings that must not be buried in the button label. */}
         {sell?.isNative && amountValid && (
           <Notice>
-            {sell.symbol} pays for gas on {pairChain.label}. Selling the full balance will
+            {sell.symbol} pays for gas on {chainDisplayName(pairChain)}. Selling the full balance will
             leave nothing to cover the transaction.
           </Notice>
         )}
@@ -566,25 +568,11 @@ function TokenPill({ token, onClick }: { token: SwapToken | null; onClick: () =>
       onClick={onClick}
       className="shrink-0 flex items-center gap-2.5 pl-2 pr-2.5 py-2 rounded-2xl bg-white/[0.06] border border-white/10 hover:bg-white/[0.1] hover:border-arc-500/30 transition-colors"
     >
-      <span className="relative shrink-0">
-        <span
-          className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-          style={{ backgroundColor: tokenAccent(token) }}
-        >
-          {token.symbol.slice(0, 4)}
-        </span>
-        <span
-          className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-slate-900 flex items-center justify-center text-[7px] font-bold text-white"
-          style={{ backgroundColor: chainAccent(token.chain) }}
-          aria-hidden
-        >
-          {token.chain.label.replace(/[^A-Za-z]/g, '').slice(0, 1).toUpperCase()}
-        </span>
-      </span>
+      <TokenMark token={token} size={36} />
       <span className="text-left leading-tight">
         <span className="block text-sm font-bold">{token.symbol}</span>
         <span className="block text-[11px] text-slate-500 max-w-[92px] truncate">
-          {token.chain.label}
+          {chainDisplayName(token.chain)}
         </span>
       </span>
       <Chevron />

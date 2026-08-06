@@ -20,6 +20,8 @@ import { useNetworkMode } from '@/lib/network';
 import { useWallet } from '@/lib/WalletProvider';
 import { type ArcChain } from '@/lib/chains';
 import { usePortfolio, formatUSD } from '@/lib/portfolio';
+import { ChainMark, TokenMark } from '@/components/BrandMark';
+import { chainDisplayName } from '@/lib/chainBrand';
 import {
   type SwapToken,
   useTokenUniverse,
@@ -31,8 +33,6 @@ import {
   useRecentTokens,
   tokensByKeys,
   groupByChain,
-  chainAccent,
-  tokenAccent,
   shortAddress,
   isAddressQuery,
 } from '@/lib/swapTokens';
@@ -188,39 +188,53 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title }: Props) {
               />
             </div>
 
-            {/* Horizontal strip on mobile, vertical list on desktop. */}
-            <div className="flex sm:block gap-1.5 sm:gap-0 sm:space-y-0.5 overflow-x-auto sm:overflow-y-auto sm:flex-1 px-3 sm:px-2 pb-3 sm:py-3">
-              <button
-                onClick={() => setChainFilter(null)}
-                className={`shrink-0 sm:w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors ${
-                  chainFilter === null
-                    ? 'bg-arc-500/15 text-arc-300'
-                    : 'hover:bg-white/5 text-slate-300'
-                }`}
-              >
-                <span className="w-6 h-6 rounded-full bg-gradient-to-br from-arc-500 to-mint-500 flex items-center justify-center text-[10px] font-bold shrink-0">
-                  ∞
-                </span>
-                <span className="truncate">All Chains</span>
-              </button>
+            {/*
+              Starred chains are pinned outside the scroll container, so they
+              stay put while the A–Z list scrolls beneath them. Putting them
+              inside with `position: sticky` would let a long starred list crowd
+              out the list it is meant to sit above.
+            */}
+            <div className="shrink-0 px-3 sm:px-2 pb-2 sm:pb-0">
+              <div className="flex sm:block gap-1.5 sm:gap-0 sm:space-y-0.5 overflow-x-auto sm:overflow-visible">
+                <button
+                  onClick={() => setChainFilter(null)}
+                  className={`shrink-0 sm:w-full flex items-center gap-2.5 px-2 py-2 rounded-xl text-sm whitespace-nowrap transition-colors ${
+                    chainFilter === null
+                      ? 'bg-arc-500/15 text-arc-300'
+                      : 'hover:bg-white/[0.06] text-slate-300'
+                  }`}
+                >
+                  <span className="w-6 h-6 rounded-full bg-gradient-to-br from-arc-500 to-mint-500 flex items-center justify-center text-[10px] font-bold shrink-0">
+                    ∞
+                  </span>
+                  <span className="truncate font-medium">All Chains</span>
+                </button>
+
+                {starredChains.length > 0 && (
+                  <>
+                    <RailHeading>Starred Chains</RailHeading>
+                    {starredChains.map((c) => (
+                      <ChainRow
+                        key={c.id}
+                        chain={c}
+                        active={chainFilter?.id === c.id}
+                        starred
+                        onSelect={() => setChainFilter(c)}
+                        onToggleStar={() => favoriteChains.toggle(c.id)}
+                      />
+                    ))}
+                  </>
+                )}
+              </div>
 
               {starredChains.length > 0 && (
-                <>
-                  <RailHeading>Starred</RailHeading>
-                  {starredChains.map((c) => (
-                    <ChainRow
-                      key={c.id}
-                      chain={c}
-                      active={chainFilter?.id === c.id}
-                      starred
-                      onSelect={() => setChainFilter(c)}
-                      onToggleStar={() => favoriteChains.toggle(c.id)}
-                    />
-                  ))}
-                </>
+                <div className="hidden sm:block mx-2 mt-2 border-t border-white/10" />
               )}
+            </div>
 
-              <RailHeading>{chainQuery ? 'Results' : 'Chains A–Z'}</RailHeading>
+            {/* Horizontal strip on mobile, scrolling list on desktop. */}
+            <div className="flex sm:block gap-1.5 sm:gap-0 sm:space-y-0.5 overflow-x-auto sm:overflow-y-auto sm:flex-1 px-3 sm:px-2 pb-3 sm:pb-3 sm:pt-2 scroll-smooth">
+              <RailHeading>{chainQuery ? 'Results' : 'All Chains'}</RailHeading>
               {otherChains.map((c) => (
                 <ChainRow
                   key={c.id}
@@ -235,6 +249,12 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title }: Props) {
               {visibleChains.length === 0 && (
                 <p className="px-3 py-6 text-xs text-slate-500 whitespace-nowrap">
                   No chain matches that search.
+                </p>
+              )}
+
+              {otherChains.length === 0 && visibleChains.length > 0 && (
+                <p className="hidden sm:block px-3 py-4 text-xs text-slate-600">
+                  Every chain is starred.
                 </p>
               )}
             </div>
@@ -275,7 +295,7 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title }: Props) {
                   ) : (
                     <p className="text-sm text-slate-400">
                       Nothing matches that search on{' '}
-                      {chainFilter ? chainFilter.label : 'any chain'}.
+                      {chainFilter ? chainDisplayName(chainFilter) : 'any chain'}.
                     </p>
                   )}
                 </div>
@@ -284,14 +304,14 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title }: Props) {
                   title={
                     tokenQuery
                       ? `${filteredTokens.length} result${filteredTokens.length === 1 ? '' : 's'}`
-                      : (chainFilter?.label ?? '')
+                      : (chainFilter ? chainDisplayName(chainFilter) : '')
                   }
                 >
                   {filteredTokens.map(row)}
                 </Section>
               ) : (
                 groupByChain(filteredTokens).map((group) => (
-                  <Section key={group.chain.id} title={group.chain.label}>
+                  <Section key={group.chain.id} title={chainDisplayName(group.chain)}>
                     {group.tokens.map(row)}
                   </Section>
                 ))
@@ -380,27 +400,24 @@ function ChainRow({
   onSelect: () => void;
   onToggleStar: () => void;
 }) {
+  const name = chainDisplayName(chain);
+
   return (
     <div
-      className={`shrink-0 sm:w-full flex items-center rounded-lg group transition-colors ${
-        active ? 'bg-arc-500/15' : 'hover:bg-white/5'
+      className={`shrink-0 sm:w-full flex items-center rounded-xl group transition-colors ${
+        active ? 'bg-arc-500/15' : 'hover:bg-white/[0.06]'
       }`}
     >
       <button
         onClick={onSelect}
-        className={`flex-1 min-w-0 flex items-center gap-2.5 pl-3 pr-2 py-2 text-sm whitespace-nowrap ${
+        className={`flex-1 min-w-0 flex items-center gap-2.5 px-2 py-2 text-sm whitespace-nowrap ${
           active ? 'text-arc-300' : 'text-slate-300'
         }`}
       >
-        <span
-          className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
-          style={{ backgroundColor: chainAccent(chain) }}
-        >
-          {chain.label.replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase()}
-        </span>
-        <span className="truncate">{chain.label}</span>
+        <ChainMark chain={chain} size={24} />
+        <span className="truncate font-medium">{name}</span>
       </button>
-      <StarButton starred={starred} onClick={onToggleStar} label={chain.label} />
+      <StarButton starred={starred} onClick={onToggleStar} label={name} />
     </div>
   );
 }
@@ -418,30 +435,14 @@ function TokenRow({
   onSelect: () => void;
   onToggleStar: () => void;
 }) {
-  const chainColor = chainAccent(token.chain);
-
   return (
-    <div className="flex items-center rounded-xl hover:bg-white/5 transition-colors group">
+    <div className="flex items-center rounded-xl hover:bg-white/[0.06] transition-colors group">
       <button
         onClick={onSelect}
         className="flex-1 min-w-0 flex items-center gap-3 pl-2 pr-1 py-2.5 text-left"
       >
-        {/* Token mark with a chain badge, as in the reference. */}
-        <span className="relative shrink-0">
-          <span
-            className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
-            style={{ backgroundColor: tokenAccent(token) }}
-          >
-            {token.symbol.slice(0, 4)}
-          </span>
-          <span
-            className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-slate-900 flex items-center justify-center text-[7px] font-bold text-white"
-            style={{ backgroundColor: chainColor }}
-            title={token.chain.label}
-          >
-            {token.chain.label.replace(/[^A-Za-z]/g, '').slice(0, 1).toUpperCase()}
-          </span>
-        </span>
+        {/* Real token logo, badged with its chain's real logo. */}
+        <TokenMark token={token} size={40} />
 
         <span className="flex-1 min-w-0">
           <span className="flex items-center gap-1.5">
@@ -460,7 +461,7 @@ function TokenRow({
             )}
           </span>
           <span className="block text-[11px] text-slate-500 truncate">
-            {token.name} · {token.chain.label}
+            {token.name} · {chainDisplayName(token.chain)}
             {token.address && (
               <span className="ml-1.5 font-mono text-slate-600">
                 {shortAddress(token.address, 6, 4)}
