@@ -3,6 +3,8 @@ import './globals.css';
 import { Chrome } from '@/components/Chrome';
 import { WalletProvider } from '@/lib/WalletProvider';
 import { SessionProvider } from '@/lib/SessionProvider';
+import { ProfileProvider } from '@/lib/ProfileProvider';
+import { ProfileOnboarding } from '@/components/ProfileOnboarding';
 import { WalletNotificationProvider, ActivityWatcher } from '@/lib/notifications';
 
 export const metadata: Metadata = {
@@ -25,14 +27,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* Inside WalletProvider: the SIWE session signs with that wallet
               and must end when the account changes. */}
           <SessionProvider>
-            {/* Notifications bind to the connected address and watch for
-                incoming transfers and submitted-transaction confirmations. */}
-            <WalletNotificationProvider>
-              <ActivityWatcher />
-              {/* Chrome picks the navigation for the route: most pages get the
-                  Navbar, the dashboard supplies its own sidebar and header. */}
-              <Chrome>{children}</Chrome>
-            </WalletNotificationProvider>
+            {/* Inside SessionProvider: the profile is loaded for the signed-in
+                address, and one instance here keeps the header, the account
+                menu and the profile page reading the same record. */}
+            <ProfileProvider>
+              {/* Notifications bind to the connected address and watch for
+                  incoming transfers and submitted-transaction confirmations. */}
+              <WalletNotificationProvider>
+                <ActivityWatcher />
+                {/* Chrome picks the navigation for the route: most pages get the
+                    Navbar, the dashboard supplies its own sidebar and header. */}
+                <Chrome>{children}</Chrome>
+                {/* Asks a first-time user to set up their profile once sign-in
+                    succeeds. Renders nothing in every other case. */}
+                <ProfileOnboarding />
+              </WalletNotificationProvider>
+            </ProfileProvider>
           </SessionProvider>
         </WalletProvider>
       </body>

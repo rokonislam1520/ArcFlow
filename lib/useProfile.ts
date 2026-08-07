@@ -7,6 +7,11 @@
  * this hook waits for authentication and clears its state on sign-out — a
  * stale profile left on screen after signing out would suggest the data is
  * still available when the next request would be rejected.
+ *
+ * This holds real state and fetches on mount, so it is called once by
+ * `ProfileProvider` and read everywhere else through that context. Calling it
+ * directly from several components would issue a `/api/profile` request per
+ * caller and let the header show a stale name after the profile page saved.
  */
 import { useCallback, useEffect, useState } from 'react';
 import { useSession } from './SessionProvider';
@@ -30,7 +35,7 @@ export interface ProfileState {
   clearStatus: () => void;
 }
 
-export function useProfile(): ProfileState {
+export function useProfileState(): ProfileState {
   const { status, address } = useSession();
   const authenticated = status === 'signed-in';
 

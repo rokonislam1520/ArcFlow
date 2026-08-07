@@ -13,12 +13,12 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
+import { AccountMenu } from '@/components/AccountMenu';
 import { ConnectButton } from '@/components/ConnectButton';
-import { NetworkSwitcher } from '@/components/NetworkSwitcher';
 import { NotificationBell } from '@/components/NotificationBell';
 import { useWallet, useActiveChain } from '@/lib/WalletProvider';
+import { chainDisplayName } from '@/lib/chainBrand';
 import { useNetworkMode } from '@/lib/network';
-import { useProfile } from '@/lib/useProfile';
 import { shortAddress } from '@/lib/useTransfers';
 import { StatusDot } from '@/components/dashboard/Primitives';
 
@@ -241,7 +241,9 @@ function Sidebar({
                 <div className="font-mono text-[11px] text-slate-400 truncate">
                   {shortAddress(address)}
                 </div>
-                <div className="text-[11px] text-slate-500 mt-1 truncate">{chain.label}</div>
+                <div className="text-[11px] text-slate-500 mt-1 truncate">
+                  {chainDisplayName(chain)}
+                </div>
               </>
             ) : (
               <p className="text-[11px] text-slate-500">
@@ -276,12 +278,7 @@ function Sidebar({
 
 function TopHeader({ onOpenDrawer }: { onOpenDrawer: () => void }) {
   const { address } = useWallet();
-  const chain = useActiveChain();
-  const { isTestnet } = useNetworkMode();
-  const profile = useProfile();
-
-  const displayName =
-    profile.fields.displayName || profile.fields.username || null;
+  const { isTestnet, ready } = useNetworkMode();
 
   return (
     <header className="sticky top-0 z-30 h-16 flex items-center gap-3 px-4 sm:px-6 lg:px-8 border-b border-arc-500/10 bg-[#020617]/80 backdrop-blur-xl">
@@ -300,12 +297,17 @@ function TopHeader({ onOpenDrawer }: { onOpenDrawer: () => void }) {
 
       <div className="flex-1" />
 
-      {/* Network + testnet indicator. The badge is deliberately loud in testnet
-          mode: mistaking test funds for real ones is the expensive error. */}
-      <div className="hidden sm:flex items-center gap-2 shrink-0">
+      {/* One mode indicator, and only the mode. The chain name used to sit
+          beside it and again inside the network control, which said the same
+          thing three times over; the chain now lives solely in the account
+          menu. This badge stays because mistaking test funds for real ones is
+          the expensive error, and it is deliberately loud in testnet mode.
+          Rendered only once the stored choice is known, so it cannot claim
+          "Mainnet" for a frame before flipping. */}
+      {ready && (
         <span
           className={[
-            'text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-md border',
+            'hidden sm:inline-block text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-md border shrink-0',
             isTestnet
               ? 'text-amber-300 border-amber-500/30 bg-amber-500/10'
               : 'text-mint-300 border-mint-500/25 bg-mint-500/10',
@@ -314,56 +316,15 @@ function TopHeader({ onOpenDrawer }: { onOpenDrawer: () => void }) {
         >
           {isTestnet ? 'Testnet' : 'Mainnet'}
         </span>
-        <span className="text-xs text-slate-400 max-w-[120px] truncate" title={chain.label}>
-          {chain.label}
-        </span>
-      </div>
+      )}
 
-      <NetworkSwitcher />
       <NotificationBell />
 
-      {/* Profile summary. Falls back to the address when no profile is saved,
-          rather than inventing a display name. */}
-      {address ? (
-        <Link
-          href="/profile"
-          className="flex items-center gap-2.5 pl-2 pr-1 py-1 rounded-xl hover:bg-white/5 transition-colors shrink-0"
-          title="Profile settings"
-        >
-          <Avatar src={profile.fields.avatar} fallback={displayName ?? address} />
-          <span className="hidden md:flex flex-col leading-tight min-w-0">
-            {displayName && (
-              <span className="text-xs font-medium truncate max-w-[110px]">{displayName}</span>
-            )}
-            <span className="font-mono text-[11px] text-slate-500 truncate">
-              {shortAddress(address)}
-            </span>
-          </span>
-        </Link>
-      ) : (
-        <ConnectButton />
-      )}
+      {/* Address opens the account menu, not the profile page: it describes the
+          connection, and switching networks or disconnecting are what people
+          actually come here to do. */}
+      {address ? <AccountMenu /> : <ConnectButton />}
     </header>
-  );
-}
-
-function Avatar({ src, fallback }: { src: string; fallback: string }) {
-  if (src) {
-    // Profile avatars are user-supplied data URLs, so next/image's optimizer
-    // has nothing to fetch or resize and would only add indirection.
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={src}
-        alt=""
-        className="w-8 h-8 rounded-full object-cover border border-white/10 shrink-0"
-      />
-    );
-  }
-  return (
-    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-arc-500 to-mint-500 flex items-center justify-center text-[11px] font-bold shrink-0">
-      {fallback.slice(2, 4).toUpperCase()}
-    </div>
   );
 }
 

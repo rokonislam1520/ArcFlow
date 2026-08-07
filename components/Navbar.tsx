@@ -1,9 +1,11 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
+import { AccountMenu } from '@/components/AccountMenu';
 import { ConnectButton } from '@/components/ConnectButton';
-import { NetworkSwitcher } from '@/components/NetworkSwitcher';
 import { NotificationBell } from '@/components/NotificationBell';
+import { useWallet } from '@/lib/WalletProvider';
+import { useNetworkMode } from '@/lib/network';
 
 const links = [
   { name: 'Dashboard', href: '/dashboard' },
@@ -16,11 +18,26 @@ const links = [
   { name: 'Portfolio', href: '/portfolio' },
   { name: 'History', href: '/history' },
   { name: 'Pay', href: '/merchant' },
+];
+
+/**
+ * Account destinations, kept out of the main row.
+ *
+ * Profile lives in the menu rather than the top-level nav, alongside the
+ * dashboard sidebar's Account group. It is a settings page visited rarely, and
+ * giving it equal billing with Send and Swap overstated how often anyone needs
+ * it. The account menu covers the frequent actions — address, network,
+ * disconnect — without leaving the page.
+ */
+const accountLinks = [
   { name: 'Profile', href: '/profile' },
+  { name: 'Assistant', href: '/assistant' },
 ];
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const { address } = useWallet();
+  const { isTestnet, ready } = useNetworkMode();
 
   return (
     <nav className="sticky top-0 z-50 glass border-b border-arc-500/10">
@@ -47,13 +64,25 @@ export function Navbar() {
             ))}
           </div>
 
-          {/* Wallet + network selection live in one shared control so every
-              page sees the same session. The mainnet/testnet switch sits
-              alongside it because it changes what every other control means. */}
+          {/* One mode badge, then the account menu. The chain name is not
+              repeated here: it lives in the menu, next to the control that
+              changes it. */}
           <div className="hidden lg:flex items-center gap-3">
+            {ready && (
+              <span
+                className={[
+                  'text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-md border',
+                  isTestnet
+                    ? 'text-amber-300 border-amber-500/30 bg-amber-500/10'
+                    : 'text-mint-300 border-mint-500/25 bg-mint-500/10',
+                ].join(' ')}
+                title={isTestnet ? 'Testnet funds have no value' : 'Live network — real funds'}
+              >
+                {isTestnet ? 'Testnet' : 'Mainnet'}
+              </span>
+            )}
             <NotificationBell />
-            <NetworkSwitcher />
-            <ConnectButton />
+            {address ? <AccountMenu /> : <ConnectButton />}
           </div>
 
           <button onClick={() => setOpen(!open)} className="lg:hidden p-2 rounded-lg hover:bg-white/5">
@@ -80,10 +109,26 @@ export function Navbar() {
               {l.name}
             </Link>
           ))}
-          <div className="pt-3 border-t border-white/10 space-y-3">
+          {/* Account section: the only route to Profile. */}
+          <div className="pt-3 border-t border-white/10 space-y-2">
+            <div className="px-4 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
+              Account
+            </div>
+            {accountLinks.map((l) => (
+              <Link
+                key={l.name}
+                href={l.href}
+                onClick={() => setOpen(false)}
+                className="block px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5"
+              >
+                {l.name}
+              </Link>
+            ))}
+          </div>
+
+          <div className="pt-3 border-t border-white/10 flex items-center gap-3">
             <NotificationBell />
-            <NetworkSwitcher />
-            <ConnectButton />
+            {address ? <AccountMenu /> : <ConnectButton />}
           </div>
         </div>
       )}

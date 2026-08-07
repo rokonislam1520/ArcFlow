@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { WalletGuard } from '@/components/WalletGuard';
 import { AvatarPicker } from '@/components/AvatarPicker';
 import { useSession } from '@/lib/SessionProvider';
-import { useProfile } from '@/lib/useProfile';
+import { useProfile } from '@/lib/ProfileProvider';
 import {
   LIMITS,
   completionPercent,

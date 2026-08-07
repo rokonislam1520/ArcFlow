@@ -33,6 +33,15 @@ export function useSiwe(): SiweState {
   const [status, setStatus] = useState<SiweStatus>('unknown');
   const [sessionAddress, setSessionAddress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * Addresses already offered the automatic prompt this page load.
+   *
+   * Sign-in is prompted once per connected address, not once per render. A
+   * declined signature must not immediately re-open the wallet: that is
+   * indistinguishable from a phishing site badgering for a signature, and it
+   * would leave no way to browse balances without signing.
+   */
+  const autoPrompted = useRef(new Set<string>());
 
   const mounted = useRef(true);
   useEffect(() => {
@@ -159,6 +168,32 @@ export function useSiwe(): SiweState {
       );
     }
   }, [wallet, address, chainId]);
+
+  /**
+   * Offer sign-in automatically once a wallet is connected.
+   *
+   * Connecting and proving control are two steps, and asking users to find a
+   * second button for the second one leaves most of them unauthenticated with
+   * no explanation of why their profile will not save. The prompt is still a
+   * normal wallet signature they can decline: nothing here is gated on it, and
+   * `autoPrompted` ensures a decline is final until the user asks again.
+   */
+  useEffect(() => {
+    // 'unknown' means the session check is still running — prompting now could
+    // demand a signature from someone who is already signed in.
+    if (status !== 'signed-out' || !wallet || !address || chainId === null) return;
+
+    const key = address.toLowerCase();
+    if (autoPrompted.current.has(key)) return;
+    autoPrompted.current.add(key);
+    void signIn();
+  }, [status, wallet, address, chainId, signIn]);
+
+  // Forget the record when a wallet disconnects, so reconnecting later is
+  // treated as a fresh intent to use the app rather than a silent refusal.
+  useEffect(() => {
+    if (!address) autoPrompted.current.clear();
+  }, [address]);
 
   return {
     status,

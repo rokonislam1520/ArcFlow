@@ -170,6 +170,29 @@ export function missingFields(fields: ProfileFields): (keyof ProfileFields)[] {
 }
 
 /**
+ * Fields the onboarding treats as the minimum to call a profile set up.
+ *
+ * Only the two that give an account a human identity. Onboarding exists to
+ * stop the app addressing people as `0x1f4b…` — it is not a data collection
+ * exercise, and gating it on an avatar or a bio would turn a courtesy into a
+ * toll gate. Everything else in the form is genuinely optional.
+ */
+const REQUIRED_FOR_ONBOARDING: (keyof ProfileFields)[] = ['username', 'displayName'];
+
+/**
+ * Whether this profile is complete enough that onboarding should stay closed.
+ *
+ * Takes `exists` as well as the values because they answer different
+ * questions: `exists` says a record was saved, the fields say it is usable.
+ * A row created by some other path with no username would otherwise count as
+ * done and leave the user permanently nameless.
+ */
+export function isProfileComplete(fields: ProfileFields, exists: boolean): boolean {
+  if (!exists) return false;
+  return REQUIRED_FOR_ONBOARDING.every((key) => (fields[key] ?? '').trim().length > 0);
+}
+
+/**
  * Normalise a stored profile into editable fields.
  *
  * The database stores absent values as null; form inputs need strings. Passing
