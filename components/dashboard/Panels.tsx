@@ -42,12 +42,21 @@ export function QuickActions() {
           key={a.label}
           href={a.href}
           title={a.hint}
-          className="group flex flex-col gap-2 p-4 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] hover:border-arc-500/30 transition-all"
+          // Lifts on hover and settles on press, matching the shared buttons, so
+          // these read as the same class of control despite being links.
+          className="group flex flex-col gap-2 p-4 rounded-2xl bg-white/[0.04] border border-white/[0.06]
+            hover:bg-white/[0.07] hover:border-arc-500/30 hover:-translate-y-0.5 hover:shadow-card-hover
+            active:translate-y-0 active:scale-[0.985]
+            transition-all duration-200 ease-premium"
         >
-          <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-arc-500/80 to-mint-500/80 flex items-center justify-center text-base font-semibold">
+          <span
+            className="w-9 h-9 rounded-xl bg-gradient-to-br from-arc-400 to-azure-500 ring-1 ring-inset ring-white/20
+              text-slate-950 flex items-center justify-center text-base font-semibold
+              group-hover:shadow-glow-arc transition-shadow duration-300 ease-premium"
+          >
             {a.icon}
           </span>
-          <span className="text-sm font-medium">{a.label}</span>
+          <span className="text-sm font-medium text-white">{a.label}</span>
           <span className="text-[11px] text-slate-500 leading-tight">{a.hint}</span>
         </Link>
       ))}
@@ -148,7 +157,8 @@ export function TokenBreakdown({
             return (
               <div
                 key={t.symbol}
-                className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] transition-colors"
+                className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.04]
+                  hover:bg-white/[0.06] hover:border-white/[0.08] transition-colors duration-200"
               >
                 <TokenBadge symbol={t.symbol} size={38} />
                 <div className="min-w-0 flex-1">
@@ -224,7 +234,11 @@ export function ChainBreakdown({
           {withValue.map((c) => {
             const share = totalUSD > 0 ? (c.valueUSD / totalUSD) * 100 : 0;
             return (
-              <div key={c.chain.id} className="p-3.5 rounded-xl bg-white/[0.03]">
+              <div
+                key={c.chain.id}
+                className="p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.04]
+                  hover:border-white/[0.08] transition-colors duration-200"
+              >
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <div className="min-w-0 flex items-center gap-2">
                     <StatusDot ok={c.error ? false : true} />
@@ -251,7 +265,8 @@ export function ChainBreakdown({
                     {/* Proportion bar: width is the real share of total value. */}
                     <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-arc-500 to-mint-400"
+                        className="h-full rounded-full bg-gradient-to-r from-arc-500 to-azure-500
+                          transition-all duration-500 ease-premium"
                         style={{ width: `${Math.min(100, share)}%` }}
                       />
                     </div>
@@ -318,10 +333,12 @@ export function RecentActivity({
             const sent = t.direction === 'sent';
 
             const row = (
-              <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/[0.04] transition-colors">
+              <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/[0.05] transition-colors duration-200">
                 <span
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 ${
-                    sent ? 'bg-white/[0.06] text-slate-300' : 'bg-mint-500/15 text-mint-300'
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border ${
+                    sent
+                      ? 'bg-white/[0.06] border-white/10 text-slate-300'
+                      : 'bg-mint-500/15 border-mint-500/25 text-mint-300'
                   }`}
                   aria-hidden
                 >

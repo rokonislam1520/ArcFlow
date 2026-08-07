@@ -159,7 +159,10 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title }: Props) {
       aria-label={title ?? 'Select token'}
     >
       <div
-        className="w-full max-w-4xl h-[88vh] sm:h-[600px] bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        // Floats above the page on desktop, and rises from the bottom edge on
+        // mobile, where a sheet is the native-feeling shape for a picker.
+        className="w-full max-w-4xl h-[88vh] sm:h-[600px] bg-slate-850/95 backdrop-blur-2xl border border-white/10
+          rounded-t-3xl sm:rounded-4xl shadow-float flex flex-col overflow-hidden animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         <header className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-white/10 shrink-0">
@@ -168,7 +171,8 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title }: Props) {
           </h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-white/10
+              active:scale-95 flex items-center justify-center transition-all duration-200"
             aria-label="Close"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -198,13 +202,14 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title }: Props) {
               <div className="flex sm:block gap-1.5 sm:gap-0 sm:space-y-0.5 overflow-x-auto sm:overflow-visible">
                 <button
                   onClick={() => setChainFilter(null)}
-                  className={`shrink-0 sm:w-full flex items-center gap-2.5 px-2 py-2 rounded-xl text-sm whitespace-nowrap transition-colors ${
+                  className={`shrink-0 sm:w-full flex items-center gap-2.5 px-2 py-2 rounded-xl text-sm whitespace-nowrap
+                    transition-colors duration-200 ${
                     chainFilter === null
-                      ? 'bg-arc-500/15 text-arc-300'
+                      ? 'bg-arc-500/15 text-arc-300 ring-1 ring-inset ring-arc-500/25'
                       : 'hover:bg-white/[0.06] text-slate-300'
                   }`}
                 >
-                  <span className="w-6 h-6 rounded-full bg-gradient-to-br from-arc-500 to-mint-500 flex items-center justify-center text-[10px] font-bold shrink-0">
+                  <span className="w-6 h-6 rounded-full bg-gradient-to-br from-arc-400 to-azure-500 ring-1 ring-inset ring-white/20 text-slate-950 flex items-center justify-center text-[10px] font-bold shrink-0">
                     ∞
                   </span>
                   <span className="truncate font-medium">All Chains</span>
@@ -358,7 +363,10 @@ function SearchInput({
         placeholder={placeholder}
         // eslint-disable-next-line jsx-a11y/no-autofocus -- focus belongs in the search field of a search dialog
         autoFocus={autoFocus}
-        className="w-full pl-9 pr-3 py-2.5 bg-white/[0.06] border border-white/10 rounded-xl text-sm outline-none focus:border-arc-500/40 focus:bg-white/[0.08] transition-colors placeholder:text-slate-500"
+        className="w-full pl-9 pr-3 py-2.5 bg-black/25 border border-white/10 rounded-xl text-sm text-white outline-none
+          hover:border-white/[0.14]
+          focus:border-arc-500/50 focus:bg-black/35 focus:ring-[3px] focus:ring-arc-500/[0.12]
+          transition-all duration-200 placeholder:text-slate-500"
       />
     </div>
   );
@@ -404,8 +412,10 @@ function ChainRow({
 
   return (
     <div
-      className={`shrink-0 sm:w-full flex items-center rounded-xl group transition-colors ${
-        active ? 'bg-arc-500/15' : 'hover:bg-white/[0.06]'
+      className={`shrink-0 sm:w-full flex items-center rounded-xl group transition-colors duration-200 ${
+        // The accent ring marks the active filter unambiguously; a tint alone
+        // is easy to miss against a list of hovered rows.
+        active ? 'bg-arc-500/15 ring-1 ring-inset ring-arc-500/25' : 'hover:bg-white/[0.06]'
       }`}
     >
       <button
@@ -436,7 +446,7 @@ function TokenRow({
   onToggleStar: () => void;
 }) {
   return (
-    <div className="flex items-center rounded-xl hover:bg-white/[0.06] transition-colors group">
+    <div className="flex items-center rounded-xl hover:bg-white/[0.06] active:bg-white/[0.09] transition-colors duration-200 group">
       <button
         onClick={onSelect}
         className="flex-1 min-w-0 flex items-center gap-3 pl-2 pr-1 py-2.5 text-left"
@@ -446,7 +456,7 @@ function TokenRow({
 
         <span className="flex-1 min-w-0">
           <span className="flex items-center gap-1.5">
-            <span className="text-sm font-semibold truncate">{token.symbol}</span>
+            <span className="text-sm font-semibold truncate text-white">{token.symbol}</span>
             {/* Registry tokens are the canonical issuances App Kit routes. */}
             {!token.isNative && (
               <svg

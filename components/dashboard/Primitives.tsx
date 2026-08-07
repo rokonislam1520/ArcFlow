@@ -30,8 +30,8 @@ export function Panel({
     <section className={`glass p-5 sm:p-6 ${className}`}>
       <header className="flex items-start justify-between gap-3 mb-5">
         <div className="min-w-0">
-          <h2 className="text-base font-semibold tracking-tight">{title}</h2>
-          {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
+          <h2 className="text-base font-semibold tracking-tight text-white">{title}</h2>
+          {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
         </div>
         {action && <div className="shrink-0">{action}</div>}
       </header>
@@ -45,7 +45,9 @@ export function SkeletonRows({ rows = 3 }: { rows?: number }) {
   return (
     <div className="space-y-2" aria-busy="true" aria-live="polite">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="h-14 rounded-xl bg-white/[0.04] animate-pulse" />
+        // A sweep rather than a fade: a moving highlight reads as "loading",
+        // where a pulsing block can just look like part of the design.
+        <div key={i} className="h-14 rounded-xl skeleton" />
       ))}
     </div>
   );
@@ -100,9 +102,13 @@ export function Stat({
         ? 'text-slate-300'
         : 'text-white';
   return (
-    <div className="glass p-5">
-      <div className="text-xs uppercase tracking-wider text-slate-500 mb-1.5">{label}</div>
-      <div className={`text-2xl font-bold tabular-nums ${valueTone}`}>{value}</div>
+    // Lifts on hover: a stat is a headline figure, so it is one of the few
+    // things on a page that earns the emphasis.
+    <div className="glass card-float p-5">
+      <div className="text-[11px] uppercase tracking-[0.08em] font-medium text-slate-400 mb-1.5">
+        {label}
+      </div>
+      <div className={`text-2xl font-bold tabular-nums tracking-tight ${valueTone}`}>{value}</div>
       {hint && <div className="text-xs text-slate-500 mt-1">{hint}</div>}
     </div>
   );
@@ -133,7 +139,9 @@ export function TokenBadge({ symbol, size = 40 }: { symbol: string; size?: numbe
   return (
     <div
       style={{ width: size, height: size }}
-      className="rounded-full bg-gradient-to-br from-arc-500 to-mint-500 flex items-center justify-center text-[11px] font-bold shrink-0"
+      // Dark text on the bright accent, and a hairline ring so the badge keeps
+      // its edge against both the card and the page background.
+      className="rounded-full bg-gradient-to-br from-arc-400 to-azure-500 ring-1 ring-inset ring-white/20 text-[11px] font-bold text-slate-950 flex items-center justify-center shrink-0"
     >
       {symbol.slice(0, 4)}
     </div>

@@ -326,7 +326,8 @@ export default function SwapPage() {
                   </span>
                   <button
                     onClick={() => setAmountIn(sellBalance.formatted.replace(/,/g, ''))}
-                    className="px-2 py-0.5 rounded-md text-[11px] font-semibold text-arc-300 bg-arc-500/15 hover:bg-arc-500/25 transition-colors"
+                    className="px-2 py-0.5 rounded-md text-[11px] font-semibold text-arc-300 bg-arc-500/15
+                      hover:bg-arc-500/25 active:scale-95 transition-all duration-200"
                   >
                     MAX
                   </button>
@@ -345,7 +346,13 @@ export default function SwapPage() {
               onClick={flip}
               disabled={!sell || !buy}
               aria-label="Switch sell and buy"
-              className="w-10 h-10 rounded-xl bg-slate-900 border border-white/10 hover:border-arc-500/40 hover:text-arc-300 shadow-lg flex items-center justify-center transition-all active:scale-95 disabled:opacity-40"
+              // Rotates a half-turn on hover, which previews the reversal the
+              // button performs. The `group` lets the icon inside animate too.
+              className="group w-10 h-10 rounded-2xl bg-slate-850 border border-white/10 text-slate-300
+                hover:border-arc-500/40 hover:text-arc-300 hover:shadow-glow-arc hover:rotate-180
+                active:scale-95 disabled:opacity-40 disabled:hover:rotate-0
+                shadow-card flex items-center justify-center
+                transition-all duration-300 ease-premium"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m0 0l-5-5m5 5l5-5" />
@@ -529,7 +536,9 @@ function AssetCard({
   onPickToken: () => void;
 }) {
   return (
-    <section className="glass p-5 rounded-3xl">
+    // `card-float` lifts the panel on hover; the two swap cards are the subject
+    // of this page, so they are where the effect belongs.
+    <section className="glass card-float p-5 rounded-3xl">
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm text-slate-400">{label}</span>
       </div>
@@ -553,7 +562,11 @@ function TokenPill({ token, onClick }: { token: SwapToken | null; onClick: () =>
     return (
       <button
         onClick={onClick}
-        className="shrink-0 flex items-center gap-2 pl-4 pr-3 py-3 rounded-2xl bg-arc-500/15 border border-arc-500/30 hover:bg-arc-500/25 transition-colors"
+        // The empty state is the call to action on a fresh swap, so it carries
+        // the accent glow that the filled state does not need.
+        className="shrink-0 flex items-center gap-2 pl-4 pr-3 py-3 rounded-2xl bg-arc-500/15 border border-arc-500/30
+          text-arc-200 font-medium hover:bg-arc-500/25 hover:shadow-glow-arc active:scale-[0.98]
+          transition-all duration-200 ease-premium"
       >
         <span className="text-sm font-bold uppercase tracking-wide text-arc-200">
           Select token
@@ -566,7 +579,9 @@ function TokenPill({ token, onClick }: { token: SwapToken | null; onClick: () =>
   return (
     <button
       onClick={onClick}
-      className="shrink-0 flex items-center gap-2.5 pl-2 pr-2.5 py-2 rounded-2xl bg-white/[0.06] border border-white/10 hover:bg-white/[0.1] hover:border-arc-500/30 transition-colors"
+      className="shrink-0 flex items-center gap-2.5 pl-2 pr-2.5 py-2 rounded-2xl bg-white/[0.06] border border-white/10
+        hover:bg-white/[0.1] hover:border-arc-500/30 active:scale-[0.98]
+        transition-all duration-200 ease-premium"
     >
       <TokenMark token={token} size={36} />
       <span className="text-left leading-tight">

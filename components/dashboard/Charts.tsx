@@ -12,15 +12,22 @@
  */
 import { useId, useMemo } from 'react';
 
-/** Palette for categorical slices. Teal-led to match ArcFlow's identity. */
+/**
+ * Palette for categorical slices.
+ *
+ * Ordered so that adjacent slices contrast: the ramp walks teal → blue → violet
+ * → green rather than stepping through neighbouring shades of one hue. A donut
+ * whose first three slices are three teals is unreadable no matter how well the
+ * individual colours are chosen.
+ */
 export const SERIES_COLORS = [
-  '#14b8a6',
-  '#4ade80',
-  '#2dd4bf',
+  '#14f1d9',
+  '#3b82f6',
+  '#8b5cf6',
   '#22c55e',
-  '#5eead4',
-  '#0d9488',
-  '#86efac',
+  '#5ff9e5',
+  '#60a5fa',
+  '#c4b5fd',
 ] as const;
 
 export function seriesColor(index: number): string {
@@ -153,7 +160,7 @@ export function AreaChart({
   points,
   width = 640,
   height = 160,
-  color = '#14b8a6',
+  color = '#14f1d9',
 }: {
   points: Array<{ at: number; value: number }>;
   width?: number;
@@ -206,7 +213,10 @@ export function AreaChart({
     >
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={stroke} stopOpacity="0.28" />
+          {/* Three stops, not two: the extra midpoint keeps the fill from
+              banding on wide gradients, which is visible on dark backgrounds. */}
+          <stop offset="0%" stopColor={stroke} stopOpacity="0.34" />
+          <stop offset="55%" stopColor={stroke} stopOpacity="0.1" />
           <stop offset="100%" stopColor={stroke} stopOpacity="0" />
         </linearGradient>
       </defs>
@@ -215,9 +225,11 @@ export function AreaChart({
         points={geometry.line}
         fill="none"
         stroke={stroke}
-        strokeWidth={2}
+        strokeWidth={2.5}
         strokeLinejoin="round"
         strokeLinecap="round"
+        // Keeps the stroke an even weight despite the non-uniform scaling that
+        // `preserveAspectRatio="none"` applies to the viewBox.
         vectorEffect="non-scaling-stroke"
       />
     </svg>
@@ -229,7 +241,7 @@ export function Sparkline({
   values,
   width = 64,
   height = 22,
-  color = '#4ade80',
+  color = '#14f1d9',
 }: {
   values: number[];
   width?: number;
@@ -262,12 +274,12 @@ export function Sparkline({
 }
 
 /** Horizontal proportion bar, used in allocation lists. */
-export function Bar({ pct, color = '#14b8a6' }: { pct: number; color?: string }) {
+export function Bar({ pct, color = '#14f1d9' }: { pct: number; color?: string }) {
   const clamped = Math.max(0, Math.min(100, pct));
   return (
-    <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+    <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
       <div
-        className="h-full rounded-full transition-all duration-500"
+        className="h-full rounded-full transition-all duration-500 ease-premium"
         style={{ width: `${clamped}%`, backgroundColor: color }}
       />
     </div>

@@ -4,152 +4,401 @@
 @tailwind components;
 @tailwind utilities;
 
-* { box-sizing: border-box; padding: 0; margin: 0; }
+/**
+ * ArcFlow theme.
+ *
+ * Every surface, control and input in the app is styled through the classes in
+ * this file. That is deliberate: a card is `.glass` everywhere, so cards cannot
+ * drift apart from each other, and the whole app can be retuned here without
+ * editing a single page.
+ *
+ * The values below are expressed as CSS variables so a colour appears once.
+ * Anything reading `--arc-500` gets the same teal as the Tailwind `arc-500`
+ * class, which keeps utility classes and these components in agreement.
+ */
 
-body {
-  font-family: 'Inter', sans-serif;
-  background: #020617;
-  color: #e2e8f0;
-  min-height: 100vh;
+:root {
+  /* Surfaces */
+  --bg: #070b14;
+  --card: #101827;
+
+  /* Accents */
+  --arc-500: 20 241 217;   /* primary   #14F1D9 */
+  --azure-500: 59 130 246; /* secondary #3B82F6 */
+  --iris-500: 139 92 246;  /* highlight #8B5CF6 */
+  --success: 34 197 94;    /* #22C55E */
+  --warning: 245 158 11;   /* #F59E0B */
+
+  /* Text hierarchy. Four steps is enough to rank anything on screen; more
+     than that and the levels stop being distinguishable. */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --text-muted: #64748b;
+
+  /* One easing and two durations for the entire app, so motion feels like it
+     comes from a single system rather than from each component's own taste. */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --fast: 200ms;
+  --slow: 300ms;
 }
 
-/* ========== ARC THEME ========== */
-.bg-arc-dark { background: linear-gradient(180deg, #020617 0%, #0f172a 50%, #020617 100%); }
+* { box-sizing: border-box; padding: 0; margin: 0; }
 
-/* Glass Card - ArcFlow Style (teal/mint accent, not purple) */
+html {
+  /* Anchor jumps and in-page navigation glide instead of teleporting. */
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text-secondary);
+  min-height: 100vh;
+  /* Inter's defaults leave dark-background text looking loose and slightly
+     heavy; these are the two fixes that make it read as typeset. */
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.011em;
+}
+
+/* Headings carry the tighter tracking that large Inter needs, and the brighter
+   ink, so hierarchy comes from the type itself rather than from ad-hoc classes. */
+h1, h2, h3, h4 {
+  color: var(--text-primary);
+  letter-spacing: -0.022em;
+  font-weight: 600;
+}
+
+/* Respect a user's reduced-motion preference. Decorative motion is removed
+   outright; interaction feedback is kept but shortened, since removing it
+   entirely would leave taps with no acknowledgement at all. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ========== BACKGROUND ========== */
+
+/*
+ * Ambient depth for the app shell. Two wide, very low-opacity pools of the
+ * primary and highlight accents keep a full-page dark background from reading
+ * as flat black, without competing with content: at 8% they register as depth
+ * rather than as colour.
+ */
+.bg-arc-dark {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(var(--arc-500) / 0.08), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 90% 10%, rgba(var(--iris-500) / 0.06), transparent 70%),
+    var(--bg);
+  background-attachment: fixed;
+}
+
+/* ========== SURFACES ========== */
+
+/*
+ * The card surface used across the app.
+ *
+ * Three layers make the glass read as a material: a translucent fill, a hairline
+ * border, and a top highlight (the inset shadow) that suggests light catching
+ * the upper edge. The border is white rather than tinted so cards stay neutral
+ * and the accent colour means something when it does appear.
+ */
 .glass {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(20, 184, 166, 0.12);
-  border-radius: 1.25rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.015) 100%), rgba(16, 24, 39, 0.72);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 1.5rem;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 8px 24px -8px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: border-color var(--slow) var(--ease), box-shadow var(--slow) var(--ease), transform var(--slow) var(--ease);
 }
 
 .glass:hover {
-  border-color: rgba(20, 184, 166, 0.25);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 16px 40px -12px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
 
 .glass-sm {
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(20, 184, 166, 0.08);
-  border-radius: 1rem;
+  background: rgba(16, 24, 39, 0.6);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1.25rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: border-color var(--fast) var(--ease), background-color var(--fast) var(--ease);
 }
 
-/* Gradient Text */
+.glass-sm:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/*
+ * Opt-in lift for cards that are the subject of a page (a swap panel, a stat
+ * tile). Applied on top of `.glass`; kept separate because a page where
+ * everything lifts has no focal point at all.
+ */
+.card-float:hover {
+  transform: translateY(-2px);
+}
+
+/* A card that is currently selected or active. The accent border and glow are
+   reserved for this state so "selected" is never ambiguous. */
+.card-active {
+  border-color: rgba(var(--arc-500) / 0.4);
+  box-shadow:
+    0 0 0 1px rgba(var(--arc-500) / 0.18),
+    0 8px 32px -8px rgba(var(--arc-500) / 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ========== TYPOGRAPHY ========== */
+
 .text-gradient {
-  background: linear-gradient(135deg, #14b8a6 0%, #2dd4bf 50%, #4ade80 100%);
+  background: linear-gradient(135deg, #14f1d9 0%, #3b82f6 55%, #8b5cf6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Primary Button */
+/* ========== BUTTONS ========== */
+
+/*
+ * Primary action.
+ *
+ * The gradient runs teal to blue, and the `::after` layer holds a brighter
+ * version of it that fades in on hover. Cross-fading two gradient layers is the
+ * only way to animate a gradient smoothly — CSS cannot interpolate
+ * `background-image` between two values, so a plain hover swap would jump.
+ */
 .btn-arc {
-  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
-  color: white;
-  font-weight: 600;
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #14f1d9 0%, #22d3ee 45%, #3b82f6 100%);
+  /* Dark ink on a bright accent: white text on this teal fails contrast. */
+  color: #04211f;
+  font-weight: 650;
+  letter-spacing: -0.01em;
   border-radius: 1rem;
   padding: 0.75rem 1.5rem;
-  transition: all 0.3s ease;
   border: none;
   cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -10px rgba(var(--arc-500) / 0.6);
+  transition: transform var(--fast) var(--ease), box-shadow var(--slow) var(--ease), opacity var(--fast) var(--ease);
 }
 
-.btn-arc:hover {
-  background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 25px rgba(20, 184, 166, 0.3);
+.btn-arc::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(135deg, #5ff9e5 0%, #38bdf8 45%, #60a5fa 100%);
+  opacity: 0;
+  transition: opacity var(--slow) var(--ease);
+}
+
+.btn-arc:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 36px -12px rgba(var(--arc-500) / 0.7);
+}
+
+.btn-arc:hover:not(:disabled)::after { opacity: 1; }
+
+/* Press returns the button to the resting plane: a control that stays lifted
+   while held does not feel like it was pressed. */
+.btn-arc:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+  transition-duration: 80ms;
 }
 
 .btn-arc:disabled {
-  opacity: 0.5;
+  /* Flattened to grey rather than dimmed. A faded gradient still looks like a
+     live button; a control with no colour reads as unavailable at a glance. */
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+  box-shadow: none;
   cursor: not-allowed;
   transform: none;
-  box-shadow: none;
 }
 
-/* Secondary Button */
+.btn-arc:disabled::after { opacity: 0; }
+
+/* Secondary action. Same geometry and motion as the primary so the two can sit
+   side by side, but no fill, so it never competes for the eye. */
 .btn-outline {
-  background: transparent;
-  color: #2dd4bf;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
   font-weight: 600;
+  letter-spacing: -0.01em;
   border-radius: 1rem;
   padding: 0.75rem 1.5rem;
-  border: 1px solid rgba(20, 184, 166, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color var(--fast) var(--ease), border-color var(--fast) var(--ease), transform var(--fast) var(--ease);
 }
 
-.btn-outline:hover {
-  background: rgba(20, 184, 166, 0.1);
-  border-color: rgba(20, 184, 166, 0.5);
+.btn-outline:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(var(--arc-500) / 0.35);
+  transform: translateY(-1px);
 }
 
-/* Input */
+.btn-outline:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+  transition-duration: 80ms;
+}
+
+.btn-outline:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Keyboard focus. Applied to both buttons and inputs, and only for keyboard
+   users, so pointer users never see a ring they did not ask for. */
+.btn-arc:focus-visible,
+.btn-outline:focus-visible,
+.input-arc:focus-visible {
+  outline: 2px solid rgba(var(--arc-500) / 0.6);
+  outline-offset: 2px;
+}
+
+/* ========== INPUTS ========== */
+
 .input-arc {
-  background: rgba(15, 23, 42, 0.5);
-  border: 1px solid rgba(20, 184, 166, 0.1);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1rem;
   padding: 1rem;
-  color: white;
+  color: var(--text-primary);
   font-size: 1.125rem;
+  /* Amounts and addresses line up column-wise only if digits share a width. */
+  font-variant-numeric: tabular-nums;
   outline: none;
   width: 100%;
-  transition: border-color 0.3s;
+  transition: border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease), background-color var(--fast) var(--ease);
+}
+
+.input-arc:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .input-arc:focus {
-  border-color: rgba(20, 184, 166, 0.4);
+  border-color: rgba(var(--arc-500) / 0.5);
+  background: rgba(0, 0, 0, 0.35);
+  /* A ring rather than a glow: it marks the field precisely without bleeding
+     light onto whatever sits next to it. */
+  box-shadow: 0 0 0 3px rgba(var(--arc-500) / 0.12);
 }
 
-.input-arc::placeholder {
-  color: #475569;
+.input-arc::placeholder { color: var(--text-muted); }
+
+.input-arc:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-/* Glow Effects */
+/* ========== EFFECTS ========== */
+
 .glow-teal {
-  box-shadow: 0 0 40px rgba(20, 184, 166, 0.15), 0 0 80px rgba(20, 184, 166, 0.05);
+  box-shadow: 0 0 40px rgba(var(--arc-500) / 0.15), 0 0 80px rgba(var(--arc-500) / 0.05);
 }
 
 .glow-teal-sm {
-  box-shadow: 0 0 20px rgba(20, 184, 166, 0.1);
+  box-shadow: 0 0 20px rgba(var(--arc-500) / 0.12);
 }
 
-/* Status Badge */
-.badge-success {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
+/* ========== BADGES ========== */
+
+/*
+ * Status badges share one shape and differ only in hue, so the colour is doing
+ * the work of distinguishing them. Each pairs a tinted fill with a matching
+ * border, which holds up against both the card and the page background.
+ */
+.badge-success,
+.badge-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 600;
+  letter-spacing: -0.01em;
+  border: 1px solid transparent;
+}
+
+.badge-success {
+  background: rgba(var(--success) / 0.12);
+  color: #6ee7a8;
+  border-color: rgba(var(--success) / 0.25);
 }
 
 .badge-warning {
-  background: rgba(234, 179, 8, 0.15);
-  color: #facc15;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  background: rgba(var(--warning) / 0.12);
+  color: #fbbf24;
+  border-color: rgba(var(--warning) / 0.25);
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #0f172a; }
-::-webkit-scrollbar-thumb { background: #0d9488; border-radius: 3px; }
+/* ========== SCROLLBAR ========== */
 
-/* Number Input */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.18); background-clip: content-box; }
+
+/* Firefox has no pseudo-element scrollbar; this is the equivalent. */
+* { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.12) transparent; }
+
+/* ========== NUMBER INPUT ========== */
+
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
 input[type="number"] { -moz-appearance: textfield; }
 
-/* Fade in */
-.animate-in {
-  animation: fadeIn 0.6s ease-out;
-}
+/* ========== ENTRANCE ========== */
+
+.animate-in { animation: fadeIn 0.4s var(--ease); }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Placeholder shimmer for loading states, so a pending card reads as loading
+   rather than as empty. */
+.skeleton {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+  border-radius: 0.75rem;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }

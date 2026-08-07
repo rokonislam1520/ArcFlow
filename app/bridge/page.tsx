@@ -86,9 +86,11 @@ function ChainSelect({
           if (next) onChange(next);
         }}
         disabled={disabled || options.length === 0}
-        className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm
-                   focus:border-arc-500 focus:ring-1 focus:ring-arc-500/30 outline-none
-                   disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="w-full px-3 py-2.5 rounded-xl bg-black/25 border border-white/10 text-sm text-white
+                   hover:border-white/[0.14]
+                   focus:border-arc-500/50 focus:bg-black/35 focus:ring-[3px] focus:ring-arc-500/[0.12]
+                   transition-all duration-200 outline-none
+                   disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {options.map((c) => (
           <option key={c.id} value={c.id} className="bg-[#0e1117]">
@@ -355,9 +357,13 @@ export default function BridgePage() {
             onClick={() => void handleSwapDirection()}
             disabled={!destination || isBusy || switching}
             title="Swap direction"
-            className="mb-6 p-2 rounded-xl bg-white/5 border border-white/10
-                       hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed
-                       transition-colors shrink-0"
+            // Matches the swap page's toggle: same rotation, same easing, so the
+            // two flows feel like one product.
+            className="mb-6 p-2 rounded-2xl bg-slate-850 border border-white/10 text-slate-300
+                       hover:bg-white/10 hover:border-arc-500/40 hover:text-arc-300 hover:rotate-180
+                       active:scale-95
+                       disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:rotate-0
+                       shadow-card transition-all duration-300 ease-premium shrink-0"
             aria-label="Swap source and destination"
           >
             {switching ? (
@@ -406,9 +412,11 @@ export default function BridgePage() {
             inputMode="decimal"
             placeholder="0.00"
             disabled={isBusy}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-lg
-                       focus:border-arc-500 focus:ring-1 focus:ring-arc-500/30 outline-none
-                       disabled:opacity-40 transition-colors"
+            className="w-full bg-black/25 border border-white/10 rounded-xl px-4 py-3 text-lg text-white
+                       tabular-nums hover:border-white/[0.14]
+                       focus:border-arc-500/50 focus:bg-black/35 focus:ring-[3px] focus:ring-arc-500/[0.12]
+                       transition-all duration-200 outline-none
+                       disabled:opacity-40"
           />
         </div>
 
@@ -429,9 +437,10 @@ export default function BridgePage() {
               onChange={(e) => setRecipient(e.target.value.trim())}
               placeholder="0x…"
               spellCheck={false}
-              className="mt-2 w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3
-                         font-mono text-sm focus:border-arc-500 focus:ring-1 focus:ring-arc-500/30
-                         outline-none transition-colors"
+              className="mt-2 w-full bg-black/25 border border-white/10 rounded-xl px-4 py-3 text-white
+                         font-mono text-sm hover:border-white/[0.14] transition-all duration-200
+                         focus:border-arc-500/50 focus:bg-black/35 focus:ring-[3px] focus:ring-arc-500/[0.12]
+                         outline-none"
             />
           )}
         </div>
