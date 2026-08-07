@@ -41,8 +41,9 @@ module.exports = {
           // The card surface from the palette. Named 850 because that is the
           // slot it occupies between Tailwind's 800 and 900.
           850: '#101827',
-          // The app background.
-          975: '#070b14',
+          // The app background base. Kept in step with `--bg` in globals.css,
+          // which the background gradient is layered over.
+          975: '#050816',
         },
       },
       borderRadius: {

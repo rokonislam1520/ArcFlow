@@ -16,11 +16,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      {/* The ambient background lives entirely in `.bg-arc-dark` (globals.css):
+          a deep-space base tint with four very low-opacity glow pools, fixed so
+          it stays put while content scrolls. Defining it there rather than as
+          overlay elements here means every route inherits the same depth, and
+          there is no blurred layer for the browser to composite on scroll. */}
       <body className="bg-arc-dark min-h-screen">
-        <div className="fixed inset-0 pointer-events-none -z-10">
-          <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-arc-500/5 rounded-full blur-[128px]" />
-          <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-mint-500/5 rounded-full blur-[128px]" />
-        </div>
         {/* One wallet session shared by every page, so switching networks in
             the navbar is immediately reflected everywhere. */}
         <WalletProvider>

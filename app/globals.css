@@ -18,9 +18,18 @@
  */
 
 :root {
-  /* Surfaces */
-  --bg: #070b14;
+  /* Surfaces — deep-space palette. `--bg` is the base the gradient is drawn
+     over; `--card` stays darker than the glow pools so cards read as a
+     distinct, floating layer rather than blending into the background. */
+  --bg: #050816;
   --card: #101827;
+
+  /* Ambient glow hues, as space-separated RGB so they can be given an alpha at
+     the point of use — the same convention the accents below follow. */
+  --glow-cyan: 34 211 238;    /* #22D3EE — cold, from the top edge */
+  --glow-emerald: 20 241 149; /* #14F195 — brand green, upper left */
+  --glow-azure: 59 130 246;   /* #3B82F6 — electric blue, right */
+  --glow-purple: 139 92 246;  /* #8B5CF6 — highlight, lower right */
 
   /* Accents */
   --arc-500: 20 241 217;   /* primary   #14F1D9 */
@@ -85,16 +94,33 @@ h1, h2, h3, h4 {
 /* ========== BACKGROUND ========== */
 
 /*
- * Ambient depth for the app shell. Two wide, very low-opacity pools of the
- * primary and highlight accents keep a full-page dark background from reading
- * as flat black, without competing with content: at 8% they register as depth
- * rather than as colour.
+ * Ambient depth for the app shell.
+ *
+ * Built in two parts. A linear gradient tints the base from #08131F to #0B1628,
+ * which gives the page a vertical sense of light before any colour is added —
+ * that alone is most of the difference between "dark" and "deep". Over it sit
+ * four wide, heavily feathered glow pools, placed off the corners so their
+ * centres — the only genuinely bright part of a radial gradient — fall outside
+ * the viewport and content never has to sit on top of one.
+ *
+ * The opacities (5–7%) are the point of restraint. A glow that can be named as
+ * a colour is too strong: these should only register as the background not
+ * being flat. `transparent 70%` keeps each pool's falloff long, so no edge is
+ * ever visible as a ring.
+ *
+ * `fixed` attachment means the light stays put while content scrolls past it,
+ * which is what makes the page feel like it sits in a space rather than on a
+ * texture that scrolls away.
  */
 .bg-arc-dark {
   background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(var(--arc-500) / 0.08), transparent 70%),
-    radial-gradient(ellipse 60% 50% at 90% 10%, rgba(var(--iris-500) / 0.06), transparent 70%),
-    var(--bg);
+    /* Glows, painted over the base tint. */
+    radial-gradient(ellipse 70% 45% at 50% -8%, rgba(var(--glow-cyan) / 0.07), transparent 70%),
+    radial-gradient(ellipse 55% 45% at 8% 20%, rgba(var(--glow-emerald) / 0.05), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 95% 25%, rgba(var(--glow-azure) / 0.06), transparent 70%),
+    radial-gradient(ellipse 65% 45% at 80% 100%, rgba(var(--glow-purple) / 0.06), transparent 70%),
+    /* Base tint, deepest at the top so the page reads as lit from above. */
+    linear-gradient(170deg, #08131f 0%, #0b1628 45%, var(--bg) 100%);
   background-attachment: fixed;
 }
 
