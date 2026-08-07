@@ -13,9 +13,9 @@
  * settings belong in navigation with the rest of the app's pages.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getEnvChains, hasArcSupport, type ArcChain } from '@/lib/chains';
+import { getSelectableChains, type ArcChain } from '@/lib/chains';
 import { chainDisplayName } from '@/lib/chainBrand';
-import { useNetworkMode } from '@/lib/network';
+import { useModeSwitch } from '@/lib/useModeSwitch';
 import { useWallet } from '@/lib/WalletProvider';
 import { useSession } from '@/lib/SessionProvider';
 import { useProfile } from '@/lib/ProfileProvider';
@@ -38,12 +38,13 @@ export function AccountMenu() {
   } = useWallet();
   const session = useSession();
   const profile = useProfile();
-  const { isTestnet, setMode, ready } = useNetworkMode();
+  // A mode change is one operation: it flips the mode, moves the wallet to that
+  // mode's default chain, and refreshes every chain-dependent screen.
+  const { isTestnet, ready, switching: switchingMode, switchMode } = useModeSwitch();
 
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<'root' | 'networks'>('root');
   const [copied, setCopied] = useState(false);
-  const [confirmMainnet, setConfirmMainnet] = useState(false);
   const [switching, setSwitching] = useState<string | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -52,7 +53,6 @@ export function AccountMenu() {
   const close = useCallback(() => {
     setOpen(false);
     setView('root');
-    setConfirmMainnet(false);
   }, []);
 
   // Outside click and Escape both dismiss. A menu that traps you until you
@@ -127,8 +127,7 @@ export function AccountMenu() {
     close();
   };
 
-  const chains = getEnvChains(isTestnet);
-  const arcMissingOnMainnet = !hasArcSupport(false);
+  const chains = getSelectableChains(isTestnet);
 
   return (
     <div ref={rootRef} className="relative shrink-0">
@@ -262,59 +261,31 @@ export function AccountMenu() {
                   Mode
                 </div>
 
-                {confirmMainnet ? (
-                  <div className="px-2 pb-1">
-                    <p className="text-xs text-slate-300 mb-1">Switch to mainnet?</p>
-                    <p className="text-[11px] text-slate-500 mb-2">
-                      Transactions will move real funds and cannot be reversed.
-                    </p>
-                    {/* Arc is testnet-only today, so say so rather than let the
-                        flagship chain quietly vanish from every selector. */}
-                    {arcMissingOnMainnet && (
-                      <p className="text-[11px] text-amber-300/90 mb-2">
-                        Arc has no mainnet yet and will not appear in mainnet mode.
-                      </p>
-                    )}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          setMode('mainnet');
-                          setConfirmMainnet(false);
-                        }}
-                        className="flex-1 px-2 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/30 text-[11px]"
-                      >
-                        Use mainnet
-                      </button>
-                      <button
-                        onClick={() => setConfirmMainnet(false)}
-                        className="flex-1 px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-[11px]"
-                      >
-                        Stay on testnet
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    role="group"
-                    aria-label="Network mode"
-                    className="mx-2 mb-1 grid grid-cols-2 gap-1 p-1 rounded-lg bg-black/30 border border-white/5"
-                  >
-                    <ModeOption
-                      label="Testnet"
-                      active={ready && isTestnet}
-                      // Moving to testnet is always safe, so it needs no
-                      // confirmation; only the mainnet direction does.
-                      onClick={() => setMode('testnet')}
-                      activeClass="bg-sky-500/20 text-sky-200 border-sky-500/40"
-                    />
-                    <ModeOption
-                      label="Mainnet"
-                      active={ready && !isTestnet}
-                      onClick={() => (isTestnet ? setConfirmMainnet(true) : undefined)}
-                      activeClass="bg-emerald-500/20 text-emerald-200 border-emerald-500/40"
-                    />
-                  </div>
-                )}
+                {/* One tap switches, in both directions. The mode is already
+                    stated in the header badge and on every mainnet row, and the
+                    wallet raises its own prompt for the chain change, so a
+                    confirmation here was a third notice for a choice the user
+                    can reverse with one more tap. */}
+                <div
+                  role="group"
+                  aria-label="Network mode"
+                  className="mx-2 mb-1 grid grid-cols-2 gap-1 p-1 rounded-lg bg-black/30 border border-white/5"
+                >
+                  <ModeOption
+                    label="Testnet"
+                    active={ready && isTestnet}
+                    disabled={switchingMode}
+                    onClick={() => void switchMode('testnet')}
+                    activeClass="bg-sky-500/20 text-sky-200 border-sky-500/40"
+                  />
+                  <ModeOption
+                    label="Mainnet"
+                    active={ready && !isTestnet}
+                    disabled={switchingMode}
+                    onClick={() => void switchMode('mainnet')}
+                    activeClass="bg-emerald-500/20 text-emerald-200 border-emerald-500/40"
+                  />
+                </div>
               </div>
 
               {/* Exit */}
@@ -395,19 +366,24 @@ export function AccountMenu() {
 function ModeOption({
   label,
   active,
+  disabled,
   onClick,
   activeClass,
 }: {
   label: string;
   active: boolean;
+  disabled?: boolean;
   onClick: () => void;
   activeClass: string;
 }) {
   return (
     <button
       onClick={onClick}
+      // Disabled only while a switch is in flight, so a second tap cannot start
+      // a competing chain request before the first has settled.
+      disabled={disabled}
       aria-pressed={active}
-      className={`px-2 py-1.5 rounded-md text-xs border transition-colors ${
+      className={`px-2 py-1.5 rounded-md text-xs border transition-colors disabled:cursor-not-allowed ${
         active ? activeClass : 'border-transparent text-slate-400 hover:text-white hover:bg-white/5'
       }`}
     >

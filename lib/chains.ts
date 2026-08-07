@@ -145,9 +145,10 @@ export function hasArcSupport(isTestnet: boolean): boolean {
 /**
  * Networks users often expect that App Kit cannot route today.
  *
- * BNB Chain is not a CCTP domain and is absent from the registry entirely, so
- * there is no Circle path to it. Surfacing this as data lets the UI say so
- * plainly rather than leaving users to wonder why a chain is missing.
+ * None of these is a CCTP domain, and none appears in the registry, so there is
+ * no Circle path to any of them. Surfacing this as data lets the UI say so
+ * plainly rather than leaving users to wonder why a chain is missing — or worse,
+ * listing it and failing at the first balance read.
  */
 export const UNSUPPORTED_NETWORKS: ReadonlyArray<{
   name: string;
@@ -158,7 +159,62 @@ export const UNSUPPORTED_NETWORKS: ReadonlyArray<{
     reason:
       'Not supported by Circle CCTP or App Kit. Routing to it would require a third-party bridge with a different trust model.',
   },
+  {
+    name: 'Bitcoin',
+    reason:
+      'Not an EVM chain and not an App Kit domain. It cannot hold the ERC-20 stablecoins this app moves.',
+  },
+  {
+    name: 'Tron',
+    reason:
+      'Not supported by App Kit. Its USDT is issued on a network Circle does not route, so no quote could settle.',
+  },
 ];
+
+/**
+ * Preferred order for the mainnet network selector.
+ *
+ * The selector is a shortlist, not the whole registry. It mirrors the networks
+ * a user is most likely to arrive from, in the order a mainstream wallet shows
+ * them, so the list is scannable instead of being 23 rows deep.
+ *
+ * Ids are matched against the registry rather than trusted: an entry that App
+ * Kit stops shipping disappears from the list instead of becoming a row that
+ * cannot load a balance. That is also why BNB Chain, Bitcoin and Tron are not
+ * here — see `UNSUPPORTED_NETWORKS`; listing them would promise routes that
+ * cannot exist.
+ */
+const MAINNET_SELECTOR_ORDER: readonly string[] = [
+  'Ethereum',
+  'Linea',
+  'Base',
+  'Arbitrum',
+  'Optimism',
+  'Polygon',
+  'Solana',
+  'Monad',
+];
+
+/**
+ * Chains offered in the network selector for a mode.
+ *
+ * Mainnet is curated (see `MAINNET_SELECTOR_ORDER`); testnet is returned whole,
+ * because a tester needs whatever chain their faucet funded and there is no
+ * mainstream ordering to mirror.
+ *
+ * Deliberately separate from `getEnvChains`, which still returns everything:
+ * Swap and Bridge quote against the full registry, and narrowing what the app
+ * can route just to shorten a menu would remove working destinations.
+ */
+export function getSelectableChains(isTestnet: boolean): ArcChain[] {
+  const available = getEnvChains(isTestnet);
+  if (isTestnet) return available;
+
+  const byId = new Map(available.map((c) => [c.id, c]));
+  return MAINNET_SELECTOR_ORDER.map((id) => byId.get(id)).filter(
+    (c): c is ArcChain => c !== undefined
+  );
+}
 
 
 export function getChainById(id: string): ArcChain | undefined {
