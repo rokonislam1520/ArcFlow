@@ -10,8 +10,12 @@
  *
  * Nothing about available routes is hardcoded: bridgeChains is whatever
  * getSupportedChains('bridge') returns for the current network mode.
+ *
+ * Layout note: the two-panel form (send card, circular switch, receive card)
+ * is presentation only. Every value, handler, and guard below is the same one
+ * the previous single-column form used.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { isAddress, parseUnits, type Address } from 'viem';
 import { getEnvChains, type ArcChain } from '@/lib/chains';
 import { useNetworkMode } from '@/lib/network';
@@ -20,24 +24,8 @@ import { useChainBalances } from '@/lib/useBalances';
 import { useAppKitOps } from '@/lib/useAppKitOps';
 import { useOpNotifications } from '@/lib/notifications';
 import { OpStatus } from '@/components/OpStatus';
-
-// Small arrow icon so we can avoid an icon dependency.
-function ArrowRight({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M4 10h12M11 5l5 5-5 5" />
-    </svg>
-  );
-}
+import { ChainMark, TokenMark } from '@/components/BrandMark';
+import { tokensForChain, type SwapToken } from '@/lib/swapTokens';
 
 function SwapIcon({ className }: { className?: string }) {
   return (
@@ -51,61 +39,220 @@ function SwapIcon({ className }: { className?: string }) {
       className={className}
       aria-hidden="true"
     >
-      <path d="M3 7h14M14 3l4 4-4 4M17 13H3M6 9l-4 4 4 4" />
+      <path d="M10 3v14M6 13l4 4 4-4" />
     </svg>
   );
 }
 
-function ChainSelect({
+function CaretIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M6 8l4 4 4-4" />
+    </svg>
+  );
+}
+
+function WalletIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M3 6.5A1.5 1.5 0 014.5 5h11A1.5 1.5 0 0117 6.5v7A1.5 1.5 0 0115.5 15h-11A1.5 1.5 0 013 13.5v-7z" />
+      <path d="M13.5 10.5h.5" />
+    </svg>
+  );
+}
+
+function CheckIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M4 10.5l4 4 8-9" />
+    </svg>
+  );
+}
+
+/**
+ * Chain picker rendered as a logo chip with a popover list.
+ *
+ * Replaces the native <select> purely for looks; it calls the same onChange
+ * with the same ArcChain the <select> resolved, so the network-switch path is
+ * untouched. Keyboard users keep a real button, Escape closes, and the list
+ * is a listbox with the current chain marked selected.
+ */
+function ChainChip({
   id,
   label,
   value,
   options,
   onChange,
   disabled,
-  sublabel,
 }: {
   id: string;
   label: string;
-  value: string;
+  value: ArcChain | null;
   options: ArcChain[];
   onChange: (chain: ArcChain) => void;
   disabled?: boolean;
-  sublabel?: string;
 }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  // Close on outside click or Escape. Both listeners are only attached while
+  // the popover is open, so a closed chip costs nothing.
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: MouseEvent) {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const isDisabled = disabled || options.length === 0;
+
   return (
-    <div className="flex-1 min-w-0">
-      <label htmlFor={id} className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wide">
-        {label}
-      </label>
-      <select
-        id={id}
-        value={value}
-        onChange={(e) => {
-          const next = options.find((c) => c.id === e.target.value);
-          if (next) onChange(next);
-        }}
-        disabled={disabled || options.length === 0}
-        className="w-full px-3 py-2.5 rounded-xl bg-black/25 border border-white/10 text-sm text-white
-                   hover:border-white/[0.14]
-                   focus:border-arc-500/50 focus:bg-black/35 focus:ring-[3px] focus:ring-arc-500/[0.12]
-                   transition-all duration-200 outline-none
-                   disabled:opacity-40 disabled:cursor-not-allowed"
+    <div className="relative" ref={wrapRef}>
+      <span id={`${id}-label`} className="sr-only">
+        {label} network
+      </span>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        disabled={isDisabled}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-labelledby={`${id}-label`}
+        className="group flex items-center gap-2 pl-1.5 pr-2.5 py-1.5 rounded-full
+                   bg-white/[0.06] border border-white/10 text-sm font-medium text-white
+                   hover:bg-white/10 hover:border-white/20 active:scale-[0.98]
+                   disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white/[0.06]
+                   shadow-card transition-all duration-200 ease-premium"
       >
-        {options.map((c) => (
-          <option key={c.id} value={c.id} className="bg-[#0e1117]">
-            {c.label}
-          </option>
-        ))}
-        {options.length === 0 && (
-          <option value="" disabled>
-            No chains available
-          </option>
+        {value ? (
+          <ChainMark chain={value} size={22} />
+        ) : (
+          <span className="w-[22px] h-[22px] rounded-full bg-white/10" />
         )}
-      </select>
-      {sublabel && <p className="mt-1 text-xs text-slate-500">{sublabel}</p>}
+        <span className="truncate max-w-[110px] sm:max-w-[140px]">
+          {value?.label ?? 'Select'}
+        </span>
+        <CaretIcon
+          className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
+            open ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          aria-labelledby={`${id}-label`}
+          className="absolute z-30 mt-2 left-0 w-60 max-h-72 overflow-y-auto
+                     glass rounded-2xl border border-white/10 p-1.5
+                     shadow-float animate-in"
+        >
+          {options.map((c) => {
+            const selected = c.id === value?.id;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                onClick={() => {
+                  setOpen(false);
+                  onChange(c);
+                }}
+                className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left text-sm
+                            transition-colors duration-150
+                            ${
+                              selected
+                                ? 'bg-arc-500/12 text-white'
+                                : 'text-slate-300 hover:bg-white/[0.07] hover:text-white'
+                            }`}
+              >
+                <ChainMark chain={c} size={22} />
+                <span className="flex-1 truncate">{c.label}</span>
+                {selected && <CheckIcon className="w-4 h-4 text-arc-400 shrink-0" />}
+              </button>
+            );
+          })}
+          {options.length === 0 && (
+            <p className="px-2.5 py-3 text-sm text-slate-500">No chains available</p>
+          )}
+        </div>
+      )}
     </div>
   );
+}
+
+/**
+ * Token chip.
+ *
+ * Deliberately static. Bridging here is USDC over Circle CCTP — the chain list
+ * itself is filtered to chains with a USDC address — so a picker offering other
+ * assets would let someone choose a token the bridge cannot quote. The chip
+ * matches the selector shape used elsewhere without implying a choice that
+ * does not exist.
+ */
+function TokenChip({ token }: { token: SwapToken | null }) {
+  return (
+    <div
+      title="Bridging is USDC-only over Circle CCTP"
+      className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full
+                 bg-white/[0.06] border border-white/10 shadow-card shrink-0"
+    >
+      {token ? (
+        <TokenMark token={token} size={22} badge={false} />
+      ) : (
+        <span className="w-[22px] h-[22px] rounded-full bg-white/10" />
+      )}
+      <span className="text-sm font-semibold text-white">USDC</span>
+    </div>
+  );
+}
+
+/** USD line under each amount. USDC is dollar-denominated, so this is 1:1. */
+function usdLine(amount: string): string {
+  const n = Number(amount);
+  if (!amount || !Number.isFinite(n)) return '$0.00';
+  return n.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 2,
+  });
 }
 
 export default function BridgePage() {
@@ -138,7 +285,7 @@ export default function BridgePage() {
    * user changes network in MetaMask directly. Both are treated identically on
    * purpose: bridging can only burn on the chain the wallet is actually on, so
    * a source selection that disagrees with the wallet is never actionable.
-   * Mirroring the wallet keeps the dropdown describing reality.
+   * Mirroring the wallet keeps the chip describing reality.
    */
   useEffect(() => {
     const walletChain = bridgeChains.find((c) => c.id === activeChain.id);
@@ -175,6 +322,20 @@ export default function BridgePage() {
   // no explicit refresh call is needed at the switch site.
   const { balances, refresh } = useChainBalances(source, address as Address | null);
   const usdc = balances.find((b) => b.symbol === 'USDC');
+
+  // Destination-side balance, shown so the user can see where funds land.
+  const { balances: destBalances } = useChainBalances(destination, address as Address | null);
+  const destUsdc = destBalances.find((b) => b.symbol === 'USDC');
+
+  // USDC as a token record on each side, for the logo chips.
+  const sourceToken = useMemo(
+    () => (source ? tokensForChain(source).find((t) => t.alias === 'USDC') ?? null : null),
+    [source]
+  );
+  const destToken = useMemo(
+    () => (destination ? tokensForChain(destination).find((t) => t.alias === 'USDC') ?? null : null),
+    [destination]
+  );
 
   useOpNotifications(state, source ?? activeChain);
 
@@ -293,16 +454,16 @@ export default function BridgePage() {
   const networkMismatch = address && !walletOnSelectedSource && !switching;
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-12">
+    <div className="max-w-xl mx-auto px-4 py-10 sm:py-14">
       {/* Header */}
-      <h1 className="text-3xl font-bold mb-1">Bridge</h1>
-      <p className="text-slate-400 text-sm mb-8">
-        Move USDC across chains via Circle CCTP.
-      </p>
+      <div className="mb-7">
+        <h1 className="text-3xl font-bold mb-1">Bridge</h1>
+        <p className="text-slate-400 text-sm">Move USDC across chains via Circle CCTP.</p>
+      </div>
 
       {/* Network mismatch banner */}
       {networkMismatch && source && (
-        <div className="mb-5 glass p-4 border border-amber-500/20 rounded-xl">
+        <div className="mb-4 glass p-4 border border-amber-500/20 rounded-2xl">
           <p className="text-amber-300 text-sm mb-2">
             Your wallet is on a different network. Switch to{' '}
             <strong>{source.label}</strong> to bridge from it.
@@ -319,7 +480,7 @@ export default function BridgePage() {
 
       {/* Wallet error banner (e.g. user declined) */}
       {walletError && (
-        <div className="mb-5 glass p-3 border border-red-500/20 rounded-xl flex items-start gap-2">
+        <div className="mb-4 glass p-3 border border-red-500/20 rounded-2xl flex items-start gap-2">
           <span className="text-red-400 text-xs mt-0.5">⚠</span>
           <p className="text-red-300 text-sm flex-1">{walletError}</p>
           <button
@@ -332,97 +493,133 @@ export default function BridgePage() {
         </div>
       )}
 
-      <div className="glass p-6 space-y-5">
-
-        {/* Chain selector row */}
-        <div className="flex items-end gap-2">
-          <ChainSelect
+      {/* ---- Send panel ---- */}
+      <section className="glass rounded-3xl p-5 sm:p-6" aria-label="Send">
+        <div className="flex items-center justify-between gap-3 mb-5">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            From
+          </span>
+          <ChainChip
             id="bridge-source"
             label="From"
-            value={source?.id ?? ''}
+            value={source}
             options={bridgeChains}
             onChange={(c) => void handleSourceChange(c)}
             disabled={isBusy || switching}
-            sublabel={
-              switching
-                ? 'Requesting network switch…'
-                : usdc
-                  ? `Balance: ${usdc.formatted} USDC`
-                  : undefined
-            }
-          />
-
-          {/* Direction swap */}
-          <button
-            onClick={() => void handleSwapDirection()}
-            disabled={!destination || isBusy || switching}
-            title="Swap direction"
-            // Matches the swap page's toggle: same rotation, same easing, so the
-            // two flows feel like one product.
-            className="mb-6 p-2 rounded-2xl bg-slate-850 border border-white/10 text-slate-300
-                       hover:bg-white/10 hover:border-arc-500/40 hover:text-arc-300 hover:rotate-180
-                       active:scale-95
-                       disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:rotate-0
-                       shadow-card transition-all duration-300 ease-premium shrink-0"
-            aria-label="Swap source and destination"
-          >
-            {switching ? (
-              <span className="inline-block w-5 h-5 rounded-full border-2 border-slate-500 border-t-arc-400 animate-spin" />
-            ) : (
-              <SwapIcon className="w-5 h-5 text-slate-400" />
-            )}
-          </button>
-
-          <ChainSelect
-            id="bridge-destination"
-            label="To"
-            value={destination?.id ?? ''}
-            options={destChains}
-            onChange={setDestination}
-            disabled={isBusy || switching || destChains.length === 0}
           />
         </div>
 
-        {/* Route arrow (visual only, desktop) */}
-        <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 -mt-2 -mb-1">
-          <span className="truncate max-w-[120px]">{source?.label}</span>
-          <ArrowRight className="w-4 h-4 shrink-0" />
-          <span className="truncate max-w-[120px]">{destination?.label ?? '—'}</span>
-          <span className="ml-auto text-arc-400 shrink-0">CCTP</span>
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <label htmlFor="bridge-amount" className="sr-only">
+              Amount in USDC
+            </label>
+            <input
+              id="bridge-amount"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ''))}
+              inputMode="decimal"
+              placeholder="0.00"
+              disabled={isBusy}
+              className="w-full bg-transparent border-0 p-0 outline-none
+                         text-[2rem] sm:text-[2.5rem] leading-none font-semibold tracking-tight
+                         text-white tabular-nums placeholder:text-slate-600
+                         disabled:opacity-40"
+            />
+          </div>
+          <TokenChip token={sourceToken} />
         </div>
 
-        {/* Amount */}
-        <div>
-          <div className="flex justify-between text-sm text-slate-400 mb-2">
-            <label htmlFor="bridge-amount">Amount (USDC)</label>
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <p className="text-sm text-slate-500 tabular-nums">{usdLine(amount)}</p>
+
+          <div className="flex items-center gap-2 text-sm text-slate-400 min-w-0">
+            <WalletIcon className="w-4 h-4 shrink-0 text-slate-500" />
+            <span className="tabular-nums truncate">
+              {switching ? 'Switching…' : usdc ? usdc.formatted : '—'}
+            </span>
             {usdc && (
               <button
                 onClick={() => setAmount(usdc.formatted.replace(/,/g, ''))}
-                className="text-arc-400 hover:underline"
-                tabIndex={-1}
+                className="px-2 py-0.5 rounded-md text-xs font-semibold
+                           bg-arc-500/12 text-arc-300 border border-arc-500/25
+                           hover:bg-arc-500/20 active:scale-95
+                           transition-all duration-150 shrink-0"
               >
-                Max: {usdc.formatted}
+                MAX
               </button>
             )}
           </div>
-          <input
-            id="bridge-amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ''))}
-            inputMode="decimal"
-            placeholder="0.00"
-            disabled={isBusy}
-            className="w-full bg-black/25 border border-white/10 rounded-xl px-4 py-3 text-lg text-white
-                       tabular-nums hover:border-white/[0.14]
-                       focus:border-arc-500/50 focus:bg-black/35 focus:ring-[3px] focus:ring-arc-500/[0.12]
-                       transition-all duration-200 outline-none
-                       disabled:opacity-40"
+        </div>
+      </section>
+
+      {/* ---- Direction switch, seated on the seam between the panels ---- */}
+      <div className="relative flex justify-center -my-4 z-10">
+        <button
+          onClick={() => void handleSwapDirection()}
+          disabled={!destination || isBusy || switching}
+          title="Swap direction"
+          // The thick border matches the page background so the button reads as
+          // a notch punched through the seam rather than a chip floating on it.
+          className="w-12 h-12 grid place-items-center rounded-full
+                     bg-slate-850 border-4 border-slate-975 text-slate-300
+                     hover:text-arc-300 hover:bg-slate-800 hover:shadow-glow-arc
+                     active:scale-95
+                     disabled:opacity-40 disabled:cursor-not-allowed
+                     shadow-float transition-all duration-300 ease-premium"
+          aria-label="Swap source and destination"
+        >
+          {switching ? (
+            <span className="w-5 h-5 rounded-full border-2 border-slate-600 border-t-arc-400 animate-spin" />
+          ) : (
+            <SwapIcon className="w-5 h-5" />
+          )}
+        </button>
+      </div>
+
+      {/* ---- Receive panel ---- */}
+      <section className="glass rounded-3xl p-5 sm:p-6" aria-label="Receive">
+        <div className="flex items-center justify-between gap-3 mb-5">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            To
+          </span>
+          <ChainChip
+            id="bridge-destination"
+            label="To"
+            value={destination}
+            options={destChains}
+            onChange={setDestination}
+            disabled={isBusy || switching}
           />
         </div>
 
+        <div className="flex items-center gap-3">
+          <p
+            className="min-w-0 flex-1 text-[2rem] sm:text-[2.5rem] leading-none font-semibold
+                       tracking-tight tabular-nums truncate
+                       text-white/90"
+          >
+            {amount || <span className="text-slate-600">0.00</span>}
+          </p>
+          <TokenChip token={destToken} />
+        </div>
+
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <p className="text-sm text-slate-500 tabular-nums">{usdLine(amount)}</p>
+          <div className="flex items-center gap-2 text-sm text-slate-400 min-w-0">
+            <WalletIcon className="w-4 h-4 shrink-0 text-slate-500" />
+            <span className="tabular-nums truncate">
+              {destUsdc ? destUsdc.formatted : '—'}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* ---- Options, validation, CTA ---- */}
+      <div className="mt-5 space-y-4">
         {/* Custom recipient */}
-        <div>
-          <label className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer select-none">
+        <div className="glass rounded-2xl p-4">
+          <label className="flex items-center gap-2.5 text-sm text-slate-300 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={useCustomRecipient}
@@ -437,7 +634,8 @@ export default function BridgePage() {
               onChange={(e) => setRecipient(e.target.value.trim())}
               placeholder="0x…"
               spellCheck={false}
-              className="mt-2 w-full bg-black/25 border border-white/10 rounded-xl px-4 py-3 text-white
+              aria-label="Recipient address"
+              className="mt-3 w-full bg-black/25 border border-white/10 rounded-xl px-4 py-3 text-white
                          font-mono text-sm hover:border-white/[0.14] transition-all duration-200
                          focus:border-arc-500/50 focus:bg-black/35 focus:ring-[3px] focus:ring-arc-500/[0.12]
                          outline-none"
@@ -455,21 +653,17 @@ export default function BridgePage() {
           <button
             onClick={onQuote}
             disabled={!canSubmit}
-            className="btn-arc w-full py-3 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="btn-arc w-full py-3.5 text-base disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {switching
-              ? 'Switching network…'
-              : isBusy
-                ? 'Working…'
-                : 'Review bridge'}
+            {switching ? 'Switching network…' : isBusy ? 'Working…' : 'Review bridge'}
           </button>
         )}
 
         {/* Info line */}
         <p className="text-xs text-slate-500 leading-relaxed">
           Bridging burns USDC on{' '}
-          <span className="text-slate-400">{source?.label ?? 'the source chain'}</span> and mints it on{' '}
-          <span className="text-slate-400">{destination?.label ?? 'the destination'}</span> after
+          <span className="text-slate-400">{source?.label ?? 'the source chain'}</span> and mints it
+          on <span className="text-slate-400">{destination?.label ?? 'the destination'}</span> after
           Circle attests the transfer. Keep this tab open — the sequence takes a few minutes.
         </p>
 
@@ -490,7 +684,7 @@ export default function BridgePage() {
 
       {/* Unsupported chains note */}
       <div className="mt-6 text-xs text-slate-600 space-y-0.5">
-        <p>Only networks supported by Circle CCTP appear in the list above.</p>
+        <p>Only networks supported by Circle CCTP appear in the lists above.</p>
         <p>BNB Chain is not a CCTP domain and cannot be routed to.</p>
       </div>
     </div>
