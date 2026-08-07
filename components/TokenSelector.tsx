@@ -25,6 +25,7 @@ import { chainDisplayName } from '@/lib/chainBrand';
 import {
   type SwapToken,
   useTokenUniverse,
+  tokensForChain,
   swapChains,
   searchChains,
   searchTokens,
@@ -44,6 +45,15 @@ interface Props {
   /** The other side of the pair, excluded so a token cannot be swapped for itself. */
   exclude?: SwapToken;
   title?: string;
+  /**
+   * Restrict the picker to one chain, and hide the chain rail with it.
+   *
+   * For a same-chain operation such as Send, offering the full cross-chain
+   * universe would let someone pick a token on a chain their wallet is not on —
+   * a selection that could never be submitted. Locking the scope means every
+   * token on screen is one the current transaction can actually use.
+   */
+  lockedChain?: ArcChain;
 }
 
 /** A balance row as shown in the list. */
@@ -60,11 +70,21 @@ export function TokenSelector(props: Props) {
   return <TokenSelectorBody {...props} />;
 }
 
-function TokenSelectorBody({ onClose, onSelect, exclude, title }: Props) {
+function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: Props) {
   const { isTestnet } = useNetworkMode();
   const { address } = useWallet();
-  const universe = useTokenUniverse(isTestnet);
+  const crossChainUniverse = useTokenUniverse(isTestnet);
   const chains = useMemo(() => swapChains(isTestnet), [isTestnet]);
+
+  /**
+   * When locked, the universe comes from the chain itself rather than from the
+   * swap-capable set: a chain can be sendable without being swappable, and
+   * scoping to `useTokenUniverse` would wrongly show it as having no tokens.
+   */
+  const universe = useMemo(
+    () => (lockedChain ? tokensForChain(lockedChain) : crossChainUniverse),
+    [lockedChain, crossChainUniverse]
+  );
 
   const [chainFilter, setChainFilter] = useState<ArcChain | null>(null);
   const [chainQuery, setChainQuery] = useState('');
@@ -161,8 +181,11 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title }: Props) {
       <div
         // Floats above the page on desktop, and rises from the bottom edge on
         // mobile, where a sheet is the native-feeling shape for a picker.
-        className="w-full max-w-4xl h-[88vh] sm:h-[600px] bg-slate-850/95 backdrop-blur-2xl border border-white/10
-          rounded-t-3xl sm:rounded-4xl shadow-float flex flex-col overflow-hidden animate-scale-in"
+        // Narrower when locked: without the chain rail, the full width would
+        // leave a single short list stranded in a lot of empty space.
+        className={`w-full h-[88vh] sm:h-[600px] bg-slate-850/95 backdrop-blur-2xl border border-white/10
+          rounded-t-3xl sm:rounded-4xl shadow-float flex flex-col overflow-hidden animate-scale-in
+          ${lockedChain ? 'max-w-md sm:h-[560px]' : 'max-w-4xl'}`}
         onClick={(e) => e.stopPropagation()}
       >
         <header className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-white/10 shrink-0">
@@ -181,8 +204,11 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title }: Props) {
           </button>
         </header>
 
-        {/* Chain rail beside the token list on desktop, stacked on mobile. */}
+        {/* Chain rail beside the token list on desktop, stacked on mobile.
+            Omitted entirely when locked to one chain, where it would offer a
+            filter with exactly one valid answer. */}
         <div className="flex-1 flex flex-col sm:flex-row min-h-0">
+          {!lockedChain && (
           <div className="sm:w-60 shrink-0 border-b sm:border-b-0 sm:border-r border-white/10 flex flex-col min-h-0">
             <div className="p-3 sm:p-4 sm:border-b border-white/10 shrink-0">
               <SearchInput
@@ -264,6 +290,7 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title }: Props) {
               )}
             </div>
           </div>
+          )}
 
           {/* Token list */}
           <div className="flex-1 flex flex-col min-w-0">
@@ -271,7 +298,11 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title }: Props) {
               <SearchInput
                 value={tokenQuery}
                 onChange={setTokenQuery}
-                placeholder="Search for a token or paste address"
+                placeholder={
+                  lockedChain
+                    ? `Search tokens on ${chainDisplayName(lockedChain)}`
+                    : 'Search for a token or paste address'
+                }
                 autoFocus
               />
             </div>
@@ -290,17 +321,22 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title }: Props) {
                   {isAddressQuery(tokenQuery) ? (
                     <>
                       <p className="text-sm text-slate-300 mb-1.5">
-                        No routable token at that address.
+                        No supported token at that address.
                       </p>
                       <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-                        App Kit routes swaps for USDC, EURC, USDT and native assets. An
-                        arbitrary ERC-20 cannot be quoted here, so it is not offered.
+                        App Kit works with USDC, EURC, USDT and native assets. An arbitrary
+                        ERC-20 cannot be handled here, so it is not offered.
                       </p>
                     </>
                   ) : (
                     <p className="text-sm text-slate-400">
                       Nothing matches that search on{' '}
-                      {chainFilter ? chainDisplayName(chainFilter) : 'any chain'}.
+                      {lockedChain
+                        ? chainDisplayName(lockedChain)
+                        : chainFilter
+                          ? chainDisplayName(chainFilter)
+                          : 'any chain'}
+                      .
                     </p>
                   )}
                 </div>

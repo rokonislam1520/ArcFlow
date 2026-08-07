@@ -7,12 +7,15 @@
  */
 import { useMemo, useState } from 'react';
 import { isAddress, parseUnits, type Address } from 'viem';
-import { getChainTokens } from '@/lib/chains';
+import { getChainTokens, type TokenAlias } from '@/lib/chains';
 import { useWallet, useActiveChain } from '@/lib/WalletProvider';
 import { useChainBalances } from '@/lib/useBalances';
 import { useAppKitOps } from '@/lib/useAppKitOps';
 import { useOpNotifications } from '@/lib/notifications';
 import { OpStatus } from '@/components/OpStatus';
+import { TokenSelector } from '@/components/TokenSelector';
+import { TokenMark } from '@/components/BrandMark';
+import { tokensForChain } from '@/lib/swapTokens';
 
 export default function SendPage() {
   const { address, adapter, isUnsupportedChain } = useWallet();
@@ -25,12 +28,25 @@ export default function SendPage() {
   useOpNotifications(state, chain);
 
   const tokens = useMemo(() => getChainTokens(chain), [chain]);
-  const [token, setToken] = useState<string>('USDC');
+  const [token, setToken] = useState<TokenAlias>('USDC');
   const [to, setTo] = useState('');
   const [amount, setAmount] = useState('');
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   // The selected token may not exist on a newly selected chain.
-  const activeToken = tokens.includes(token as never) ? token : tokens[0];
+  const activeToken = tokens.includes(token) ? token : tokens[0];
+
+  /**
+   * The selected token as a display record, for the chip's logo and symbol.
+   *
+   * Derived from `activeToken` rather than tracked separately, so the thing
+   * shown is always the alias the transaction will actually use — including
+   * after a network change silently falls back to the chain's first token.
+   */
+  const selectedToken = useMemo(
+    () => tokensForChain(chain).find((t) => t.alias === activeToken) ?? null,
+    [chain, activeToken]
+  );
 
   const balance = balances.find((b) =>
     activeToken === 'NATIVE' ? b.address === undefined : b.symbol === activeToken
@@ -93,21 +109,46 @@ export default function SendPage() {
       <div className="glass p-6 space-y-5">
         <div>
           <label className="block text-sm text-slate-400 mb-2">Token</label>
-          <div className="flex flex-wrap gap-2">
-            {tokens.map((t) => (
-              <button
-                key={t}
-                onClick={() => setToken(t)}
-                className={`px-4 py-2 rounded-xl text-sm border transition-colors ${
-                  activeToken === t
-                    ? 'border-arc-500 bg-arc-500/15 text-arc-300'
-                    : 'border-white/10 bg-white/5 hover:bg-white/10'
-                }`}
-              >
-                {t === 'NATIVE' ? chain.nativeCurrency.symbol : t}
-              </button>
-            ))}
-          </div>
+          {/*
+            One chip opening the shared picker, rather than a button per token.
+            The row of buttons could not show logos or search, and it grew wider
+            with every token a chain supports; a chip stays a fixed size and
+            hands the list to the same modal the Swap page uses.
+          */}
+          <button
+            onClick={() => setPickerOpen(true)}
+            disabled={isBusy}
+            aria-haspopup="dialog"
+            className="w-full flex items-center gap-3 pl-2 pr-3 py-2 rounded-2xl
+                       bg-white/[0.06] border border-white/10
+                       hover:bg-white/[0.1] hover:border-arc-500/30 active:scale-[0.99]
+                       disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white/[0.06]
+                       transition-all duration-200 ease-premium"
+          >
+            {selectedToken ? (
+              <>
+                <TokenMark token={selectedToken} size={36} />
+                <span className="text-left leading-tight min-w-0">
+                  <span className="block text-sm font-bold">{selectedToken.symbol}</span>
+                  <span className="block text-[11px] text-slate-500 truncate">
+                    {selectedToken.name}
+                  </span>
+                </span>
+              </>
+            ) : (
+              <span className="pl-1 text-sm text-slate-400">Select token</span>
+            )}
+            <svg
+              className="w-4 h-4 text-slate-500 shrink-0 ml-auto"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+              aria-hidden
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
         </div>
 
         <div>
@@ -168,6 +209,20 @@ export default function SendPage() {
           </button>
         )}
       </div>
+
+      {/*
+        Locked to the active chain: a transfer here is same-chain, so a token on
+        any other network could not be sent even if it were selectable. The
+        picker's own `alias` is what the transaction uses, so selection needs no
+        translation.
+      */}
+      <TokenSelector
+        isOpen={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(t) => setToken(t.alias)}
+        lockedChain={chain}
+        title={`Send on ${chain.label}`}
+      />
     </div>
   );
 }
