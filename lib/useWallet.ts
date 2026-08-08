@@ -1,7 +1,6 @@
 'use client';
 /**
- * Compatibility layer for the contract-backed pages (Split / Merchant /
- * Recurring).
+ * Compatibility layer for the contract-backed pages (Merchant).
  *
  * Those pages call custom ArcFlow contracts, which App Kit does not cover, so
  * they still need a raw viem `WalletClient`. What they must NOT have is a
@@ -29,8 +28,8 @@ import { useWallet as useWalletContext, useActiveChain } from './WalletProvider'
 /**
  * Read client for the chain the ArcFlow contracts are deployed on.
  *
- * This is deliberately pinned rather than following the wallet: Split, Merchant
- * and Recurring state lives in contracts at fixed addresses on one deployment
+ * This is deliberately pinned rather than following the wallet: Merchant state
+ * lives in contracts at fixed addresses on one deployment
  * chain. Reading them through whatever network the wallet happens to be on
  * would query addresses that do not exist there.
  */

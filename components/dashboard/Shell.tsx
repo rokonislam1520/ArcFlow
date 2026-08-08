@@ -41,8 +41,6 @@ const NAV_GROUPS: Array<{
       { label: 'Receive', href: '/receive', icon: <Icon d="M12 5v14M5 12l7 7 7-7" /> },
       { label: 'Swap', href: '/swap', icon: <Icon d="M3 7h14M14 3l4 4-4 4M17 13H3M6 9l-4 4 4 4" /> },
       { label: 'Bridge', href: '/bridge', icon: <Icon d="M4 12h16M4 12a8 8 0 0116 0M7 12v6M17 12v6" /> },
-      { label: 'Split', href: '/split', icon: <Icon d="M6 3v6a3 3 0 003 3h6a3 3 0 013 3v6M6 21V9" /> },
-      { label: 'Recurring', href: '/recurring', icon: <Icon d="M3 12a9 9 0 019-9 9 9 0 018 5M21 12a9 9 0 01-9 9 9 9 0 01-8-5M17 8h4V4M7 16H3v4" /> },
     ],
   },
   {

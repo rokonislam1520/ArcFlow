@@ -47,12 +47,13 @@ const QUICK_ACTIONS = [
   { label: 'Swap', href: '/swap', d: 'M3 7h14M14 3l4 4-4 4M17 13H3M6 9l-4 4 4 4' },
   { label: 'Bridge', href: '/bridge', d: 'M4 12h16M4 12a8 8 0 0116 0M7 12v6M17 12v6' },
   { label: 'Pay', href: '/merchant', d: 'M3 9l1-5h16l1 5M4 9v11h16V9M9 20v-6h6v6' },
-  { label: 'Split', href: '/split', d: 'M6 3v6a3 3 0 003 3h6a3 3 0 013 3v6M6 21V9' },
 ];
 
 function QuickActions() {
+  // Column count tracks the action count, so the row fills exactly and leaves
+  // no empty cell at the end.
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5">
+    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2.5">
       {QUICK_ACTIONS.map((a) => (
         <Link
           key={a.href}

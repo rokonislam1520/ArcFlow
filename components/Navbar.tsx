@@ -13,8 +13,6 @@ const links = [
   { name: 'Receive', href: '/receive' },
   { name: 'Swap', href: '/swap' },
   { name: 'Bridge', href: '/bridge' },
-  { name: 'Split', href: '/split' },
-  { name: 'Recurring', href: '/recurring' },
   { name: 'Portfolio', href: '/portfolio' },
   { name: 'History', href: '/history' },
   { name: 'Pay', href: '/merchant' },

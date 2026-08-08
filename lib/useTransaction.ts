@@ -60,8 +60,6 @@ export function describeTxError(err: unknown): string {
           'Insufficient liquidity': 'Not enough liquidity in this pool.',
           'Pool not found': 'No liquidity pool exists for this token pair.',
           'Merchant not active': 'That merchant is not accepting payments.',
-          'Already paid': 'Your share is already settled.',
-          'Not a member': 'You are not a member of this split.',
           Expired: 'Transaction deadline passed. Try again.',
           'Zero amount': 'Enter an amount greater than zero.',
         };

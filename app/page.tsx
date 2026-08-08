@@ -9,8 +9,6 @@ const features = [
   { icon: '📊', title: 'Portfolio', description: 'Track all your stablecoin holdings across chains in one view.', href: '/portfolio' },
   { icon: '🤖', title: 'AI Assistant', description: 'Get spending insights, budgeting tips, and smart suggestions.', href: '/assistant' },
   { icon: '💳', title: 'Pay Merchant', description: 'Scan & pay at any merchant accepting stablecoins.', href: '/merchant' },
-  { icon: '📄', title: 'Recurring Payments', description: 'Auto-pay subscriptions, rent, and salaries in USDC.', href: '/recurring' },
-  { icon: '👥', title: 'Split Bills', description: 'Split dinner, rent, or trips with friends — settle in one tap.', href: '/split' },
 ];
 
 const stats = [
@@ -88,7 +86,9 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* Three across, so the six cards fill two even rows rather than
+              leaving a short trailing row. */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {features.map((f) => (
               <FeatureCard key={f.title} {...f} />
             ))}

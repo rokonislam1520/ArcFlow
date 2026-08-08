@@ -62,8 +62,6 @@ export const ADDRESSES = {
   send: envAddress(process.env.NEXT_PUBLIC_SEND_ADDRESS),
   swap: envAddress(process.env.NEXT_PUBLIC_SWAP_ADDRESS),
   pay: envAddress(process.env.NEXT_PUBLIC_PAY_ADDRESS),
-  recurring: envAddress(process.env.NEXT_PUBLIC_RECURRING_ADDRESS),
-  split: envAddress(process.env.NEXT_PUBLIC_SPLIT_ADDRESS),
 } as const;
 
 /** USDC uses 6 decimals - matches `minTransfer = 1_000_000` in ArcFlowSend. */
@@ -205,70 +203,6 @@ export const arcFlowSwapAbi = [
   },
 ] as const;
 
-export const arcFlowSplitAbi = [
-  {
-    type: 'function',
-    name: 'createSplit',
-    stateMutability: 'nonpayable',
-    inputs: [
-      { name: 'name', type: 'string' },
-      { name: 'members', type: 'address[]' },
-      { name: 'shares', type: 'uint256[]' },
-      { name: 'recipient', type: 'address' },
-    ],
-    outputs: [{ name: 'groupId', type: 'uint256' }],
-  },
-  {
-    type: 'function',
-    name: 'settleShare',
-    stateMutability: 'nonpayable',
-    inputs: [{ name: 'groupId', type: 'uint256' }],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'getGroup',
-    stateMutability: 'view',
-    inputs: [{ name: 'groupId', type: 'uint256' }],
-    outputs: [
-      { name: 'creator', type: 'address' },
-      { name: 'name', type: 'string' },
-      { name: 'totalAmount', type: 'uint256' },
-      { name: 'memberCount', type: 'uint256' },
-      { name: 'settledCount', type: 'uint256' },
-      { name: 'status', type: 'uint8' },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'getGroupMembers',
-    stateMutability: 'view',
-    inputs: [{ name: 'groupId', type: 'uint256' }],
-    outputs: [
-      { name: 'wallets', type: 'address[]' },
-      { name: 'shares', type: 'uint256[]' },
-      { name: 'paid', type: 'bool[]' },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'getUserGroups',
-    stateMutability: 'view',
-    inputs: [{ name: 'user', type: 'address' }],
-    outputs: [{ type: 'uint256[]' }],
-  },
-  {
-    type: 'function',
-    name: 'getOutstandingShare',
-    stateMutability: 'view',
-    inputs: [
-      { name: 'groupId', type: 'uint256' },
-      { name: 'user', type: 'address' },
-    ],
-    outputs: [{ type: 'uint256' }],
-  },
-] as const;
-
 export const arcFlowPayAbi = [
   {
     type: 'function',
@@ -319,58 +253,9 @@ export const arcFlowPayAbi = [
   },
 ] as const;
 
-export const arcFlowRecurringAbi = [
-  {
-    type: 'function',
-    name: 'createRecurring',
-    stateMutability: 'nonpayable',
-    inputs: [
-      { name: 'payee', type: 'address' },
-      { name: 'amount', type: 'uint256' },
-      { name: 'frequency', type: 'uint8' },
-      { name: 'maxExecutions', type: 'uint32' },
-      { name: 'name', type: 'string' },
-    ],
-    outputs: [{ name: 'paymentId', type: 'uint256' }],
-  },
-  {
-    type: 'function',
-    name: 'cancelRecurring',
-    stateMutability: 'nonpayable',
-    inputs: [{ name: 'paymentId', type: 'uint256' }],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'getPayment',
-    stateMutability: 'view',
-    inputs: [{ name: 'paymentId', type: 'uint256' }],
-    outputs: [
-      { name: 'payer', type: 'address' },
-      { name: 'payee', type: 'address' },
-      { name: 'amount', type: 'uint256' },
-      { name: 'frequency', type: 'uint8' },
-      { name: 'nextPayment', type: 'uint256' },
-      { name: 'totalPaid', type: 'uint256' },
-      { name: 'executions', type: 'uint32' },
-      { name: 'active', type: 'bool' },
-      { name: 'name', type: 'string' },
-    ],
-  },
-  {
-    type: 'function',
-    name: 'getUserPayments',
-    stateMutability: 'view',
-    inputs: [{ name: 'user', type: 'address' }],
-    outputs: [{ type: 'uint256[]' }],
-  },
-] as const;
-
 /** Feature gates - true when the addresses that flow needs are configured. */
 export const isConfigured = {
   send: Boolean(ADDRESSES.usdc && ADDRESSES.send),
   swap: Boolean(ADDRESSES.swap && AVAILABLE_TOKENS.length >= 2),
-  split: Boolean(ADDRESSES.usdc && ADDRESSES.split),
   pay: Boolean(ADDRESSES.usdc && ADDRESSES.pay),
-  recurring: Boolean(ADDRESSES.usdc && ADDRESSES.recurring),
 } as const;
