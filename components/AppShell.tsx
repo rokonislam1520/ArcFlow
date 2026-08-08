@@ -22,11 +22,8 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { AccountMenu } from '@/components/AccountMenu';
 import { ConnectButton } from '@/components/ConnectButton';
 import { NotificationBell } from '@/components/NotificationBell';
-import { useWallet, useActiveChain } from '@/lib/WalletProvider';
-import { chainDisplayName } from '@/lib/chainBrand';
+import { useWallet } from '@/lib/WalletProvider';
 import { useNetworkMode } from '@/lib/network';
-import { shortAddress } from '@/lib/useTransfers';
-import { StatusDot } from '@/components/dashboard/Primitives';
 
 /** Nav model. Grouped so the list stays scannable as it grows. */
 const NAV_GROUPS: Array<{
@@ -155,9 +152,6 @@ function Sidebar({
   pathname: string;
   onToggleCollapse: () => void;
 }) {
-  const { address, wallet, isConnecting } = useWallet();
-  const chain = useActiveChain();
-
   const width = collapsed ? 'lg:w-[76px]' : 'lg:w-[248px]';
 
   return (
@@ -228,47 +222,19 @@ function Sidebar({
         ))}
       </nav>
 
-      {/* Wallet status.
-          The extra bottom padding reserves the corner the fixed theme toggle
-          occupies. Without it the toggle would sit on top of the collapse
-          button, which is the one control here that must stay clickable. */}
-      <div className="p-3 pb-16 border-t border-hairline shrink-0">
-        {collapsed ? (
-          <div className="flex justify-center py-2" title={address ? shortAddress(address) : 'Not connected'}>
-            <StatusDot ok={address ? true : null} />
-          </div>
-        ) : (
-          <div className="rounded-xl bg-surface-input border border-hairline p-3">
-            <div className="flex items-center gap-2 mb-1.5">
-              <StatusDot ok={address ? true : null} />
-              <span className="text-xs font-medium truncate">
-                {isConnecting
-                  ? 'Connecting…'
-                  : address
-                    ? (wallet?.name ?? 'Wallet')
-                    : 'Not connected'}
-              </span>
-            </div>
-            {address ? (
-              <>
-                <div className="font-mono text-[11px] text-ink-secondary truncate">
-                  {shortAddress(address)}
-                </div>
-                <div className="text-[11px] text-ink-muted mt-1 truncate">
-                  {chainDisplayName(chain)}
-                </div>
-              </>
-            ) : (
-              <p className="text-[11px] text-ink-muted">
-                Connect to see balances and act on them.
-              </p>
-            )}
-          </div>
-        )}
+      {/* Sidebar footer: the collapse control only.
+          Connection state lives in the header account menu, which is where a
+          user goes to act on it. Repeating it here said the same thing twice
+          and neither copy could be interacted with.
 
+          Desktop-only, because the collapse button is: on mobile this would be
+          an empty bordered strip below the nav. The bottom padding reserves the
+          corner the fixed theme toggle occupies, so the toggle cannot land on
+          top of the button. */}
+      <div className="hidden lg:block p-3 pb-16 border-t border-hairline shrink-0">
         <button
           onClick={onToggleCollapse}
-          className="hidden lg:flex mt-2 w-full items-center justify-center gap-2 rounded-lg py-2 text-xs text-ink-muted hover:text-ink-primary hover:bg-surface-hover/[0.06] transition-colors"
+          className="flex w-full items-center justify-center gap-2 rounded-lg py-2 text-xs text-ink-muted hover:text-ink-primary hover:bg-surface-hover/[0.06] transition-colors"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           <svg
