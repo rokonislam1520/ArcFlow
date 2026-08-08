@@ -21,6 +21,7 @@ import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { AppShell } from '@/components/AppShell';
 import { Navbar } from '@/components/Navbar';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 /**
  * Routes that render outside the application shell.
@@ -42,9 +43,15 @@ export function Chrome({ children }: { children: ReactNode }) {
       <>
         <Navbar />
         <main>{children}</main>
+        {/* No sidebar, so no footer group to hold the theme switcher — it
+            floats in the bottom-left corner here. Unscoped to breakpoint: on a
+            phone the landing page has neither sidebar footer nor AppShell, so
+            hiding it under `lg` would make the theme unreachable. */}
+        <ThemeToggle />
       </>
     );
   }
 
+  // Shell routes mount the switcher themselves, in the sidebar footer group.
   return <AppShell>{children}</AppShell>;
 }

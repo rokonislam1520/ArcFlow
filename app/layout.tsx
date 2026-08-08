@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Chrome } from '@/components/Chrome';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { THEME_INIT_SCRIPT } from '@/lib/theme';
 import { WalletProvider } from '@/lib/WalletProvider';
 import { SessionProvider } from '@/lib/SessionProvider';
@@ -49,15 +48,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <ActivityWatcher />
                 {/* Chrome applies the shared AppShell (sidebar + header) to every
                     application route, so navigation looks identical on all of
-                    them. Only the marketing landing page renders outside it. */}
+                    them. Only the marketing landing page renders outside it.
+
+                    The theme switcher is mounted inside Chrome rather than here,
+                    because where it belongs depends on the chrome: shell routes
+                    seat it in the sidebar's footer group, and the landing page
+                    has no sidebar to seat it in. */}
                 <Chrome>{children}</Chrome>
                 {/* Asks a first-time user to set up their profile once sign-in
                     succeeds. Renders nothing in every other case. */}
                 <ProfileOnboarding />
-                {/* Mounted once here, outside Chrome, so a single control serves
-                    every route — including the landing page — and the choice
-                    cannot vary from page to page. */}
-                <ThemeToggle />
               </WalletNotificationProvider>
             </ProfileProvider>
           </SessionProvider>

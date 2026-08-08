@@ -22,6 +22,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { AccountMenu } from '@/components/AccountMenu';
 import { ConnectButton } from '@/components/ConnectButton';
 import { NotificationBell } from '@/components/NotificationBell';
+import { ThemeControl, ThemeToggle } from '@/components/ThemeToggle';
 import { useWallet } from '@/lib/WalletProvider';
 import { useNetworkMode } from '@/lib/network';
 
@@ -137,6 +138,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             the gutter is identical everywhere. */}
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6">{children}</main>
       </div>
+
+      {/* Mobile's theme switcher. The footer group that owns it on desktop is
+          hidden below `lg`, so without this the control would be unreachable on
+          a phone. Scoped to `lg:hidden` for the same reason: rendering both at
+          once would stack two switchers in the same corner. */}
+      <ThemeToggle className="lg:hidden" />
     </div>
   );
 }
@@ -222,34 +229,71 @@ function Sidebar({
         ))}
       </nav>
 
-      {/* Sidebar footer: the collapse control only.
-          Connection state lives in the header account menu, which is where a
-          user goes to act on it. Repeating it here said the same thing twice
-          and neither copy could be interacted with.
+      {/* Footer utility group: collapse and theme in one capsule.
+          These are the two controls that act on the frame rather than on money,
+          so they belong together and away from the nav. The theme switcher used
+          to float free in this corner while collapse sat in the footer above it
+          — two unrelated pills stacked in the same few pixels.
 
-          Desktop-only, because the collapse button is: on mobile this would be
-          an empty bordered strip below the nav. The bottom padding reserves the
-          corner the fixed theme toggle occupies, so the toggle cannot land on
-          top of the button. */}
-      <div className="hidden lg:block p-3 pb-16 border-t border-hairline shrink-0">
-        <button
-          onClick={onToggleCollapse}
-          className="flex w-full items-center justify-center gap-2 rounded-lg py-2 text-xs text-ink-muted hover:text-ink-primary hover:bg-surface-hover/[0.06] transition-colors"
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          Desktop-only, because collapsing a drawer is meaningless. Mobile keeps
+          the floating theme pill instead, mounted below. */}
+      <div className="hidden lg:block p-3 border-t border-hairline shrink-0">
+        <div
+          className={[
+            'flex items-center rounded-full p-1',
+            // Recessed rather than raised: the sidebar is already
+            // `surface-card`, and in light mode `surface-raised` resolves to
+            // the same white, which would leave the capsule invisible but for
+            // its border. `surface-input` is a step away from the sidebar in
+            // both themes, so the group reads as a distinct object either way.
+            'bg-surface-input border border-hairline shadow-card',
+            'transition-colors duration-300 ease-premium',
+            // Collapsed the rail is 76px wide, which cannot seat three round
+            // buttons in a row, so the group turns on its side.
+            collapsed ? 'flex-col gap-1' : 'gap-1',
+          ].join(' ')}
         >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={`w-4 h-4 transition-transform duration-300 ${collapsed ? 'rotate-180' : ''}`}
+          <button
+            onClick={onToggleCollapse}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-expanded={!collapsed}
+            className={[
+              'group flex items-center h-8 rounded-full shrink-0',
+              'text-ink-muted hover:text-accent-text hover:bg-accent/10',
+              'transition-all duration-200 ease-premium',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+              // Expanded it is a labelled pill that takes the spare width;
+              // collapsed it matches the theme buttons exactly, so the stack
+              // reads as one set of controls rather than three odd sizes.
+              collapsed ? 'w-8 justify-center' : 'flex-1 min-w-0 gap-2 px-3',
+            ].join(' ')}
           >
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-          {!collapsed && <span>Collapse</span>}
-        </button>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`w-4 h-4 shrink-0 transition-transform duration-300 ease-premium ${
+                collapsed ? 'rotate-180' : ''
+              }`}
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+            {!collapsed && <span className="text-xs font-medium truncate">Collapse</span>}
+          </button>
+
+          {/* Hairline separator: the two halves do different jobs, and without it
+              the capsule reads as one four-button switch. */}
+          <span
+            className={collapsed ? 'h-px w-4 bg-hairline shrink-0' : 'w-px h-5 bg-hairline shrink-0'}
+            aria-hidden="true"
+          />
+
+          <ThemeControl vertical={collapsed} />
+        </div>
       </div>
     </aside>
   );
