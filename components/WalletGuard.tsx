@@ -11,12 +11,15 @@ interface Props {
   featureName?: string;
 }
 
+/**
+ * Gate states are centred in the content area. No page padding here: the shell's
+ * <main> already supplies the gutter, and adding more would indent these panels
+ * further than the page content they stand in for.
+ */
 function Panel({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen py-8 animate-in">
-      <div className="max-w-lg mx-auto px-4">
-        <div className="glass p-10 text-center">{children}</div>
-      </div>
+    <div className="max-w-lg mx-auto animate-in">
+      <div className="glass p-10 text-center">{children}</div>
     </div>
   );
 }

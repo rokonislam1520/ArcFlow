@@ -31,8 +31,8 @@ function PortfolioView() {
   const allocation = chainAllocation(portfolio.chains, portfolio.totalUSD);
 
   return (
-    <div className="min-h-screen py-6 sm:py-8 animate-in">
-      <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="animate-in">
+      <div className="max-w-[90rem] mx-auto">
         {/* Header */}
         <header className="mb-8">
           <div className="flex flex-wrap items-end justify-between gap-4 mb-2">

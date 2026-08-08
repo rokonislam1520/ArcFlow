@@ -133,7 +133,7 @@ export default function ReceivePage() {
 
   if (!address) {
     return (
-      <div className="max-w-lg mx-auto px-4 py-12">
+      <div className="max-w-lg mx-auto animate-in">
         <h1 className="text-3xl font-bold mb-1">Receive</h1>
         <div className="glass p-6 mt-8 text-center text-slate-400 text-sm">
           Connect your wallet to show your address.
@@ -143,7 +143,7 @@ export default function ReceivePage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-12">
+    <div className="max-w-lg mx-auto animate-in">
       <h1 className="text-3xl font-bold mb-1">Receive</h1>
       <p className="text-slate-400 text-sm mb-8">
         Share this to be paid on <span className="text-arc-400">{chain.label}</span>.

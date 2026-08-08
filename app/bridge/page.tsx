@@ -454,7 +454,7 @@ export default function BridgePage() {
   const networkMismatch = address && !walletOnSelectedSource && !switching;
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-10 sm:py-14">
+    <div className="max-w-xl mx-auto animate-in">
       {/* Header */}
       <div className="mb-7">
         <h1 className="text-3xl font-bold mb-1">Bridge</h1>

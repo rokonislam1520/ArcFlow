@@ -102,8 +102,8 @@ function AssistantView() {
   };
 
   return (
-    <div className="min-h-screen py-8 animate-in">
-      <div className="max-w-3xl mx-auto px-4">
+    <div className="animate-in">
+      <div className="max-w-3xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Assistant</h1>
           <p className="text-slate-400">Answers read directly from {CHAIN_NAME}</p>

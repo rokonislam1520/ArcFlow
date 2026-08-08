@@ -205,7 +205,7 @@ function ProfileInner() {
   // page can show or store anything.
   if (status !== 'signed-in') {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16">
+      <div className="mx-auto max-w-lg">
         <div className="glass p-10 text-center">
           <div className="mb-4 text-5xl">✍️</div>
           <h2 className="mb-2 text-2xl font-bold">Sign in to continue</h2>
@@ -234,7 +234,7 @@ function ProfileInner() {
     (address ? address.slice(2, 4).toUpperCase() : '??');
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
+    <div className="mx-auto max-w-3xl space-y-6 animate-in">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gradient">Profile</h1>

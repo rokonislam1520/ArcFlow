@@ -127,8 +127,8 @@ function MerchantView() {
   };
 
   return (
-    <div className="min-h-screen py-8 animate-in">
-      <div className="max-w-lg mx-auto px-4">
+    <div className="animate-in">
+      <div className="max-w-lg mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Pay Merchant</h1>
           <p className="text-slate-400">Pay any registered merchant in USDC</p>

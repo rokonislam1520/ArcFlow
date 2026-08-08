@@ -17,7 +17,6 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 import { type Address } from 'viem';
 import { WalletGuard } from '@/components/WalletGuard';
-import { DashboardShell } from '@/components/dashboard/Shell';
 import { AreaChart, Bar, Donut, seriesColor } from '@/components/dashboard/Charts';
 import {
   EmptyState,
@@ -836,10 +835,8 @@ function InsightsPanel({
 
 export default function DashboardPage() {
   return (
-    <DashboardShell>
-      <WalletGuard featureName="Dashboard">
-        <DashboardView />
-      </WalletGuard>
-    </DashboardShell>
+    <WalletGuard featureName="Dashboard">
+      <DashboardView />
+    </WalletGuard>
   );
 }

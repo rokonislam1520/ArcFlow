@@ -1,11 +1,17 @@
 'use client';
 /**
- * Dashboard shell: collapsible sidebar plus top header.
+ * The application shell: collapsible sidebar plus top header.
  *
- * The app's global Navbar is a horizontal bar suited to single-purpose pages.
- * The dashboard needs persistent navigation alongside dense panels, so this
- * provides its own chrome and the route hides the Navbar rather than stacking
- * two navigations.
+ * This is the only desktop navigation in the app. Every signed-in route renders
+ * inside it, so the sidebar and header are identical on Dashboard, Send, Swap,
+ * Bridge and the rest — navigating changes the content area and nothing else.
+ * Previously only the dashboard used this and every other page rendered a
+ * horizontal navbar instead, so moving between routes rebuilt the entire frame
+ * and the app read as two different products.
+ *
+ * `Chrome` decides where it applies; the shell itself knows nothing about
+ * routes beyond highlighting the active link. The marketing landing page is the
+ * one screen that opts out, since a product sidebar has no place there.
  *
  * Collapse state persists in localStorage: a user who works collapsed should
  * not have to re-collapse on every visit.
@@ -78,7 +84,7 @@ function Icon({ d }: { d: string }) {
 
 const COLLAPSE_KEY = 'arcflow.sidebar.collapsed';
 
-export function DashboardShell({ children }: { children: ReactNode }) {
+export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   // Mobile uses an overlay drawer rather than an inline rail.
@@ -129,6 +135,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
       <div className="flex-1 min-w-0 flex flex-col">
         <TopHeader onOpenDrawer={() => setDrawerOpen(true)} />
+        {/* The single <main> for every app route. Pages supply their own
+            max-width and centering inside it, never their own page padding, so
+            the gutter is identical everywhere. */}
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6">{children}</main>
       </div>
     </div>

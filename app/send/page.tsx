@@ -99,7 +99,7 @@ export default function SendPage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-12">
+    <div className="max-w-lg mx-auto animate-in">
       <h1 className="text-3xl font-bold mb-1">Send</h1>
       <p className="text-slate-400 text-sm mb-8">
         Transfer on <span className="text-arc-400">{chain.label}</span>. Change networks from the

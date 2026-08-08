@@ -268,7 +268,7 @@ export default function SwapPage() {
   ]);
 
   return (
-    <div className="min-h-screen px-4 py-8 sm:py-12">
+    <div className="animate-in">
       <div className="max-w-[480px] mx-auto">
         <header className="flex items-end justify-between mb-5">
           <div>

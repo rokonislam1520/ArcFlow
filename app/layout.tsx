@@ -36,8 +36,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   incoming transfers and submitted-transaction confirmations. */}
               <WalletNotificationProvider>
                 <ActivityWatcher />
-                {/* Chrome picks the navigation for the route: most pages get the
-                    Navbar, the dashboard supplies its own sidebar and header. */}
+                {/* Chrome applies the shared AppShell (sidebar + header) to every
+                    application route, so navigation looks identical on all of
+                    them. Only the marketing landing page renders outside it. */}
                 <Chrome>{children}</Chrome>
                 {/* Asks a first-time user to set up their profile once sign-in
                     succeeds. Renders nothing in every other case. */}
