@@ -135,7 +135,7 @@ export default function ReceivePage() {
     return (
       <div className="max-w-lg mx-auto animate-in">
         <h1 className="text-3xl font-bold mb-1">Receive</h1>
-        <div className="glass p-6 mt-8 text-center text-slate-400 text-sm">
+        <div className="glass p-6 mt-8 text-center text-ink-secondary text-sm">
           Connect your wallet to show your address.
         </div>
       </div>
@@ -145,8 +145,8 @@ export default function ReceivePage() {
   return (
     <div className="max-w-lg mx-auto animate-in">
       <h1 className="text-3xl font-bold mb-1">Receive</h1>
-      <p className="text-slate-400 text-sm mb-8">
-        Share this to be paid on <span className="text-arc-400">{chain.label}</span>.
+      <p className="text-ink-secondary text-sm mb-8">
+        Share this to be paid on <span className="text-accent-text">{chain.label}</span>.
       </p>
 
       <div className="glass p-6 space-y-5">
@@ -158,7 +158,7 @@ export default function ReceivePage() {
               className="rounded-xl w-56 h-56 bg-white p-1"
             />
           ) : (
-            <div className="w-56 h-56 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xs text-slate-500">
+            <div className="w-56 h-56 rounded-xl bg-surface-input border border-hairline flex items-center justify-center text-xs text-ink-muted">
               Generating…
             </div>
           )}
@@ -166,12 +166,12 @@ export default function ReceivePage() {
 
         {/* Same address on every EVM chain, but funds only arrive on the one
             the sender uses — worth stating plainly. */}
-        <div className="rounded-xl bg-amber-500/10 border border-amber-500/25 p-3 text-xs text-amber-200/90">
+        <div className="rounded-xl bg-amber-500/10 border border-amber-500/25 p-3 text-xs text-warning/90">
           Only send assets on {chain.label}. Funds sent on another network will not appear here.
         </div>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-2">Asset</label>
+          <label className="block text-sm text-ink-secondary mb-2">Asset</label>
           <div className="flex flex-wrap gap-2">
             {tokens.map((t) => (
               <button
@@ -179,8 +179,8 @@ export default function ReceivePage() {
                 onClick={() => setToken(t)}
                 className={`px-4 py-2 rounded-xl text-sm border transition-colors ${
                   activeToken === t
-                    ? 'border-arc-500 bg-arc-500/15 text-arc-300'
-                    : 'border-white/10 bg-white/5 hover:bg-white/10'
+                    ? 'border-arc-500 bg-arc-500/15 text-accent-text'
+                    : 'border-hairline bg-surface-input hover:bg-surface-hover/[0.06]'
                 }`}
               >
                 {t === 'NATIVE' ? chain.nativeCurrency.symbol : t}
@@ -190,27 +190,27 @@ export default function ReceivePage() {
         </div>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-2">
-            Requested amount <span className="text-slate-600">(optional)</span>
+          <label className="block text-sm text-ink-secondary mb-2">
+            Requested amount <span className="text-ink-muted">(optional)</span>
           </label>
           <input
             value={amount}
             onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ''))}
             inputMode="decimal"
             placeholder="Any amount"
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-arc-500 outline-none"
+            className="w-full bg-surface-input border border-hairline rounded-xl px-4 py-3 focus:border-arc-500 outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-2">Your address</label>
+          <label className="block text-sm text-ink-secondary mb-2">Your address</label>
           <div className="flex gap-2">
-            <code className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-3 font-mono text-xs break-all">
+            <code className="flex-1 bg-surface-input border border-hairline rounded-xl px-3 py-3 font-mono text-xs break-all">
               {address}
             </code>
             <button
               onClick={() => void copy(address, 'address')}
-              className="px-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-sm shrink-0"
+              className="px-4 rounded-xl bg-surface-input border border-hairline hover:bg-surface-hover/[0.06] text-sm shrink-0"
             >
               {copied === 'address' ? 'Copied' : 'Copy'}
             </button>
@@ -219,7 +219,7 @@ export default function ReceivePage() {
 
         <button
           onClick={() => void copy(uri, 'uri')}
-          className="w-full py-2.5 rounded-xl text-sm bg-white/5 border border-white/10 hover:bg-white/10"
+          className="w-full py-2.5 rounded-xl text-sm bg-surface-input border border-hairline hover:bg-surface-hover/[0.06]"
         >
           {copied === 'uri' ? 'Payment link copied' : 'Copy payment link'}
         </button>

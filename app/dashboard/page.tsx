@@ -58,7 +58,7 @@ function QuickActions() {
           key={a.href}
           href={a.href}
           className="group glass-sm p-3 sm:p-4 flex flex-col items-center gap-2 text-center
-                     hover:bg-white/[0.06] hover:border-arc-500/25 hover:-translate-y-0.5
+                     hover:bg-surface-hover/[0.06] hover:border-arc-500/25 hover:-translate-y-0.5
                      transition-all duration-200"
         >
           <span className="w-9 h-9 rounded-xl bg-arc-500/10 border border-arc-500/20 flex items-center justify-center group-hover:bg-arc-500/20 transition-colors">
@@ -69,7 +69,7 @@ function QuickActions() {
               strokeWidth={1.9}
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-[18px] h-[18px] text-arc-300"
+              className="w-[18px] h-[18px] text-accent-text"
             >
               <path d={a.d} />
             </svg>
@@ -98,19 +98,19 @@ function MetricCard({
 }) {
   const valueClass =
     tone === 'up'
-      ? 'text-mint-400'
+      ? 'text-success'
       : tone === 'down'
-        ? 'text-red-400'
+        ? 'text-danger'
         : tone === 'unknown'
-          ? 'text-slate-500'
-          : 'text-white';
+          ? 'text-ink-muted'
+          : 'text-ink-primary';
   return (
     <div className="glass p-4 sm:p-5" title={title}>
-      <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-2">{label}</div>
+      <div className="text-[10px] uppercase tracking-widest text-ink-muted mb-2">{label}</div>
       <div className={`text-xl sm:text-2xl font-bold tabular-nums leading-tight ${valueClass}`}>
         {value}
       </div>
-      {sub && <div className="text-[11px] text-slate-500 mt-1.5 leading-snug">{sub}</div>}
+      {sub && <div className="text-[11px] text-ink-muted mt-1.5 leading-snug">{sub}</div>}
     </div>
   );
 }
@@ -162,7 +162,7 @@ function DashboardView() {
       <div className="flex flex-wrap items-end justify-between gap-3 mb-5">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
-          <p className="text-sm text-slate-400 mt-0.5">
+          <p className="text-sm text-ink-secondary mt-0.5">
             {fundedChains.length > 0
               ? `Funds on ${fundedChains.length} of ${networkProbe.total || '—'} networks`
               : 'Balances across every supported network'}
@@ -172,7 +172,7 @@ function DashboardView() {
       </div>
 
       {portfolio.partial && (
-        <div className="mb-4 flex items-start gap-2 text-xs text-amber-300/90 bg-amber-500/[0.07] border border-amber-500/20 rounded-xl px-3.5 py-2.5">
+        <div className="mb-4 flex items-start gap-2 text-xs text-warning/90 bg-amber-500/[0.07] border border-amber-500/20 rounded-xl px-3.5 py-2.5">
           <span aria-hidden>⚠</span>
           <span>
             One or more chains could not be reached, so the total below is a lower bound rather
@@ -185,7 +185,7 @@ function DashboardView() {
       <div className="grid lg:grid-cols-12 gap-4 mb-5">
         <section className="lg:col-span-5 glass glow-teal p-5 sm:p-6 flex flex-col justify-between">
           <div>
-            <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-2">
+            <div className="text-[10px] uppercase tracking-widest text-ink-muted mb-2">
               Total portfolio value
             </div>
             <div className="text-4xl sm:text-5xl font-extrabold text-gradient tabular-nums leading-none">
@@ -203,7 +203,7 @@ function DashboardView() {
                 height={72}
               />
             ) : (
-              <p className="text-[11px] text-slate-600 leading-snug">
+              <p className="text-[11px] text-ink-muted leading-snug">
                 Value chart appears once this device has recorded two readings.
                 Nothing historical is available to backfill it.
               </p>
@@ -250,7 +250,7 @@ function DashboardView() {
 
       {/* Quick actions */}
       <div className="mb-5">
-        <h2 className="text-xs uppercase tracking-widest text-slate-500 mb-2.5">Quick actions</h2>
+        <h2 className="text-xs uppercase tracking-widest text-ink-muted mb-2.5">Quick actions</h2>
         <QuickActions />
       </div>
 
@@ -339,7 +339,7 @@ function Change24h({ history }: { history: ReturnType<typeof usePortfolioHistory
   if (!history.change24h) {
     const hours = Math.floor(history.spanMs / 3_600_000);
     return (
-      <p className="mt-2 text-xs text-slate-500">
+      <p className="mt-2 text-xs text-ink-muted">
         {history.isEmpty
           ? 'Recording started just now.'
           : `${hours}h of history recorded — 24h change available after a full day.`}
@@ -349,7 +349,7 @@ function Change24h({ history }: { history: ReturnType<typeof usePortfolioHistory
   const { absolute, percent } = history.change24h;
   const up = absolute >= 0;
   return (
-    <p className={`mt-2 text-sm font-medium tabular-nums ${up ? 'text-mint-400' : 'text-red-400'}`}>
+    <p className={`mt-2 text-sm font-medium tabular-nums ${up ? 'text-success' : 'text-danger'}`}>
       {up ? '▲' : '▼'} {formatUSD(Math.abs(absolute))} ({up ? '+' : '−'}
       {Math.abs(percent).toFixed(2)}%) in 24h
     </p>
@@ -438,7 +438,7 @@ function AllocationPanel({
                       <span className="truncate">{r.label}</span>
                     </span>
                     <span className="flex items-center gap-2 shrink-0 text-xs">
-                      <span className="text-slate-500">{r.meta}</span>
+                      <span className="text-ink-muted">{r.meta}</span>
                       <UsdValue value={r.valueUSD} format={formatUSD} className="font-medium" />
                     </span>
                   </div>
@@ -472,7 +472,7 @@ function TopHoldings({
       title="Top holdings"
       subtitle="Individual positions, per chain"
       action={
-        <Link href="/portfolio" className="text-xs text-arc-400 hover:underline">
+        <Link href="/portfolio" className="text-xs text-accent-text hover:underline">
           Full portfolio →
         </Link>
       }
@@ -489,12 +489,12 @@ function TopHoldings({
           {all.map((h, i) => (
             <div
               key={`${h.chainLabel}-${h.symbol}-${i}`}
-              className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/[0.03] transition-colors"
+              className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface-hover/[0.06] transition-colors"
             >
               <TokenBadge symbol={h.symbol} size={36} />
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium truncate">{h.symbol}</div>
-                <div className="text-[11px] text-slate-500 truncate">{h.chainLabel}</div>
+                <div className="text-[11px] text-ink-muted truncate">{h.chainLabel}</div>
               </div>
               <div className="text-right shrink-0">
                 <div className="text-sm tabular-nums">
@@ -503,7 +503,7 @@ function TopHoldings({
                 <UsdValue
                   value={h.valueUSD}
                   format={formatUSD}
-                  className="text-[11px] text-slate-500"
+                  className="text-[11px] text-ink-muted"
                 />
               </div>
             </div>
@@ -534,7 +534,7 @@ function RecentActivity({
       title="Recent activity"
       subtitle={`Token transfers on ${chain.label}`}
       action={
-        <Link href="/history" className="text-xs text-arc-400 hover:underline">
+        <Link href="/history" className="text-xs text-accent-text hover:underline">
           All transactions →
         </Link>
       }
@@ -552,7 +552,7 @@ function RecentActivity({
         <div className="overflow-x-auto -mx-1">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-[10px] uppercase tracking-widest text-slate-600">
+              <tr className="text-[10px] uppercase tracking-widest text-ink-muted">
                 <th className="text-left font-medium px-2 pb-2.5">Type</th>
                 <th className="text-left font-medium px-2 pb-2.5">Asset</th>
                 <th className="text-left font-medium px-2 pb-2.5 hidden sm:table-cell">Counterparty</th>
@@ -569,22 +569,22 @@ function RecentActivity({
                 return (
                   <tr
                     key={`${t.txHash}-${t.direction}-${t.symbol}`}
-                    className="border-t border-white/5 hover:bg-white/[0.02]"
+                    className="border-t border-hairline hover:bg-surface-hover/[0.06]"
                   >
                     <td className="px-2 py-2.5">
                       <span
-                        className={`inline-flex items-center gap-1.5 text-xs ${sent ? 'text-amber-300' : 'text-mint-300'}`}
+                        className={`inline-flex items-center gap-1.5 text-xs ${sent ? 'text-warning' : 'text-success'}`}
                       >
                         <span aria-hidden>{sent ? '↑' : '↓'}</span>
                         {sent ? 'Sent' : 'Received'}
                       </span>
                     </td>
                     <td className="px-2 py-2.5">{t.symbol}</td>
-                    <td className="px-2 py-2.5 font-mono text-xs text-slate-400 hidden sm:table-cell">
+                    <td className="px-2 py-2.5 font-mono text-xs text-ink-secondary hidden sm:table-cell">
                       {shortAddress(t.counterparty)}
                     </td>
                     <td
-                      className={`px-2 py-2.5 text-right tabular-nums ${sent ? 'text-amber-200' : 'text-mint-200'}`}
+                      className={`px-2 py-2.5 text-right tabular-nums ${sent ? 'text-warning' : 'text-success'}`}
                     >
                       {sent ? '−' : '+'}
                       {Number(t.amount).toLocaleString('en-US', { maximumFractionDigits: 6 })}
@@ -595,7 +595,7 @@ function RecentActivity({
                     <td className="px-2 py-2.5 hidden md:table-cell">
                       <span className="badge-success">Confirmed</span>
                     </td>
-                    <td className="px-2 py-2.5 text-right text-xs text-slate-500 whitespace-nowrap">
+                    <td className="px-2 py-2.5 text-right text-xs text-ink-muted whitespace-nowrap">
                       {relativeTime(t.timestamp) ?? `Block ${t.blockNumber.toString()}`}
                     </td>
                     <td className="px-2 py-2.5 text-right">
@@ -604,7 +604,7 @@ function RecentActivity({
                           href={url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-slate-500 hover:text-arc-400"
+                          className="text-ink-muted hover:text-accent-text"
                           title="View on explorer"
                         >
                           ↗
@@ -646,7 +646,7 @@ function ChainBreakdownPanel({
   return (
     <Panel title="Chain breakdown" subtitle={walletName ?? 'Connected wallet'}>
       {/* Active chain + address */}
-      <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3.5 mb-4">
+      <div className="rounded-xl bg-surface-input border border-hairline p-3.5 mb-4">
         <div className="flex items-center justify-between gap-2 mb-2.5">
           <span className="flex items-center gap-2 text-sm font-medium min-w-0">
             <StatusDot
@@ -655,19 +655,19 @@ function ChainBreakdownPanel({
             />
             <span className="truncate">{activeChain.label}</span>
           </span>
-          <span className="text-[10px] uppercase tracking-wider text-arc-300 bg-arc-500/12 border border-arc-500/25 rounded px-1.5 py-0.5 shrink-0">
+          <span className="text-[10px] uppercase tracking-wider text-accent-text bg-arc-500/12 border border-arc-500/25 rounded px-1.5 py-0.5 shrink-0">
             Active
           </span>
         </div>
 
         {address && (
           <div className="flex items-center gap-2">
-            <code className="flex-1 min-w-0 text-[11px] font-mono text-slate-400 truncate">
+            <code className="flex-1 min-w-0 text-[11px] font-mono text-ink-secondary truncate">
               {address}
             </code>
             <button
               onClick={() => void navigator.clipboard?.writeText(address)}
-              className="text-slate-500 hover:text-arc-400 text-xs shrink-0"
+              className="text-ink-muted hover:text-accent-text text-xs shrink-0"
               title="Copy address"
             >
               ⧉
@@ -677,7 +677,7 @@ function ChainBreakdownPanel({
                 href={`${explorerBase.replace(/\/$/, '')}/address/${address}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-slate-500 hover:text-arc-400 text-xs shrink-0"
+                className="text-ink-muted hover:text-accent-text text-xs shrink-0"
                 title="View on explorer"
               >
                 ↗
@@ -697,7 +697,7 @@ function ChainBreakdownPanel({
           {chains.map((c) => (
             <div
               key={c.chain.id}
-              className="flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg hover:bg-white/[0.03]"
+              className="flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg hover:bg-surface-hover/[0.06]"
             >
               <span className="flex items-center gap-2 min-w-0">
                 <StatusDot
@@ -707,7 +707,7 @@ function ChainBreakdownPanel({
               </span>
               {c.error ? (
                 <span
-                  className="text-[11px] text-amber-300/80 shrink-0"
+                  className="text-[11px] text-warning/80 shrink-0"
                   title={c.error}
                 >
                   Unreachable
@@ -756,11 +756,11 @@ function MarketPanel({
             {rows.map((r) => (
               <div
                 key={r.symbol}
-                className="flex items-center justify-between gap-2 px-2 py-2 rounded-lg hover:bg-white/[0.03]"
+                className="flex items-center justify-between gap-2 px-2 py-2 rounded-lg hover:bg-surface-hover/[0.06]"
               >
                 <span className="min-w-0">
                   <span className="text-sm font-medium">{r.symbol}</span>
-                  <span className="block text-[10px] text-slate-500 truncate">{r.name}</span>
+                  <span className="block text-[10px] text-ink-muted truncate">{r.name}</span>
                 </span>
                 <span className="text-right shrink-0">
                   <span className="block text-sm tabular-nums">{formatPrice(r.priceUSD)}</span>
@@ -768,8 +768,8 @@ function MarketPanel({
                     <span
                       className={`block text-[10px] tabular-nums ${
                         Math.abs(r.pegDeviationPct) >= 0.5
-                          ? 'text-amber-400'
-                          : 'text-slate-500'
+                          ? 'text-warning'
+                          : 'text-ink-muted'
                       }`}
                       title="Deviation from its $1.00 peg"
                     >
@@ -777,7 +777,7 @@ function MarketPanel({
                       {Math.abs(r.pegDeviationPct).toFixed(3)}% vs peg
                     </span>
                   ) : (
-                    <span className="block text-[10px] text-slate-600">no peg</span>
+                    <span className="block text-[10px] text-ink-muted">no peg</span>
                   )}
                 </span>
               </div>
@@ -785,7 +785,7 @@ function MarketPanel({
           </div>
           {/* Stated rather than left as a silent omission: a market list that
               quietly lacks BTC looks broken instead of bounded. */}
-          <p className="mt-3 pt-3 border-t border-white/5 text-[10px] text-slate-600 leading-relaxed">
+          <p className="mt-3 pt-3 border-t border-hairline text-[10px] text-ink-muted leading-relaxed">
             Covers the stablecoins and gas assets App Kit prices. BTC and
             governance tokens such as ARB have no quote available, so they are
             omitted rather than sourced from elsewhere.
@@ -817,11 +817,11 @@ function InsightsPanel({
                 ? 'border-amber-500/25 bg-amber-500/[0.06]'
                 : i.tone === 'positive'
                   ? 'border-mint-500/20 bg-mint-500/[0.05]'
-                  : 'border-white/8 bg-white/[0.03]';
+                  : 'border-hairline bg-surface-input';
             return (
               <div key={i.id} className={`rounded-xl border p-3 ${accent}`}>
                 <div className="text-sm font-medium mb-1">{i.title}</div>
-                <p className="text-[11px] text-slate-400 leading-relaxed">{i.detail}</p>
+                <p className="text-[11px] text-ink-secondary leading-relaxed">{i.detail}</p>
               </div>
             );
           })}

@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Chrome } from '@/components/Chrome';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { THEME_INIT_SCRIPT } from '@/lib/theme';
 import { WalletProvider } from '@/lib/WalletProvider';
 import { SessionProvider } from '@/lib/SessionProvider';
 import { ProfileProvider } from '@/lib/ProfileProvider';
@@ -15,12 +17,21 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      {/* The ambient background lives entirely in `.bg-arc-dark` (globals.css):
-          a deep-space base tint with four very low-opacity glow pools, fixed so
-          it stays put while content scrolls. Defining it there rather than as
-          overlay elements here means every route inherits the same depth, and
-          there is no blurred layer for the browser to composite on scroll. */}
+    // `suppressHydrationWarning` is required and is scoped to this element
+    // alone: the script below sets `data-theme` before React hydrates, so the
+    // attribute legitimately differs from the server-rendered markup. Without
+    // it React would warn about a mismatch it cannot otherwise be told about.
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Runs before first paint so the page is never briefly the wrong
+            theme. It has to be inline and blocking — anything deferred, or any
+            React effect, resolves only after the browser has already painted,
+            which is exactly the flash we are avoiding. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
+      {/* `.bg-arc-dark` (globals.css) resolves to the themed page surface, so
+          the background follows the active theme without this file knowing
+          which one is active. */}
       <body className="bg-arc-dark min-h-screen">
         {/* One wallet session shared by every page, so switching networks in
             the navbar is immediately reflected everywhere. */}
@@ -43,6 +54,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 {/* Asks a first-time user to set up their profile once sign-in
                     succeeds. Renders nothing in every other case. */}
                 <ProfileOnboarding />
+                {/* Mounted once here, outside Chrome, so a single control serves
+                    every route — including the landing page — and the choice
+                    cannot vary from page to page. */}
+                <ThemeToggle />
               </WalletNotificationProvider>
             </ProfileProvider>
           </SessionProvider>

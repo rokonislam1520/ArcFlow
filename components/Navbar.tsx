@@ -43,7 +43,7 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-arc-500 to-mint-500 flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5 text-ink-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
@@ -55,7 +55,7 @@ export function Navbar() {
               <Link
                 key={l.name}
                 href={l.href}
-                className="px-3 py-2 rounded-xl text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+                className="px-3 py-2 rounded-xl text-sm text-ink-secondary hover:text-ink-primary hover:bg-surface-hover/[0.06] transition-all"
               >
                 {l.name}
               </Link>
@@ -71,8 +71,8 @@ export function Navbar() {
                 className={[
                   'text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-md border',
                   isTestnet
-                    ? 'text-amber-300 border-amber-500/30 bg-amber-500/10'
-                    : 'text-mint-300 border-mint-500/25 bg-mint-500/10',
+                    ? 'text-warning border-amber-500/30 bg-amber-500/10'
+                    : 'text-success border-mint-500/25 bg-mint-500/10',
                 ].join(' ')}
                 title={isTestnet ? 'Testnet funds have no value' : 'Live network — real funds'}
               >
@@ -83,7 +83,7 @@ export function Navbar() {
             {address ? <AccountMenu /> : <ConnectButton />}
           </div>
 
-          <button onClick={() => setOpen(!open)} className="lg:hidden p-2 rounded-lg hover:bg-white/5">
+          <button onClick={() => setOpen(!open)} className="lg:hidden p-2 rounded-lg hover:bg-surface-hover/[0.06]">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {open ? (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -102,14 +102,14 @@ export function Navbar() {
               key={l.name}
               href={l.href}
               onClick={() => setOpen(false)}
-              className="block px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5"
+              className="block px-4 py-3 rounded-xl text-ink-secondary hover:text-ink-primary hover:bg-surface-hover/[0.06]"
             >
               {l.name}
             </Link>
           ))}
           {/* Account section: the only route to Profile. */}
-          <div className="pt-3 border-t border-white/10 space-y-2">
-            <div className="px-4 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
+          <div className="pt-3 border-t border-hairline space-y-2">
+            <div className="px-4 text-[10px] font-semibold uppercase tracking-widest text-ink-muted">
               Account
             </div>
             {accountLinks.map((l) => (
@@ -117,14 +117,14 @@ export function Navbar() {
                 key={l.name}
                 href={l.href}
                 onClick={() => setOpen(false)}
-                className="block px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5"
+                className="block px-4 py-3 rounded-xl text-ink-secondary hover:text-ink-primary hover:bg-surface-hover/[0.06]"
               >
                 {l.name}
               </Link>
             ))}
           </div>
 
-          <div className="pt-3 border-t border-white/10 flex items-center gap-3">
+          <div className="pt-3 border-t border-hairline flex items-center gap-3">
             <NotificationBell />
             {address ? <AccountMenu /> : <ConnectButton />}
           </div>

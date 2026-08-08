@@ -18,8 +18,8 @@ function FeeTable({ state }: { state: OpState }) {
     <div className="space-y-3">
       {quote.output && (
         <div className="flex justify-between items-baseline">
-          <span className="text-slate-400 text-sm">You receive (estimated)</span>
-          <span className="text-lg font-semibold text-white">
+          <span className="text-ink-secondary text-sm">You receive (estimated)</span>
+          <span className="text-lg font-semibold text-ink-primary">
             {quote.output.amount} {quote.output.token}
           </span>
         </div>
@@ -28,8 +28,8 @@ function FeeTable({ state }: { state: OpState }) {
       {/* The floor the route guarantees. Without it a user cannot judge slippage. */}
       {quote.minOutput && (
         <div className="flex justify-between text-xs">
-          <span className="text-slate-500">Minimum received</span>
-          <span className="text-slate-300 font-mono">
+          <span className="text-ink-muted">Minimum received</span>
+          <span className="text-ink-secondary font-mono">
             {quote.minOutput.amount} {quote.minOutput.token}
           </span>
         </div>
@@ -37,8 +37,8 @@ function FeeTable({ state }: { state: OpState }) {
 
       {quote.destination?.address && (
         <div className="flex justify-between text-xs">
-          <span className="text-slate-500">Recipient</span>
-          <span className="text-slate-300 font-mono">
+          <span className="text-ink-muted">Recipient</span>
+          <span className="text-ink-secondary font-mono">
             {quote.destination.address.slice(0, 6)}…{quote.destination.address.slice(-4)}
             {quote.destination.chain ? ` on ${quote.destination.chain.replace(/_/g, ' ')}` : ''}
           </span>
@@ -46,17 +46,17 @@ function FeeTable({ state }: { state: OpState }) {
       )}
 
       {quote.fees.length > 0 ? (
-        <div className="pt-2 border-t border-white/10 space-y-1.5">
+        <div className="pt-2 border-t border-hairline space-y-1.5">
           {quote.fees.map((fee, i) => (
             <div key={`${fee.label}-${i}`} className="flex justify-between text-xs">
-              <span className="text-slate-500 capitalize">
+              <span className="text-ink-muted capitalize">
                 {fee.label}
                 {/* Bridges charge on both chains, so name which one. */}
                 {fee.chain && (
-                  <span className="text-slate-600"> · {fee.chain.replace(/_/g, ' ')}</span>
+                  <span className="text-ink-muted"> · {fee.chain.replace(/_/g, ' ')}</span>
                 )}
               </span>
-              <span className="text-slate-300 font-mono">
+              <span className="text-ink-secondary font-mono">
                 {fee.amount} {fee.token}
               </span>
             </div>
@@ -64,7 +64,7 @@ function FeeTable({ state }: { state: OpState }) {
         </div>
       ) : (
         // Silence would read as "free", which would be a lie.
-        <p className="text-xs text-slate-500 pt-2 border-t border-white/10">
+        <p className="text-xs text-ink-muted pt-2 border-t border-hairline">
           No fee breakdown was returned for this route.
         </p>
       )}
@@ -90,11 +90,11 @@ export function OpStatus({
   if (state.stage === 'quoted') {
     return (
       <div className="rounded-xl border border-arc-500/30 bg-arc-500/5 p-4 space-y-4">
-        <div className="text-sm font-semibold text-arc-300">Confirm details</div>
+        <div className="text-sm font-semibold text-accent-text">Confirm details</div>
         <FeeTable state={state} />
 
         {state.kind === 'bridge' && (
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-ink-muted">
             Your wallet will prompt more than once: an approval, the burn, then the mint on the
             destination chain.
           </p>
@@ -109,7 +109,7 @@ export function OpStatus({
           </button>
           <button
             onClick={onCancel}
-            className="px-4 py-2.5 rounded-xl text-sm bg-white/5 border border-white/10 hover:bg-white/10"
+            className="px-4 py-2.5 rounded-xl text-sm bg-surface-input border border-hairline hover:bg-surface-hover/[0.06]"
           >
             Cancel
           </button>
@@ -122,17 +122,17 @@ export function OpStatus({
     return (
       <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm space-y-3">
         <div>
-          <div className="font-semibold text-red-300 mb-1">
+          <div className="font-semibold text-danger mb-1">
             {state.error === 'Cancelled in wallet.' ? 'Cancelled' : 'Failed'}
           </div>
-          <p className="text-red-200/90 break-words">{state.error}</p>
+          <p className="text-danger/90 break-words">{state.error}</p>
         </div>
 
         {/* A prior quote survives a decline, so retrying costs no extra round trip. */}
         {state.quote && onConfirm && (
           <button
             onClick={onConfirm}
-            className="w-full py-2 rounded-xl text-sm bg-white/5 border border-white/10 hover:bg-white/10"
+            className="w-full py-2 rounded-xl text-sm bg-surface-input border border-hairline hover:bg-surface-hover/[0.06]"
           >
             Try again
           </button>
@@ -144,8 +144,8 @@ export function OpStatus({
   if (state.stage === 'success') {
     return (
       <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm">
-        <div className="font-semibold text-emerald-300 mb-1">Complete</div>
-        <p className="text-emerald-200/90">{state.message}</p>
+        <div className="font-semibold text-success mb-1">Complete</div>
+        <p className="text-success/90">{state.message}</p>
         {state.hashes.length > 0 && (
           <div className="mt-3 space-y-1">
             {state.hashes.map((hash) => {
@@ -157,12 +157,12 @@ export function OpStatus({
                       href={url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-arc-400 hover:underline"
+                      className="text-accent-text hover:underline"
                     >
                       {hash}
                     </a>
                   ) : (
-                    <span className="text-slate-400">{hash}</span>
+                    <span className="text-ink-secondary">{hash}</span>
                   )}
                 </div>
               );
@@ -177,7 +177,7 @@ export function OpStatus({
   return (
     <div className="rounded-xl border border-arc-500/30 bg-arc-500/10 p-4 text-sm flex items-center gap-3">
       <span className="inline-block w-4 h-4 border-2 border-arc-400 border-t-transparent rounded-full animate-spin" />
-      <span className="text-arc-200">{state.message}</span>
+      <span className="text-accent-text">{state.message}</span>
     </div>
   );
 }

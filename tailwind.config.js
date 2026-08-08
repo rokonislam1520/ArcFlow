@@ -2,63 +2,112 @@
 /**
  * Design tokens for the ArcFlow theme.
  *
- * The palette is defined here rather than in component classes so a colour is
- * changed in one place. Every page already styles itself with `arc-*`, `mint-*`
- * and the shared classes in globals.css, which is why the visual refresh needed
- * no structural edits: retuning these scales moves the whole app at once.
+ * There are two families here, and the difference matters:
  *
- * Only shades Tailwind does not already ship are added. Redefining an existing
- * shade (slate-900, slate-950) would silently change it everywhere it is used.
+ *  - **Semantic tokens** (`surface-*`, `ink-*`, `hairline`, `accent`) resolve to
+ *    CSS variables defined in globals.css, which hold different values per
+ *    theme. A component written with `bg-surface-card text-ink-primary` is
+ *    correct in both light and dark without a single `dark:` variant, because
+ *    the variable changes underneath it rather than the class.
+ *
+ *  - **Literal palettes** (`arc`, `mint`, `azure`, `iris`) are fixed colours
+ *    that mean the same thing in either theme — brand accent, success, info.
+ *
+ * Prefer the semantic tokens for anything structural: surfaces, text, borders.
+ * Reach for a literal only when the colour *is* the message, as with a success
+ * green. A hard-coded `slate-400` or `white/10` is what makes a component
+ * dark-only, and is the thing this file exists to avoid.
+ *
+ * The `<alpha-value>` placeholder is what lets `bg-accent/12` work: Tailwind
+ * substitutes the opacity into the channel list at build time.
  */
+
+const withAlpha = (variable) => `rgb(var(${variable}) / <alpha-value>)`;
+
 module.exports = {
   content: ['./pages/**/*.{js,ts,jsx,tsx}', './components/**/*.{js,ts,jsx,tsx}', './app/**/*.{js,ts,jsx,tsx}'],
+  // The theme is chosen by the user and stored, so it is driven by an attribute
+  // we control rather than by the OS media query. `dark:` variants therefore
+  // follow the same switch as everything else; without this they would track
+  // the system setting and contradict the toggle.
+  darkMode: ['class', '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
-        // Primary accent, built around #14F1D9. The scale is a real ramp so
-        // borders (600-800) and text (300-400) can be picked by weight instead
-        // of being faked with opacity on a single hue.
+        /* ---- Semantic: these flip with the theme ---- */
+        surface: {
+          page: withAlpha('--surface-page'),
+          card: withAlpha('--surface-card'),
+          raised: withAlpha('--surface-raised'),
+          input: withAlpha('--surface-input'),
+          // Neutral overlay for hover states — white in dark, near-black in
+          // light — so `hover:bg-surface-hover/[0.06]` reads correctly in both.
+          hover: withAlpha('--surface-hover'),
+        },
+        hairline: {
+          DEFAULT: withAlpha('--border'),
+          strong: withAlpha('--border-strong'),
+        },
+        ink: {
+          primary: withAlpha('--text-primary'),
+          secondary: withAlpha('--text-secondary'),
+          muted: withAlpha('--text-muted'),
+        },
+        accent: {
+          DEFAULT: withAlpha('--accent'),
+          hover: withAlpha('--accent-hover'),
+          // The accent as *text*. Lighter than the fill in dark mode, darker in
+          // light: the same purple cannot be both a legible label and a button
+          // background, so the two are separate tokens.
+          text: withAlpha('--accent-text'),
+          contrast: withAlpha('--accent-contrast'),
+        },
+        success: withAlpha('--success'),
+        warning: withAlpha('--warning'),
+        danger: withAlpha('--danger'),
+
+        /* ---- Literal palettes ---- */
+        // Brand accent. Purple is the product's action colour, so this ramp and
+        // the `--accent` token above are the same hue at different weights;
+        // borders (600–800) and text (300–400) can be picked by weight instead
+        // of being faked with opacity on a single value.
         arc: {
-          50: '#ecfffb', 100: '#cffef7', 200: '#9ffdef', 300: '#5ff9e5',
-          400: '#2af3db', 500: '#14f1d9', 600: '#06c2b0', 700: '#0a9a8d',
-          800: '#0d7a71', 900: '#10645e', 950: '#023d39',
+          50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd',
+          400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9',
+          800: '#5b21b6', 900: '#4c1d95', 950: '#2e1065',
         },
         // Success. Kept under the `mint` name it already has across the app so
         // the refresh does not rename anything.
         mint: {
           300: '#6ee7a8', 400: '#4ade80', 500: '#22c55e', 600: '#16a34a',
         },
-        // Secondary accent, used for the gradient pair and informational states.
+        // Informational, for states that must not read as success or warning.
         azure: {
           300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb',
         },
-        // Highlight, for emphasis that must not read as success or warning.
         iris: {
           300: '#c4b5fd', 400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed',
         },
         slate: {
           750: '#1e293b',
-          // The card surface from the palette. Named 850 because that is the
-          // slot it occupies between Tailwind's 800 and 900.
           850: '#101827',
-          // The app background base. Kept in step with `--bg` in globals.css,
-          // which the background gradient is layered over.
           975: '#050816',
         },
       },
       borderRadius: {
-        // Larger radii, applied through the shared card and control classes.
         '4xl': '1.75rem',
         '5xl': '2rem',
       },
       boxShadow: {
-        // Layered rather than a single blur: a tight shadow for the edge and a
-        // wide one for depth, which is what keeps a card from looking flat.
-        card: '0 1px 2px rgba(0,0,0,0.4), 0 8px 24px -8px rgba(0,0,0,0.5)',
-        'card-hover': '0 1px 2px rgba(0,0,0,0.4), 0 16px 40px -12px rgba(0,0,0,0.65)',
-        float: '0 24px 64px -16px rgba(0,0,0,0.75)',
-        'glow-arc': '0 0 0 1px rgba(20,241,217,0.18), 0 8px 32px -8px rgba(20,241,217,0.35)',
-        'glow-iris': '0 0 0 1px rgba(139,92,246,0.2), 0 8px 32px -8px rgba(139,92,246,0.35)',
+        // Delegated to the theme variables so a card's elevation is soft grey on
+        // a light page and near-black on a dark one. A single literal shadow
+        // cannot do both: black under a white card reads as dirt.
+        card: 'var(--shadow-card)',
+        'card-hover': 'var(--shadow-lift)',
+        float: 'var(--shadow-float)',
+        // Accent ring for a focused or selected control.
+        'glow-arc': '0 0 0 3px rgb(var(--accent) / 0.14)',
+        'glow-iris': '0 0 0 3px rgb(var(--accent) / 0.14)',
       },
       transitionTimingFunction: {
         // A single easing for the whole app; mixed curves are what make an

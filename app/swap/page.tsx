@@ -273,8 +273,8 @@ export default function SwapPage() {
         <header className="flex items-end justify-between mb-5">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Swap</h1>
-            <p className="text-sm text-slate-500 mt-0.5">
-              Settles on <span className="text-arc-400">{chainDisplayName(pairChain)}</span>
+            <p className="text-sm text-ink-muted mt-0.5">
+              Settles on <span className="text-accent-text">{chainDisplayName(pairChain)}</span>
             </p>
           </div>
           <WalletChip
@@ -306,7 +306,7 @@ export default function SwapPage() {
                 inputMode="decimal"
                 placeholder="0"
                 aria-label="Amount to sell"
-                className="w-full bg-transparent text-4xl sm:text-[42px] font-semibold tracking-tight outline-none placeholder:text-slate-700 tabular-nums"
+                className="w-full bg-transparent text-4xl sm:text-[42px] font-semibold tracking-tight outline-none placeholder:text-ink-muted tabular-nums"
               />
             }
             subValue={
@@ -321,19 +321,19 @@ export default function SwapPage() {
             footer={
               sellBalance ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-500">
+                  <span className="text-ink-muted">
                     Balance {sellBalance.formatted} {sell?.symbol}
                   </span>
                   <button
                     onClick={() => setAmountIn(sellBalance.formatted.replace(/,/g, ''))}
-                    className="px-2 py-0.5 rounded-md text-[11px] font-semibold text-arc-300 bg-arc-500/15
+                    className="px-2 py-0.5 rounded-md text-[11px] font-semibold text-accent-text bg-arc-500/15
                       hover:bg-arc-500/25 active:scale-95 transition-all duration-200"
                   >
                     MAX
                   </button>
                 </div>
               ) : address ? (
-                <span className="text-slate-600">
+                <span className="text-ink-muted">
                   No {sell?.symbol} on {chainDisplayName(pairChain)}
                 </span>
               ) : null
@@ -348,8 +348,8 @@ export default function SwapPage() {
               aria-label="Switch sell and buy"
               // Rotates a half-turn on hover, which previews the reversal the
               // button performs. The `group` lets the icon inside animate too.
-              className="group w-10 h-10 rounded-2xl bg-slate-850 border border-white/10 text-slate-300
-                hover:border-arc-500/40 hover:text-arc-300 hover:shadow-glow-arc hover:rotate-180
+              className="group w-10 h-10 rounded-2xl bg-surface-card border border-hairline text-ink-secondary
+                hover:border-arc-500/40 hover:text-accent-text hover:shadow-glow-arc hover:rotate-180
                 active:scale-95 disabled:opacity-40 disabled:hover:rotate-0
                 shadow-card flex items-center justify-center
                 transition-all duration-300 ease-premium"
@@ -369,7 +369,7 @@ export default function SwapPage() {
             onPickToken={() => setPicking('buy')}
             amount={
               <div className="text-4xl sm:text-[42px] font-semibold tracking-tight tabular-nums truncate">
-                {receivedAmount ?? <span className="text-slate-700">0</span>}
+                {receivedAmount ?? <span className="text-ink-muted">0</span>}
               </div>
             }
             subValue={
@@ -383,11 +383,11 @@ export default function SwapPage() {
             }
             footer={
               receivedAmount === null ? (
-                <span className="text-slate-600">
+                <span className="text-ink-muted">
                   Quoted by the route, not estimated from a price.
                 </span>
               ) : (
-                <span className="text-slate-500">Estimated by App Kit</span>
+                <span className="text-ink-muted">Estimated by App Kit</span>
               )
             }
           />
@@ -415,10 +415,10 @@ export default function SwapPage() {
                 <span
                   className={
                     priceImpact < -0.01
-                      ? 'text-amber-300'
+                      ? 'text-warning'
                       : priceImpact < 0
-                        ? 'text-slate-300'
-                        : 'text-mint-400'
+                        ? 'text-ink-secondary'
+                        : 'text-success'
                   }
                 >
                   {(priceImpact * 100).toFixed(2)}%
@@ -444,7 +444,7 @@ export default function SwapPage() {
 
             <Row label="Route">
               Same-chain on {chainDisplayName(pairChain)}
-              <span className="text-slate-600"> · venue not disclosed</span>
+              <span className="text-ink-muted"> · venue not disclosed</span>
             </Row>
 
             {quote.fees.length > 0 ? (
@@ -475,7 +475,7 @@ export default function SwapPage() {
         {sell && buy && sell.chain.id !== buy.chain.id && (
           <Notice>
             A swap settles on one chain. To move USDC between chains, use{' '}
-            <Link href="/bridge" className="text-arc-400 hover:underline">
+            <Link href="/bridge" className="text-accent-text hover:underline">
               Bridge
             </Link>
             .
@@ -501,7 +501,7 @@ export default function SwapPage() {
               quotedSignature.current = null;
               reset();
             }}
-            className="w-full mt-3 text-sm text-slate-400 hover:text-white"
+            className="w-full mt-3 text-sm text-ink-secondary hover:text-ink-primary"
           >
             New swap
           </button>
@@ -540,7 +540,7 @@ function AssetCard({
     // of this page, so they are where the effect belongs.
     <section className="glass card-float p-5 rounded-3xl">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-slate-400">{label}</span>
+        <span className="text-sm text-ink-secondary">{label}</span>
       </div>
 
       <div className="flex items-center gap-3">
@@ -549,7 +549,7 @@ function AssetCard({
       </div>
 
       <div className="flex items-center justify-between gap-3 mt-3 text-xs">
-        <span className="text-slate-500 tabular-nums">{subValue}</span>
+        <span className="text-ink-muted tabular-nums">{subValue}</span>
         <span className="text-right">{footer}</span>
       </div>
     </section>
@@ -565,10 +565,10 @@ function TokenPill({ token, onClick }: { token: SwapToken | null; onClick: () =>
         // The empty state is the call to action on a fresh swap, so it carries
         // the accent glow that the filled state does not need.
         className="shrink-0 flex items-center gap-2 pl-4 pr-3 py-3 rounded-2xl bg-arc-500/15 border border-arc-500/30
-          text-arc-200 font-medium hover:bg-arc-500/25 hover:shadow-glow-arc active:scale-[0.98]
+          text-accent-text font-medium hover:bg-arc-500/25 hover:shadow-glow-arc active:scale-[0.98]
           transition-all duration-200 ease-premium"
       >
-        <span className="text-sm font-bold uppercase tracking-wide text-arc-200">
+        <span className="text-sm font-bold uppercase tracking-wide text-accent-text">
           Select token
         </span>
         <Chevron />
@@ -579,14 +579,14 @@ function TokenPill({ token, onClick }: { token: SwapToken | null; onClick: () =>
   return (
     <button
       onClick={onClick}
-      className="shrink-0 flex items-center gap-2.5 pl-2 pr-2.5 py-2 rounded-2xl bg-white/[0.06] border border-white/10
-        hover:bg-white/[0.1] hover:border-arc-500/30 active:scale-[0.98]
+      className="shrink-0 flex items-center gap-2.5 pl-2 pr-2.5 py-2 rounded-2xl bg-surface-input border border-hairline
+        hover:bg-surface-hover/[0.06] hover:border-arc-500/30 active:scale-[0.98]
         transition-all duration-200 ease-premium"
     >
       <TokenMark token={token} size={36} />
       <span className="text-left leading-tight">
         <span className="block text-sm font-bold">{token.symbol}</span>
-        <span className="block text-[11px] text-slate-500 max-w-[92px] truncate">
+        <span className="block text-[11px] text-ink-muted max-w-[92px] truncate">
           {chainDisplayName(token.chain)}
         </span>
       </span>
@@ -597,7 +597,7 @@ function TokenPill({ token, onClick }: { token: SwapToken | null; onClick: () =>
 
 function Chevron() {
   return (
-    <svg className="w-4 h-4 text-slate-500 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <svg className="w-4 h-4 text-ink-muted shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
     </svg>
   );
@@ -623,7 +623,7 @@ function WalletChip({
 }) {
   if (!address) {
     return (
-      <button onClick={onClick} className="text-sm font-semibold text-arc-400 hover:text-arc-300">
+      <button onClick={onClick} className="text-sm font-semibold text-accent-text hover:text-accent-text">
         Select wallet
       </button>
     );
@@ -632,8 +632,8 @@ function WalletChip({
     <button
       onClick={multiple ? onClick : undefined}
       title={multiple ? 'Switch wallet' : walletName}
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.06] border border-white/10 text-xs ${
-        multiple ? 'hover:bg-white/10' : 'cursor-default'
+      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-input border border-hairline text-xs ${
+        multiple ? 'hover:bg-surface-hover/[0.06]' : 'cursor-default'
       }`}
     >
       <span className="w-1.5 h-1.5 rounded-full bg-mint-400" />
@@ -648,20 +648,20 @@ function WalletChip({
 function Row({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="flex justify-between items-baseline gap-4">
-      <span className="text-slate-500 shrink-0">{label}</span>
-      <span className="text-slate-300 text-right tabular-nums">{children}</span>
+      <span className="text-ink-muted shrink-0">{label}</span>
+      <span className="text-ink-secondary text-right tabular-nums">{children}</span>
     </div>
   );
 }
 
 /** Marks a figure the SDK did not supply, so it reads as absent, not as zero. */
 function Unknown({ children }: { children: React.ReactNode }) {
-  return <span className="text-slate-600">{children}</span>;
+  return <span className="text-ink-muted">{children}</span>;
 }
 
 function Notice({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mt-3 text-xs text-amber-300/90 bg-amber-500/[0.07] border border-amber-500/20 rounded-xl px-3 py-2.5">
+    <p className="mt-3 text-xs text-warning/90 bg-amber-500/[0.07] border border-amber-500/20 rounded-xl px-3 py-2.5">
       {children}
     </p>
   );

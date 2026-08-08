@@ -110,18 +110,21 @@ export function AvatarPicker({ value, onChange, fallback, disabled }: AvatarPick
   return (
     <div className="flex items-center gap-5">
       <div className="relative">
-        <div className="h-24 w-24 overflow-hidden rounded-full bg-slate-800 ring-2 ring-slate-700">
+        <div className="h-24 w-24 overflow-hidden rounded-full bg-surface-raised ring-2 ring-hairline">
           {value ? (
             // eslint-disable-next-line @next/next/no-img-element -- data URI, no loader benefit
             <img src={value} alt="Your avatar" className="h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-slate-500">
+            <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-ink-muted">
               {fallback}
             </div>
           )}
         </div>
+        {/* Sits over an arbitrary user image, so the scrim has to be a real
+            surface rather than a wash — otherwise the label competes with
+            whatever the photo happens to be. */}
         {busy && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-slate-950/70 text-xs text-slate-300">
+          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-surface-card/80 text-xs text-ink-secondary">
             Resizing…
           </div>
         )}
@@ -133,7 +136,7 @@ export function AvatarPicker({ value, onChange, fallback, disabled }: AvatarPick
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={disabled || busy}
-            className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 transition hover:border-slate-600 hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg border border-hairline bg-surface-raised px-3 py-1.5 text-sm text-ink-primary transition hover:border-hairline hover:bg-surface-hover/[0.06] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {value ? 'Change' : 'Upload'}
           </button>
@@ -145,14 +148,14 @@ export function AvatarPicker({ value, onChange, fallback, disabled }: AvatarPick
                 setError(null);
               }}
               disabled={disabled || busy}
-              className="rounded-lg border border-transparent px-3 py-1.5 text-sm text-slate-400 transition hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg border border-transparent px-3 py-1.5 text-sm text-ink-secondary transition hover:text-ink-primary disabled:cursor-not-allowed disabled:opacity-50"
             >
               Remove
             </button>
           )}
         </div>
-        <p className="text-xs text-slate-500">Square works best. Resized to 256px automatically.</p>
-        {error && <p className="text-xs text-rose-400">{error}</p>}
+        <p className="text-xs text-ink-muted">Square works best. Resized to 256px automatically.</p>
+        {error && <p className="text-xs text-danger">{error}</p>}
       </div>
 
       <input

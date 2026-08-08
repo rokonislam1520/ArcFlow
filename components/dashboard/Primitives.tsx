@@ -30,8 +30,8 @@ export function Panel({
     <section className={`glass p-5 sm:p-6 ${className}`}>
       <header className="flex items-start justify-between gap-3 mb-5">
         <div className="min-w-0">
-          <h2 className="text-base font-semibold tracking-tight text-white">{title}</h2>
-          {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
+          <h2 className="text-base font-semibold tracking-tight text-ink-primary">{title}</h2>
+          {subtitle && <p className="text-xs text-ink-secondary mt-0.5">{subtitle}</p>}
         </div>
         {action && <div className="shrink-0">{action}</div>}
       </header>
@@ -60,8 +60,8 @@ export function SkeletonRows({ rows = 3 }: { rows?: number }) {
 export function EmptyState({ message, hint }: { message: string; hint?: ReactNode }) {
   return (
     <div className="py-8 text-center">
-      <p className="text-sm text-slate-400">{message}</p>
-      {hint && <p className="text-xs text-slate-500 mt-1.5">{hint}</p>}
+      <p className="text-sm text-ink-secondary">{message}</p>
+      {hint && <p className="text-xs text-ink-muted mt-1.5">{hint}</p>}
     </div>
   );
 }
@@ -70,11 +70,11 @@ export function EmptyState({ message, hint }: { message: string; hint?: ReactNod
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
     <div className="py-6 px-4 rounded-xl border border-red-500/20 bg-red-500/[0.06] text-center">
-      <p className="text-sm text-red-300">{message}</p>
+      <p className="text-sm text-danger">{message}</p>
       {onRetry && (
         <button
           onClick={onRetry}
-          className="mt-3 text-xs px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10"
+          className="mt-3 text-xs px-3 py-1.5 rounded-lg border border-hairline bg-surface-input hover:bg-surface-hover/[0.06]"
         >
           Try again
         </button>
@@ -99,17 +99,17 @@ export function Stat({
     tone === 'accent'
       ? 'text-gradient'
       : tone === 'muted'
-        ? 'text-slate-300'
-        : 'text-white';
+        ? 'text-ink-secondary'
+        : 'text-ink-primary';
   return (
     // Lifts on hover: a stat is a headline figure, so it is one of the few
     // things on a page that earns the emphasis.
     <div className="glass card-float p-5">
-      <div className="text-[11px] uppercase tracking-[0.08em] font-medium text-slate-400 mb-1.5">
+      <div className="text-[11px] uppercase tracking-[0.08em] font-medium text-ink-secondary mb-1.5">
         {label}
       </div>
       <div className={`text-2xl font-bold tabular-nums tracking-tight ${valueTone}`}>{value}</div>
-      {hint && <div className="text-xs text-slate-500 mt-1">{hint}</div>}
+      {hint && <div className="text-xs text-ink-muted mt-1">{hint}</div>}
     </div>
   );
 }
@@ -123,7 +123,7 @@ export function StatusDot({
   title?: string;
 }) {
   const color =
-    ok === null ? 'bg-slate-500' : ok ? 'bg-mint-400' : 'bg-red-400';
+    ok === null ? 'bg-ink-muted' : ok ? 'bg-mint-400' : 'bg-red-400';
   return (
     <span
       title={title}
@@ -141,7 +141,7 @@ export function TokenBadge({ symbol, size = 40 }: { symbol: string; size?: numbe
       style={{ width: size, height: size }}
       // Dark text on the bright accent, and a hairline ring so the badge keeps
       // its edge against both the card and the page background.
-      className="rounded-full bg-gradient-to-br from-arc-400 to-azure-500 ring-1 ring-inset ring-white/20 text-[11px] font-bold text-slate-950 flex items-center justify-center shrink-0"
+      className="rounded-full bg-gradient-to-br from-arc-400 to-azure-500 ring-1 ring-inset ring-white/20 text-[11px] font-bold text-accent-contrast flex items-center justify-center shrink-0"
     >
       {symbol.slice(0, 4)}
     </div>
@@ -165,7 +165,7 @@ export function UsdValue({
     return (
       <span
         title="No price available for this token"
-        className={`text-slate-500 ${className}`}
+        className={`text-ink-muted ${className}`}
       >
         Unpriced
       </span>
@@ -176,7 +176,7 @@ export function UsdValue({
 
 /** "Updated 12s ago" line, so a stale panel is visibly stale. */
 export function UpdatedAt({ at, loading }: { at: number | null; loading?: boolean }) {
-  if (loading) return <span className="text-xs text-slate-500">Refreshing…</span>;
+  if (loading) return <span className="text-xs text-ink-muted">Refreshing…</span>;
   if (at === null) return null;
   const seconds = Math.max(0, Math.floor((Date.now() - at) / 1000));
   const text =
@@ -185,13 +185,13 @@ export function UpdatedAt({ at, loading }: { at: number | null; loading?: boolea
       : seconds < 60
         ? `${seconds}s ago`
         : `${Math.floor(seconds / 60)}m ago`;
-  return <span className="text-xs text-slate-500">Updated {text}</span>;
+  return <span className="text-xs text-ink-muted">Updated {text}</span>;
 }
 
 /** Flags that a total excludes chains that failed, so it reads as understated. */
 export function PartialNotice({ children }: { children: ReactNode }) {
   return (
-    <div className="flex items-start gap-2 text-xs text-amber-300/90 bg-amber-500/[0.07] border border-amber-500/20 rounded-lg px-3 py-2">
+    <div className="flex items-start gap-2 text-xs text-warning/90 bg-amber-500/[0.07] border border-amber-500/20 rounded-lg px-3 py-2">
       <span aria-hidden>⚠</span>
       <span>{children}</span>
     </div>

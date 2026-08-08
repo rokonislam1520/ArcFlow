@@ -32,14 +32,14 @@ export function TxStatus({ state }: { state: TxState }) {
     return (
       <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/25">
         <div className="flex items-start gap-3">
-          <span className="text-red-400 text-lg leading-none">⚠</span>
+          <span className="text-danger text-lg leading-none">⚠</span>
           <div className="min-w-0">
-            <div className="font-semibold text-red-300 text-sm">Transaction failed</div>
-            <p className="text-red-200/80 text-sm mt-1 break-words">{state.error}</p>
+            <div className="font-semibold text-danger text-sm">Transaction failed</div>
+            <p className="text-danger/80 text-sm mt-1 break-words">{state.error}</p>
             {hash && (
-              <p className="text-xs text-slate-500 mt-2 font-mono break-all">
+              <p className="text-xs text-ink-muted mt-2 font-mono break-all">
                 {link ? (
-                  <a href={link} target="_blank" rel="noopener noreferrer" className="hover:text-arc-400 underline">
+                  <a href={link} target="_blank" rel="noopener noreferrer" className="hover:text-accent-text underline">
                     {hash}
                   </a>
                 ) : (
@@ -65,7 +65,7 @@ export function TxStatus({ state }: { state: TxState }) {
     >
       <div className="flex items-start gap-3">
         {isConfirmed ? (
-          <span className="text-mint-400 text-lg leading-none">✓</span>
+          <span className="text-success text-lg leading-none">✓</span>
         ) : (
           <span
             className="mt-0.5 w-4 h-4 rounded-full border-2 border-arc-400 border-t-transparent animate-spin shrink-0"
@@ -73,13 +73,13 @@ export function TxStatus({ state }: { state: TxState }) {
           />
         )}
         <div className="min-w-0">
-          <div className={`font-semibold text-sm ${isConfirmed ? 'text-mint-300' : 'text-arc-300'}`}>
+          <div className={`font-semibold text-sm ${isConfirmed ? 'text-success' : 'text-accent-text'}`}>
             {PHASE_TEXT[state.phase]}
           </div>
           {hash && (
-            <p className="text-xs text-slate-500 mt-2 font-mono break-all">
+            <p className="text-xs text-ink-muted mt-2 font-mono break-all">
               {link ? (
-                <a href={link} target="_blank" rel="noopener noreferrer" className="hover:text-arc-400 underline">
+                <a href={link} target="_blank" rel="noopener noreferrer" className="hover:text-accent-text underline">
                   {hash}
                 </a>
               ) : (

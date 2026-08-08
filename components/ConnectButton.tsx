@@ -48,7 +48,7 @@ export function ConnectButton() {
                 setShowWallets(false);
                 void connect(w.uuid);
               }}
-              className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-white/10 text-sm"
+              className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-surface-hover/[0.06] text-sm"
             >
               {/* Wallet icons arrive as data URIs from the extension itself,
                   so there is nothing for next/image to optimise. */}
@@ -61,7 +61,7 @@ export function ConnectButton() {
       )}
 
       {error && (
-        <div className="absolute right-0 top-full mt-2 w-64 glass p-3 text-xs text-red-300 z-50">
+        <div className="absolute right-0 top-full mt-2 w-64 glass p-3 text-xs text-danger z-50">
           {error}
         </div>
       )}

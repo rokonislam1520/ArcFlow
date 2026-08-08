@@ -60,15 +60,15 @@ function Field({
   hint?: string;
 }) {
   const base =
-    'w-full rounded-xl bg-slate-900/60 border px-4 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none transition focus:border-arc-500';
-  const border = error ? 'border-red-500/60' : 'border-white/10';
+    'w-full rounded-xl bg-surface-input border px-4 py-2.5 text-sm text-ink-primary placeholder:text-ink-muted outline-none transition focus:border-arc-500';
+  const border = error ? 'border-red-500/60' : 'border-hairline';
 
   return (
     <label className="block">
       <span className="mb-1.5 flex items-baseline justify-between">
-        <span className="text-sm text-slate-300">{label}</span>
+        <span className="text-sm text-ink-secondary">{label}</span>
         {maxLength && (
-          <span className="text-xs text-slate-600">
+          <span className="text-xs text-ink-muted">
             {value.length}/{maxLength}
           </span>
         )}
@@ -92,9 +92,9 @@ function Field({
         />
       )}
       {error ? (
-        <span className="mt-1 block text-xs text-red-400">{error}</span>
+        <span className="mt-1 block text-xs text-danger">{error}</span>
       ) : hint ? (
-        <span className="mt-1 block text-xs text-slate-600">{hint}</span>
+        <span className="mt-1 block text-xs text-ink-muted">{hint}</span>
       ) : null}
     </label>
   );
@@ -107,17 +107,17 @@ function CompletionMeter({ fields }: { fields: ProfileFields }) {
   return (
     <div className="glass p-5">
       <div className="mb-2 flex items-baseline justify-between">
-        <span className="text-sm font-medium text-slate-300">Profile completion</span>
-        <span className="text-sm font-semibold text-arc-400">{percent}%</span>
+        <span className="text-sm font-medium text-ink-secondary">Profile completion</span>
+        <span className="text-sm font-semibold text-accent-text">{percent}%</span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+      <div className="h-2 overflow-hidden rounded-full bg-surface-raised">
         <div
           className="h-full rounded-full bg-gradient-to-r from-arc-500 to-mint-500 transition-all duration-500"
           style={{ width: `${percent}%` }}
         />
       </div>
       {missing.length > 0 && (
-        <p className="mt-3 text-xs text-slate-500">
+        <p className="mt-3 text-xs text-ink-muted">
           Add your {missing.map((k) => FIELD_LABELS[k] ?? k).join(', ')} to finish.
         </p>
       )}
@@ -146,11 +146,11 @@ function CopyAddress({ address }: { address: string }) {
           // Clipboard access can be denied; the address is shown either way.
         }
       }}
-      className="group inline-flex items-center gap-2 rounded-lg bg-slate-900/60 px-3 py-1.5 font-mono text-xs text-slate-400 transition hover:text-white"
+      className="group inline-flex items-center gap-2 rounded-lg bg-surface-input px-3 py-1.5 font-mono text-xs text-ink-secondary transition hover:text-ink-primary"
       title={address}
     >
       {shortAddress(address)}
-      <span className={copied ? 'text-mint-400' : 'text-slate-600 group-hover:text-slate-300'}>
+      <span className={copied ? 'text-success' : 'text-ink-muted group-hover:text-ink-secondary'}>
         {copied ? 'copied' : 'copy'}
       </span>
     </button>
@@ -209,7 +209,7 @@ function ProfileInner() {
         <div className="glass p-10 text-center">
           <div className="mb-4 text-5xl">✍️</div>
           <h2 className="mb-2 text-2xl font-bold">Sign in to continue</h2>
-          <p className="mb-6 text-slate-400">
+          <p className="mb-6 text-ink-secondary">
             Your profile is tied to your address. Sign a message to prove it is yours — this costs no
             gas and authorizes no transactions.
           </p>
@@ -238,7 +238,7 @@ function ProfileInner() {
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gradient">Profile</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-ink-muted">
             Stored off-chain and linked to your address. Nothing here is published on-chain.
           </p>
         </div>
@@ -249,19 +249,19 @@ function ProfileInner() {
         )}
       </header>
 
-      {loading && <div className="glass p-6 text-sm text-slate-400">Loading your profile…</div>}
+      {loading && <div className="glass p-6 text-sm text-ink-secondary">Loading your profile…</div>}
 
       {error && (
         <div className="glass border border-red-500/30 p-4">
-          <p className="text-sm text-red-400">{error}</p>
-          <button onClick={() => void reload()} className="mt-2 text-xs text-slate-400 underline">
+          <p className="text-sm text-danger">{error}</p>
+          <button onClick={() => void reload()} className="mt-2 text-xs text-ink-secondary underline">
             Try again
           </button>
         </div>
       )}
 
       {savedAt && !editing && !error && (
-        <div className="glass border border-mint-500/30 p-4 text-sm text-mint-400">
+        <div className="glass border border-mint-500/30 p-4 text-sm text-success">
           Profile saved.
         </div>
       )}
@@ -277,21 +277,21 @@ function ProfileInner() {
             />
           ) : (
             <>
-              <div className="h-24 w-24 overflow-hidden rounded-full bg-slate-800 ring-2 ring-white/10">
+              <div className="h-24 w-24 overflow-hidden rounded-full bg-surface-raised ring-2 ring-white/10">
                 {draft.avatar ? (
                   // eslint-disable-next-line @next/next/no-img-element -- data URI
                   <img src={draft.avatar} alt="" className="h-full w-full object-cover" />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-slate-500">
+                  <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-ink-muted">
                     {initials}
                   </div>
                 )}
               </div>
               <div className="min-w-0">
-                <h2 className="truncate text-xl font-semibold text-white">
+                <h2 className="truncate text-xl font-semibold text-ink-primary">
                   {draft.displayName || draft.username || 'Unnamed'}
                 </h2>
-                {draft.username && <p className="text-sm text-arc-400">@{draft.username}</p>}
+                {draft.username && <p className="text-sm text-accent-text">@{draft.username}</p>}
                 {address && (
                   <div className="mt-2">
                     <CopyAddress address={address} />
@@ -303,20 +303,20 @@ function ProfileInner() {
         </div>
 
         {!editing && draft.bio && (
-          <p className="mt-5 whitespace-pre-wrap text-sm leading-relaxed text-slate-300">
+          <p className="mt-5 whitespace-pre-wrap text-sm leading-relaxed text-ink-secondary">
             {draft.bio}
           </p>
         )}
 
         {!editing && (draft.country || draft.email) && (
-          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm text-slate-400">
+          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm text-ink-secondary">
             {draft.country && <span>📍 {draft.country}</span>}
             {draft.email && <span>✉️ {draft.email}</span>}
           </div>
         )}
 
         {!editing && SOCIALS.some((s) => draft[s.key]) && (
-          <div className="mt-4 flex flex-wrap gap-2 border-t border-white/5 pt-4">
+          <div className="mt-4 flex flex-wrap gap-2 border-t border-hairline pt-4">
             {SOCIALS.filter((s) => draft[s.key]).map((s) => {
               const value = draft[s.key];
               // Only the website field is turned into a link, and only after
@@ -329,16 +329,16 @@ function ProfileInner() {
                   href={value}
                   target="_blank"
                   rel="noopener noreferrer nofollow"
-                  className="rounded-lg bg-slate-900/60 px-3 py-1.5 text-xs text-arc-400 transition hover:text-arc-300"
+                  className="rounded-lg bg-surface-input px-3 py-1.5 text-xs text-accent-text transition hover:text-accent-text"
                 >
                   {s.label}
                 </a>
               ) : (
                 <span
                   key={s.key}
-                  className="rounded-lg bg-slate-900/60 px-3 py-1.5 text-xs text-slate-400"
+                  className="rounded-lg bg-surface-input px-3 py-1.5 text-xs text-ink-secondary"
                 >
-                  {s.label}: <span className="text-slate-300">{value}</span>
+                  {s.label}: <span className="text-ink-secondary">{value}</span>
                 </span>
               );
             })}
@@ -351,7 +351,7 @@ function ProfileInner() {
       {editing && (
         <>
           <div className="glass space-y-5 p-6">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Identity</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">Identity</h3>
             <div className="grid gap-5 sm:grid-cols-2">
               <Field
                 label="Username"
@@ -400,7 +400,7 @@ function ProfileInner() {
           </div>
 
           <div className="glass space-y-5 p-6">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Links</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">Links</h3>
             <div className="grid gap-5 sm:grid-cols-2">
               {SOCIALS.map((s) => (
                 <Field
@@ -429,12 +429,12 @@ function ProfileInner() {
             <button
               onClick={onDiscard}
               disabled={saving}
-              className="rounded-xl border border-white/10 px-5 py-3 text-sm text-slate-300 transition hover:bg-white/5 disabled:opacity-50"
+              className="rounded-xl border border-hairline px-5 py-3 text-sm text-ink-secondary transition hover:bg-surface-hover/[0.06] disabled:opacity-50"
             >
               {dirty ? 'Discard changes' : 'Done'}
             </button>
-            {hasErrors && <span className="text-xs text-red-400">Fix the highlighted fields.</span>}
-            {!dirty && !hasErrors && <span className="text-xs text-slate-600">No changes yet.</span>}
+            {hasErrors && <span className="text-xs text-danger">Fix the highlighted fields.</span>}
+            {!dirty && !hasErrors && <span className="text-xs text-ink-muted">No changes yet.</span>}
           </div>
         </>
       )}

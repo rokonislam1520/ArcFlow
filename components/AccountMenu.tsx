@@ -136,14 +136,14 @@ export function AccountMenu() {
         onClick={() => (open ? close() : setOpen(true))}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="flex items-center gap-2.5 pl-2 pr-2.5 py-1 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] transition-colors"
+        className="flex items-center gap-2.5 pl-2 pr-2.5 py-1 rounded-xl border border-hairline bg-surface-input hover:bg-surface-hover/[0.06] transition-colors"
       >
         <Avatar src={profile.fields.avatar} fallback={displayName ?? address} />
         <span className="hidden md:flex flex-col leading-tight min-w-0 text-left">
           {displayName && (
             <span className="text-xs font-medium truncate max-w-[110px]">{displayName}</span>
           )}
-          <span className="font-mono text-[11px] text-slate-500 truncate">
+          <span className="font-mono text-[11px] text-ink-muted truncate">
             {shortAddress(address)}
           </span>
         </span>
@@ -154,7 +154,7 @@ export function AccountMenu() {
           strokeWidth={2}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className={`w-3.5 h-3.5 text-slate-500 transition-transform ${open ? 'rotate-180' : ''}`}
+          className={`w-3.5 h-3.5 text-ink-muted transition-transform ${open ? 'rotate-180' : ''}`}
           aria-hidden
         >
           <path d="M6 9l6 6 6-6" />
@@ -169,7 +169,7 @@ export function AccountMenu() {
           {view === 'root' ? (
             <>
               {/* Identity */}
-              <div className="p-4 border-b border-white/10">
+              <div className="p-4 border-b border-hairline">
                 <div className="flex items-center gap-3">
                   <Avatar src={profile.fields.avatar} fallback={displayName ?? address} size={40} />
                   <div className="min-w-0 flex-1">
@@ -178,16 +178,16 @@ export function AccountMenu() {
                     )}
                     <div
                       id="account-address-full"
-                      className="font-mono text-[11px] text-slate-400 break-all"
+                      className="font-mono text-[11px] text-ink-secondary break-all"
                       title={address}
                     >
                       {shortAddress(address)}
                     </div>
                     {wallet && (
-                      <div className="text-[11px] text-slate-500 mt-0.5 truncate">
+                      <div className="text-[11px] text-ink-muted mt-0.5 truncate">
                         {wallet.name}
                         {session.status === 'signed-in' && (
-                          <span className="text-mint-400"> · Verified</span>
+                          <span className="text-success"> · Verified</span>
                         )}
                       </div>
                     )}
@@ -196,14 +196,14 @@ export function AccountMenu() {
 
                 <button
                   onClick={() => void copyAddress()}
-                  className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+                  className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs border border-hairline bg-surface-input hover:bg-surface-hover/[0.06] transition-colors"
                 >
                   {copied ? (
                     <>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-mint-400" aria-hidden>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-success" aria-hidden>
                         <path d="M20 6L9 17l-5-5" />
                       </svg>
-                      <span className="text-mint-300">Copied</span>
+                      <span className="text-success">Copied</span>
                     </>
                   ) : (
                     <>
@@ -218,14 +218,14 @@ export function AccountMenu() {
               </div>
 
               {/* Network */}
-              <div className="p-2 border-b border-white/10">
-                <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
+              <div className="p-2 border-b border-hairline">
+                <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-ink-muted">
                   Network
                 </div>
 
                 <button
                   onClick={() => setView('networks')}
-                  className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-white/5 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-surface-hover/[0.06] transition-colors text-left"
                 >
                   {chain ? (
                     <ChainMark chain={chain} size={22} />
@@ -242,13 +242,13 @@ export function AccountMenu() {
                           ? chainDisplayName(chain)
                           : 'No network'}
                     </span>
-                    <span className="block text-[11px] text-slate-500">
+                    <span className="block text-[11px] text-ink-muted">
                       {chain && chain.isTestnet !== isTestnet
                         ? 'Different mode — switch to continue'
                         : 'Switch network'}
                     </span>
                   </span>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-slate-600" aria-hidden>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-ink-muted" aria-hidden>
                     <path d="M9 18l6-6-6-6" />
                   </svg>
                 </button>
@@ -256,8 +256,8 @@ export function AccountMenu() {
 
               {/* Mode. Kept distinct from the network list because it changes
                   what every chain in that list means: test funds or real ones. */}
-              <div className="p-2 border-b border-white/10">
-                <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
+              <div className="p-2 border-b border-hairline">
+                <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-ink-muted">
                   Mode
                 </div>
 
@@ -269,21 +269,21 @@ export function AccountMenu() {
                 <div
                   role="group"
                   aria-label="Network mode"
-                  className="mx-2 mb-1 grid grid-cols-2 gap-1 p-1 rounded-lg bg-black/30 border border-white/5"
+                  className="mx-2 mb-1 grid grid-cols-2 gap-1 p-1 rounded-lg bg-black/30 border border-hairline"
                 >
                   <ModeOption
                     label="Testnet"
                     active={ready && isTestnet}
                     disabled={switchingMode}
                     onClick={() => void switchMode('testnet')}
-                    activeClass="bg-sky-500/20 text-sky-200 border-sky-500/40"
+                    activeClass="bg-sky-500/20 text-accent-text border-sky-500/40"
                   />
                   <ModeOption
                     label="Mainnet"
                     active={ready && !isTestnet}
                     disabled={switchingMode}
                     onClick={() => void switchMode('mainnet')}
-                    activeClass="bg-emerald-500/20 text-emerald-200 border-emerald-500/40"
+                    activeClass="bg-emerald-500/20 text-success border-emerald-500/40"
                   />
                 </div>
               </div>
@@ -292,7 +292,7 @@ export function AccountMenu() {
               <div className="p-2">
                 <button
                   onClick={handleDisconnect}
-                  className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-red-300 hover:bg-red-500/10 transition-colors"
+                  className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-danger hover:bg-red-500/10 transition-colors"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]" aria-hidden>
                     <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
@@ -302,17 +302,17 @@ export function AccountMenu() {
               </div>
 
               {(walletError || session.error) && (
-                <p className="px-4 pb-3 text-[11px] text-red-300">
+                <p className="px-4 pb-3 text-[11px] text-danger">
                   {walletError ?? session.error}
                 </p>
               )}
             </>
           ) : (
             <>
-              <div className="flex items-center gap-2 p-3 border-b border-white/10">
+              <div className="flex items-center gap-2 p-3 border-b border-hairline">
                 <button
                   onClick={() => setView('root')}
-                  className="p-1 rounded-lg hover:bg-white/10"
+                  className="p-1 rounded-lg hover:bg-surface-hover/[0.06]"
                   aria-label="Back to account"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden>
@@ -320,7 +320,7 @@ export function AccountMenu() {
                   </svg>
                 </button>
                 <span className="text-sm font-medium">Switch network</span>
-                <span className="ml-auto text-[10px] uppercase tracking-wider text-slate-500">
+                <span className="ml-auto text-[10px] uppercase tracking-wider text-ink-muted">
                   {isTestnet ? 'Testnet' : 'Mainnet'}
                 </span>
               </div>
@@ -336,20 +336,20 @@ export function AccountMenu() {
                       disabled={!isEvm || switching !== null}
                       className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-left transition-colors
                         disabled:opacity-40 disabled:cursor-not-allowed
-                        ${active ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                        ${active ? 'bg-surface-input' : 'hover:bg-surface-hover/[0.06]'}`}
                     >
                       <ChainMark chain={c} size={22} />
                       <span className="flex-1 min-w-0 truncate">{chainDisplayName(c)}</span>
                       {switching === c.id ? (
-                        <span className="text-[10px] text-slate-400">Check wallet…</span>
+                        <span className="text-[10px] text-ink-secondary">Check wallet…</span>
                       ) : active ? (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-mint-400" aria-hidden>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-success" aria-hidden>
                           <path d="M20 6L9 17l-5-5" />
                         </svg>
                       ) : (
                         /* Solana needs a different adapter, so flag it rather
                            than offer a switch that cannot work. */
-                        !isEvm && <span className="text-[10px] text-slate-500">non-EVM</span>
+                        !isEvm && <span className="text-[10px] text-ink-muted">non-EVM</span>
                       )}
                     </button>
                   );
@@ -384,7 +384,7 @@ function ModeOption({
       disabled={disabled}
       aria-pressed={active}
       className={`px-2 py-1.5 rounded-md text-xs border transition-colors disabled:cursor-not-allowed ${
-        active ? activeClass : 'border-transparent text-slate-400 hover:text-white hover:bg-white/5'
+        active ? activeClass : 'border-transparent text-ink-secondary hover:text-ink-primary hover:bg-surface-hover/[0.06]'
       }`}
     >
       {label}
@@ -402,7 +402,7 @@ function Avatar({ src, fallback, size = 32 }: { src: string; fallback: string; s
         src={src}
         alt=""
         style={{ width: size, height: size }}
-        className="rounded-full object-cover border border-white/10 shrink-0"
+        className="rounded-full object-cover border border-hairline shrink-0"
       />
     );
   }

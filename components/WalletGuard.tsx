@@ -48,7 +48,7 @@ export function WalletGuard({ children, configured = true, featureName = 'This f
       <Panel>
         <div className="text-5xl mb-4">🦊</div>
         <h2 className="text-2xl font-bold mb-2">No Wallet Detected</h2>
-        <p className="text-slate-400 mb-6">
+        <p className="text-ink-secondary mb-6">
           Install MetaMask (or another EIP-1193 wallet) to use ArcFlow.
         </p>
         <a
@@ -68,11 +68,11 @@ export function WalletGuard({ children, configured = true, featureName = 'This f
       <Panel>
         <div className="text-5xl mb-4">🔒</div>
         <h2 className="text-2xl font-bold mb-2">Wallet Not Connected</h2>
-        <p className="text-slate-400 mb-6">Connect your wallet to continue.</p>
+        <p className="text-ink-secondary mb-6">Connect your wallet to continue.</p>
         <button onClick={connect} disabled={isConnecting} className="btn-arc px-8 py-3 text-lg">
           {isConnecting ? 'Connecting…' : 'Connect Wallet'}
         </button>
-        {connectError && <p className="text-red-400 text-sm mt-4">{connectError}</p>}
+        {connectError && <p className="text-danger text-sm mt-4">{connectError}</p>}
       </Panel>
     );
   }
@@ -82,8 +82,8 @@ export function WalletGuard({ children, configured = true, featureName = 'This f
       <Panel>
         <div className="text-5xl mb-4">🌐</div>
         <h2 className="text-2xl font-bold mb-2">Wrong Network</h2>
-        <p className="text-slate-400 mb-6">
-          ArcFlow runs on <span className="text-arc-400 font-semibold">{expectedChainName}</span>{' '}
+        <p className="text-ink-secondary mb-6">
+          ArcFlow runs on <span className="text-accent-text font-semibold">{expectedChainName}</span>{' '}
           (chain {expectedChainId}). Your wallet is on chain {chainId ?? 'unknown'}.
         </p>
         <button onClick={switchNetwork} className="btn-arc px-8 py-3 text-lg">
@@ -98,8 +98,8 @@ export function WalletGuard({ children, configured = true, featureName = 'This f
       <Panel>
         <div className="text-5xl mb-4">⚙️</div>
         <h2 className="text-2xl font-bold mb-2">Not Configured</h2>
-        <p className="text-slate-400">
-          {featureName} needs its contract addresses set in <code className="text-arc-400">.env.local</code>.
+        <p className="text-ink-secondary">
+          {featureName} needs its contract addresses set in <code className="text-accent-text">.env.local</code>.
           Deploy the contracts and copy the printed values across.
         </p>
       </Panel>

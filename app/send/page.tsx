@@ -101,14 +101,14 @@ export default function SendPage() {
   return (
     <div className="max-w-lg mx-auto animate-in">
       <h1 className="text-3xl font-bold mb-1">Send</h1>
-      <p className="text-slate-400 text-sm mb-8">
-        Transfer on <span className="text-arc-400">{chain.label}</span>. Change networks from the
+      <p className="text-ink-secondary text-sm mb-8">
+        Transfer on <span className="text-accent-text">{chain.label}</span>. Change networks from the
         navbar.
       </p>
 
       <div className="glass p-6 space-y-5">
         <div>
-          <label className="block text-sm text-slate-400 mb-2">Token</label>
+          <label className="block text-sm text-ink-secondary mb-2">Token</label>
           {/*
             One chip opening the shared picker, rather than a button per token.
             The row of buttons could not show logos or search, and it grew wider
@@ -120,9 +120,9 @@ export default function SendPage() {
             disabled={isBusy}
             aria-haspopup="dialog"
             className="w-full flex items-center gap-3 pl-2 pr-3 py-2 rounded-2xl
-                       bg-white/[0.06] border border-white/10
-                       hover:bg-white/[0.1] hover:border-arc-500/30 active:scale-[0.99]
-                       disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white/[0.06]
+                       bg-surface-input border border-hairline
+                       hover:bg-surface-hover/[0.06] hover:border-arc-500/30 active:scale-[0.99]
+                       disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-surface-hover/[0.06]
                        transition-all duration-200 ease-premium"
           >
             {selectedToken ? (
@@ -130,16 +130,16 @@ export default function SendPage() {
                 <TokenMark token={selectedToken} size={36} />
                 <span className="text-left leading-tight min-w-0">
                   <span className="block text-sm font-bold">{selectedToken.symbol}</span>
-                  <span className="block text-[11px] text-slate-500 truncate">
+                  <span className="block text-[11px] text-ink-muted truncate">
                     {selectedToken.name}
                   </span>
                 </span>
               </>
             ) : (
-              <span className="pl-1 text-sm text-slate-400">Select token</span>
+              <span className="pl-1 text-sm text-ink-secondary">Select token</span>
             )}
             <svg
-              className="w-4 h-4 text-slate-500 shrink-0 ml-auto"
+              className="w-4 h-4 text-ink-muted shrink-0 ml-auto"
               fill="none"
               stroke="currentColor"
               strokeWidth={2}
@@ -152,23 +152,23 @@ export default function SendPage() {
         </div>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-2">Recipient</label>
+          <label className="block text-sm text-ink-secondary mb-2">Recipient</label>
           <input
             value={to}
             onChange={(e) => setTo(e.target.value.trim())}
             placeholder="0x…"
             spellCheck={false}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 font-mono text-sm focus:border-arc-500 outline-none"
+            className="w-full bg-surface-input border border-hairline rounded-xl px-4 py-3 font-mono text-sm focus:border-arc-500 outline-none"
           />
         </div>
 
         <div>
-          <div className="flex justify-between text-sm text-slate-400 mb-2">
+          <div className="flex justify-between text-sm text-ink-secondary mb-2">
             <label>Amount</label>
             {balance && (
               <button
                 onClick={() => setAmount(balance.formatted.replace(/,/g, ''))}
-                className="text-arc-400 hover:underline"
+                className="text-accent-text hover:underline"
               >
                 Max: {balance.formatted}
               </button>
@@ -179,11 +179,11 @@ export default function SendPage() {
             onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ''))}
             inputMode="decimal"
             placeholder="0.00"
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-lg focus:border-arc-500 outline-none"
+            className="w-full bg-surface-input border border-hairline rounded-xl px-4 py-3 text-lg focus:border-arc-500 outline-none"
           />
         </div>
 
-        {validationError && to && <p className="text-sm text-amber-400">{validationError}</p>}
+        {validationError && to && <p className="text-sm text-warning">{validationError}</p>}
 
         {/* Hidden while a quote is on screen: the confirm action lives there. */}
         {!hasQuote && state.stage !== 'success' && (
@@ -204,7 +204,7 @@ export default function SendPage() {
         />
 
         {(state.stage === 'success' || state.stage === 'error') && !isBusy && (
-          <button onClick={reset} className="w-full text-sm text-slate-400 hover:text-white">
+          <button onClick={reset} className="w-full text-sm text-ink-secondary hover:text-ink-primary">
             Start another transfer
           </button>
         )}

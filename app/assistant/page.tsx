@@ -106,7 +106,7 @@ function AssistantView() {
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Assistant</h1>
-          <p className="text-slate-400">Answers read directly from {CHAIN_NAME}</p>
+          <p className="text-ink-secondary">Answers read directly from {CHAIN_NAME}</p>
         </div>
 
         <div className="glass p-6 min-h-[500px] flex flex-col">
@@ -119,12 +119,12 @@ function AssistantView() {
                 <div
                   className={`max-w-[80%] p-4 rounded-2xl text-sm leading-relaxed whitespace-pre-line break-words ${
                     msg.role === 'user'
-                      ? 'bg-arc-500/20 border border-arc-500/30 text-white'
-                      : 'bg-white/[0.05] border border-white/10 text-slate-300'
+                      ? 'bg-accent/12 border border-accent/30 text-accent-text'
+                      : 'bg-surface-input border border-hairline text-ink-secondary'
                   }`}
                 >
                   {msg.role === 'assistant' && (
-                    <div className="text-arc-400 text-xs font-semibold mb-1">On-chain data</div>
+                    <div className="text-accent-text text-xs font-semibold mb-1">On-chain data</div>
                   )}
                   {msg.text}
                 </div>
@@ -137,7 +137,7 @@ function AssistantView() {
               <button
                 key={s}
                 onClick={() => handleSend(s)}
-                className="px-3 py-1.5 rounded-full bg-white/5 text-slate-400 text-xs hover:bg-white/10 hover:text-white transition-all"
+                className="px-3 py-1.5 rounded-full bg-surface-input text-ink-secondary text-xs hover:bg-surface-hover/[0.06] hover:text-ink-primary transition-all"
               >
                 {s}
               </button>

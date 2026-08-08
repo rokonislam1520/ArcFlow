@@ -12,38 +12,53 @@
  * drift apart from each other, and the whole app can be retuned here without
  * editing a single page.
  *
- * The values below are expressed as CSS variables so a colour appears once.
- * Anything reading `--arc-500` gets the same teal as the Tailwind `arc-500`
- * class, which keeps utility classes and these components in agreement.
+ * The file is organised as one semantic token set with two values — a dark
+ * theme on `:root` and a light theme under `[data-theme='light']`. Components
+ * name the *role* (`--surface-card`, `--text-muted`, `--accent`) and never the
+ * colour, so a control written once works in both themes and a new theme means
+ * adding values here rather than auditing every page for hard-coded greys.
+ *
+ * Colours are stored as space-separated RGB channels rather than hex so both
+ * CSS (`rgb(var(--accent) / 0.12)`) and Tailwind's `<alpha-value>` can apply
+ * their own opacity to the same token.
  */
 
 :root {
-  /* Surfaces — deep-space palette. `--bg` is the base the gradient is drawn
-     over; `--card` stays darker than the glow pools so cards read as a
-     distinct, floating layer rather than blending into the background. */
-  --bg: #050816;
-  --card: #101827;
+  /* ---- Dark theme (default) --------------------------------------------
+     Deep near-black navy. The surfaces step up in lightness as they come
+     forward — page, card, raised — which is what communicates depth in a dark
+     UI, where shadow alone is nearly invisible. */
+  --surface-page: 10 12 20;      /* #0A0C14 */
+  --surface-card: 18 21 32;      /* #121520 */
+  --surface-raised: 26 30 44;    /* #1A1E2C */
+  --surface-input: 13 16 25;     /* #0D1019 — recessed below the card */
+  --surface-hover: 255 255 255;  /* tinted with alpha at point of use */
+  --surface-hover-alpha: 0.04;
 
-  /* Ambient glow hues, as space-separated RGB so they can be given an alpha at
-     the point of use — the same convention the accents below follow. */
-  --glow-cyan: 34 211 238;    /* #22D3EE — cold, from the top edge */
-  --glow-emerald: 20 241 149; /* #14F195 — brand green, upper left */
-  --glow-azure: 59 130 246;   /* #3B82F6 — electric blue, right */
-  --glow-purple: 139 92 246;  /* #8B5CF6 — highlight, lower right */
+  --border: 40 46 62;            /* #282E3E */
+  --border-strong: 58 66 87;     /* #3A4257 */
 
-  /* Accents */
-  --arc-500: 20 241 217;   /* primary   #14F1D9 */
-  --azure-500: 59 130 246; /* secondary #3B82F6 */
-  --iris-500: 139 92 246;  /* highlight #8B5CF6 */
-  --success: 34 197 94;    /* #22C55E */
-  --warning: 245 158 11;   /* #F59E0B */
+  --text-primary: 246 247 250;   /* #F6F7FA */
+  --text-secondary: 166 174 189; /* #A6AEBD */
+  --text-muted: 111 120 137;     /* #6F7889 */
 
-  /* Text hierarchy. Four steps is enough to rank anything on screen; more
-     than that and the levels stop being distinguishable. */
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-tertiary: #94a3b8;
-  --text-muted: #64748b;
+  /* Primary action colour. Purple throughout; the app has exactly one accent
+     so that "this is the action" never needs a second cue. */
+  --accent: 139 92 246;          /* #8B5CF6 */
+  --accent-hover: 167 139 250;   /* #A78BFA */
+  --accent-text: 181 158 253;    /* accent as *text*, lifted for contrast */
+  --accent-contrast: 255 255 255;/* ink on top of an accent fill */
+
+  --success: 52 199 123;
+  --warning: 245 176 65;
+  --danger: 244 92 92;
+
+  /* Shadows are tokens too: a light theme needs soft grey diffusion where a
+     dark theme needs near-black, and hard-coding either strands the other. */
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px -10px rgb(0 0 0 / 0.55);
+  --shadow-lift: 0 1px 2px rgb(0 0 0 / 0.35), 0 16px 40px -14px rgb(0 0 0 / 0.7);
+  --shadow-float: 0 24px 64px -16px rgb(0 0 0 / 0.75);
 
   /* One easing and two durations for the entire app, so motion feels like it
      comes from a single system rather than from each component's own taste. */
@@ -52,29 +67,71 @@
   --slow: 300ms;
 }
 
+[data-theme='light'] {
+  /* ---- Light theme ------------------------------------------------------
+     Cool off-white page with pure white cards. The page is deliberately *not*
+     white: a white card needs a slightly darker ground to read as a distinct
+     surface, and without that separation the whole screen flattens. */
+  --surface-page: 246 247 250;   /* #F6F7FA */
+  --surface-card: 255 255 255;   /* #FFFFFF */
+  --surface-raised: 255 255 255;
+  --surface-input: 244 245 249;  /* #F4F5F9 — recessed, as in dark */
+  --surface-hover: 15 18 34;
+  --surface-hover-alpha: 0.04;
+
+  --border: 226 229 236;         /* #E2E5EC */
+  --border-strong: 203 208 219;  /* #CBD0DB */
+
+  --text-primary: 16 19 33;      /* #101321 */
+  --text-secondary: 89 97 115;   /* #596173 */
+  --text-muted: 136 143 158;     /* #888F9E */
+
+  /* Deepened one step from the dark theme's purple: #8B5CF6 on white is bright
+     enough to vibrate, and as button text it sits under 4.5:1. */
+  --accent: 124 58 237;          /* #7C3AED */
+  --accent-hover: 109 40 217;    /* #6D28D9 */
+  --accent-text: 109 40 217;
+  --accent-contrast: 255 255 255;
+
+  --success: 22 145 88;
+  --warning: 181 111 12;
+  --danger: 205 51 51;
+
+  /* Soft and grey rather than black: a dark shadow under a white card reads as
+     dirt, not as elevation. */
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.05);
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 6px 16px -8px rgb(16 24 40 / 0.12);
+  --shadow-lift: 0 1px 2px rgb(16 24 40 / 0.05), 0 12px 28px -10px rgb(16 24 40 / 0.16);
+  --shadow-float: 0 20px 48px -12px rgb(16 24 40 / 0.2);
+}
+
 * { box-sizing: border-box; padding: 0; margin: 0; }
 
 html {
   /* Anchor jumps and in-page navigation glide instead of teleporting. */
   scroll-behavior: smooth;
+  background: rgb(var(--surface-page));
 }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: var(--bg);
-  color: var(--text-secondary);
+  background: rgb(var(--surface-page));
+  color: rgb(var(--text-secondary));
   min-height: 100vh;
-  /* Inter's defaults leave dark-background text looking loose and slightly
-     heavy; these are the two fixes that make it read as typeset. */
+  /* Inter's defaults leave text looking loose and slightly heavy; these are the
+     two fixes that make it read as typeset. */
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   letter-spacing: -0.011em;
+  /* Themed together so the switch reads as one deliberate change rather than as
+     a dozen elements each deciding for themselves. Colour only — never layout. */
+  transition: background-color var(--slow) var(--ease), color var(--slow) var(--ease);
 }
 
-/* Headings carry the tighter tracking that large Inter needs, and the brighter
+/* Headings carry the tighter tracking that large Inter needs, and the strongest
    ink, so hierarchy comes from the type itself rather than from ad-hoc classes. */
 h1, h2, h3, h4 {
-  color: var(--text-primary);
+  color: rgb(var(--text-primary));
   letter-spacing: -0.022em;
   font-weight: 600;
 }
@@ -94,34 +151,17 @@ h1, h2, h3, h4 {
 /* ========== BACKGROUND ========== */
 
 /*
- * Ambient depth for the app shell.
+ * The app background.
  *
- * Built in two parts. A linear gradient tints the base from #08131F to #0B1628,
- * which gives the page a vertical sense of light before any colour is added —
- * that alone is most of the difference between "dark" and "deep". Over it sit
- * four wide, heavily feathered glow pools, placed off the corners so their
- * centres — the only genuinely bright part of a radial gradient — fall outside
- * the viewport and content never has to sit on top of one.
- *
- * The opacities (5–7%) are the point of restraint. A glow that can be named as
- * a colour is too strong: these should only register as the background not
- * being flat. `transparent 70%` keeps each pool's falloff long, so no edge is
- * ever visible as a ring.
- *
- * `fixed` attachment means the light stays put while content scrolls past it,
- * which is what makes the page feel like it sits in a space rather than on a
- * texture that scrolls away.
+ * A single flat surface in both themes. The previous version layered four
+ * coloured glow pools here; they were legible against near-black but turned to
+ * muddy tints on an off-white page, and a fintech surface that shifts hue
+ * across the viewport makes the cards sitting on it look inconsistently tinted.
+ * Depth now comes from the card layer alone, which is the part that should
+ * carry it.
  */
 .bg-arc-dark {
-  background:
-    /* Glows, painted over the base tint. */
-    radial-gradient(ellipse 70% 45% at 50% -8%, rgba(var(--glow-cyan) / 0.07), transparent 70%),
-    radial-gradient(ellipse 55% 45% at 8% 20%, rgba(var(--glow-emerald) / 0.05), transparent 70%),
-    radial-gradient(ellipse 60% 50% at 95% 25%, rgba(var(--glow-azure) / 0.06), transparent 70%),
-    radial-gradient(ellipse 65% 45% at 80% 100%, rgba(var(--glow-purple) / 0.06), transparent 70%),
-    /* Base tint, deepest at the top so the page reads as lit from above. */
-    linear-gradient(170deg, #08131f 0%, #0b1628 45%, var(--bg) 100%);
-  background-attachment: fixed;
+  background: rgb(var(--surface-page));
 }
 
 /* ========== SURFACES ========== */
@@ -129,69 +169,62 @@ h1, h2, h3, h4 {
 /*
  * The card surface used across the app.
  *
- * Three layers make the glass read as a material: a translucent fill, a hairline
- * border, and a top highlight (the inset shadow) that suggests light catching
- * the upper edge. The border is white rather than tinted so cards stay neutral
- * and the accent colour means something when it does appear.
+ * Solid rather than translucent. Glass over a busy dark background was the
+ * previous look, but a blurred panel on a light page reads as smudged, and the
+ * blur cost a repaint on every scroll. A flat fill with a hairline border and a
+ * soft shadow is the language the reference uses, and it renders identically in
+ * both themes.
  */
 .glass {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.015) 100%), rgba(16, 24, 39, 0.72);
-  backdrop-filter: blur(24px) saturate(140%);
-  -webkit-backdrop-filter: blur(24px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 1.5rem;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.4),
-    0 8px 24px -8px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  transition: border-color var(--slow) var(--ease), box-shadow var(--slow) var(--ease), transform var(--slow) var(--ease);
+  background: rgb(var(--surface-card));
+  border: 1px solid rgb(var(--border));
+  border-radius: 1.25rem;
+  box-shadow: var(--shadow-card);
+  transition:
+    background-color var(--slow) var(--ease),
+    border-color var(--slow) var(--ease),
+    box-shadow var(--slow) var(--ease),
+    transform var(--slow) var(--ease);
 }
 
 .glass:hover {
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.4),
-    0 16px 40px -12px rgba(0, 0, 0, 0.65),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  border-color: rgb(var(--border-strong));
+  box-shadow: var(--shadow-lift);
 }
 
 .glass-sm {
-  background: rgba(16, 24, 39, 0.6);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 1.25rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  transition: border-color var(--fast) var(--ease), background-color var(--fast) var(--ease);
+  background: rgb(var(--surface-card));
+  border: 1px solid rgb(var(--border));
+  border-radius: 1rem;
+  box-shadow: var(--shadow-sm);
+  transition:
+    background-color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease);
 }
 
-.glass-sm:hover {
-  border-color: rgba(255, 255, 255, 0.1);
-}
+.glass-sm:hover { border-color: rgb(var(--border-strong)); }
 
 /*
  * Opt-in lift for cards that are the subject of a page (a swap panel, a stat
  * tile). Applied on top of `.glass`; kept separate because a page where
  * everything lifts has no focal point at all.
  */
-.card-float:hover {
-  transform: translateY(-2px);
-}
+.card-float:hover { transform: translateY(-2px); }
 
-/* A card that is currently selected or active. The accent border and glow are
-   reserved for this state so "selected" is never ambiguous. */
+/* A card that is currently selected or active. The accent border is reserved
+   for this state so "selected" is never ambiguous. */
 .card-active {
-  border-color: rgba(var(--arc-500) / 0.4);
-  box-shadow:
-    0 0 0 1px rgba(var(--arc-500) / 0.18),
-    0 8px 32px -8px rgba(var(--arc-500) / 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  border-color: rgb(var(--accent) / 0.45);
+  box-shadow: 0 0 0 3px rgb(var(--accent) / 0.1), var(--shadow-card);
 }
 
 /* ========== TYPOGRAPHY ========== */
 
+/* Reads as solid accent text in both themes. It was a three-stop teal-to-purple
+   gradient; a wordmark that changes hue is hard to place as a brand, and the
+   teal end was invisible against white. */
 .text-gradient {
-  background: linear-gradient(135deg, #14f1d9 0%, #3b82f6 55%, #8b5cf6 100%);
+  background: linear-gradient(135deg, rgb(var(--accent)) 0%, rgb(var(--accent-hover)) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -200,69 +233,51 @@ h1, h2, h3, h4 {
 /* ========== BUTTONS ========== */
 
 /*
- * Primary action.
- *
- * The gradient runs teal to blue, and the `::after` layer holds a brighter
- * version of it that fades in on hover. Cross-fading two gradient layers is the
- * only way to animate a gradient smoothly — CSS cannot interpolate
- * `background-image` between two values, so a plain hover swap would jump.
+ * Primary action. One flat purple: a solid fill states "this is the action"
+ * more plainly than a gradient, and it is the one element that should look the
+ * same on every page of the app.
  */
 .btn-arc {
-  position: relative;
-  isolation: isolate;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: linear-gradient(135deg, #14f1d9 0%, #22d3ee 45%, #3b82f6 100%);
-  /* Dark ink on a bright accent: white text on this teal fails contrast. */
-  color: #04211f;
-  font-weight: 650;
+  background: rgb(var(--accent));
+  color: rgb(var(--accent-contrast));
+  font-weight: 600;
   letter-spacing: -0.01em;
-  border-radius: 1rem;
+  border-radius: 0.875rem;
   padding: 0.75rem 1.5rem;
   border: none;
   cursor: pointer;
-  overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -10px rgba(var(--arc-500) / 0.6);
-  transition: transform var(--fast) var(--ease), box-shadow var(--slow) var(--ease), opacity var(--fast) var(--ease);
-}
-
-.btn-arc::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: linear-gradient(135deg, #5ff9e5 0%, #38bdf8 45%, #60a5fa 100%);
-  opacity: 0;
-  transition: opacity var(--slow) var(--ease);
+  box-shadow: var(--shadow-sm);
+  transition:
+    background-color var(--fast) var(--ease),
+    transform var(--fast) var(--ease),
+    box-shadow var(--fast) var(--ease);
 }
 
 .btn-arc:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 36px -12px rgba(var(--arc-500) / 0.7);
+  background: rgb(var(--accent-hover));
+  box-shadow: 0 4px 16px -4px rgb(var(--accent) / 0.45);
 }
-
-.btn-arc:hover:not(:disabled)::after { opacity: 1; }
 
 /* Press returns the button to the resting plane: a control that stays lifted
    while held does not feel like it was pressed. */
 .btn-arc:active:not(:disabled) {
-  transform: translateY(0) scale(0.985);
+  transform: scale(0.985);
   transition-duration: 80ms;
 }
 
 .btn-arc:disabled {
-  /* Flattened to grey rather than dimmed. A faded gradient still looks like a
-     live button; a control with no colour reads as unavailable at a glance. */
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-muted);
+  /* Flattened to the page's own neutral rather than dimmed. A faded purple
+     still looks like a live button; a control with no colour reads as
+     unavailable at a glance. */
+  background: rgb(var(--surface-hover) / 0.08);
+  color: rgb(var(--text-muted));
   box-shadow: none;
   cursor: not-allowed;
-  transform: none;
 }
-
-.btn-arc:disabled::after { opacity: 0; }
 
 /* Secondary action. Same geometry and motion as the primary so the two can sit
    side by side, but no fill, so it never competes for the eye. */
@@ -271,94 +286,87 @@ h1, h2, h3, h4 {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text-primary);
+  background: transparent;
+  color: rgb(var(--text-primary));
   font-weight: 600;
   letter-spacing: -0.01em;
-  border-radius: 1rem;
+  border-radius: 0.875rem;
   padding: 0.75rem 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgb(var(--border));
   cursor: pointer;
-  transition: background-color var(--fast) var(--ease), border-color var(--fast) var(--ease), transform var(--fast) var(--ease);
+  transition:
+    background-color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease);
 }
 
 .btn-outline:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(var(--arc-500) / 0.35);
-  transform: translateY(-1px);
+  background: rgb(var(--surface-hover) / var(--surface-hover-alpha));
+  border-color: rgb(var(--border-strong));
 }
 
 .btn-outline:active:not(:disabled) {
-  transform: translateY(0) scale(0.985);
+  transform: scale(0.985);
   transition-duration: 80ms;
 }
 
-.btn-outline:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  transform: none;
-}
+.btn-outline:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* Keyboard focus. Applied to both buttons and inputs, and only for keyboard
-   users, so pointer users never see a ring they did not ask for. */
+/* Keyboard focus. Applied to buttons and inputs, and only for keyboard users,
+   so pointer users never see a ring they did not ask for. */
 .btn-arc:focus-visible,
 .btn-outline:focus-visible,
 .input-arc:focus-visible {
-  outline: 2px solid rgba(var(--arc-500) / 0.6);
+  outline: 2px solid rgb(var(--accent));
   outline-offset: 2px;
 }
 
 /* ========== INPUTS ========== */
 
 .input-arc {
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 1rem;
-  padding: 1rem;
-  color: var(--text-primary);
-  font-size: 1.125rem;
+  background: rgb(var(--surface-input));
+  border: 1px solid rgb(var(--border));
+  border-radius: 0.875rem;
+  padding: 0.875rem 1rem;
+  color: rgb(var(--text-primary));
+  font-size: 1rem;
   /* Amounts and addresses line up column-wise only if digits share a width. */
   font-variant-numeric: tabular-nums;
   outline: none;
   width: 100%;
-  transition: border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease), background-color var(--fast) var(--ease);
+  transition:
+    border-color var(--fast) var(--ease),
+    box-shadow var(--fast) var(--ease),
+    background-color var(--fast) var(--ease);
 }
 
-.input-arc:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.14);
-}
+.input-arc:hover:not(:disabled):not(:focus) { border-color: rgb(var(--border-strong)); }
 
 .input-arc:focus {
-  border-color: rgba(var(--arc-500) / 0.5);
-  background: rgba(0, 0, 0, 0.35);
+  border-color: rgb(var(--accent));
+  background: rgb(var(--surface-card));
   /* A ring rather than a glow: it marks the field precisely without bleeding
      light onto whatever sits next to it. */
-  box-shadow: 0 0 0 3px rgba(var(--arc-500) / 0.12);
+  box-shadow: 0 0 0 3px rgb(var(--accent) / 0.14);
 }
 
-.input-arc::placeholder { color: var(--text-muted); }
-
-.input-arc:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+.input-arc::placeholder { color: rgb(var(--text-muted)); }
+.input-arc:disabled { opacity: 0.55; cursor: not-allowed; }
 
 /* ========== EFFECTS ========== */
 
-.glow-teal {
-  box-shadow: 0 0 40px rgba(var(--arc-500) / 0.15), 0 0 80px rgba(var(--arc-500) / 0.05);
-}
-
-.glow-teal-sm {
-  box-shadow: 0 0 20px rgba(var(--arc-500) / 0.12);
-}
+/* Kept for the pages that still reference them, but reduced to a soft accent
+   ring. The original 80px neon bloom belonged to the old dark-only look and
+   would smear grey across a light page. */
+.glow-teal { box-shadow: 0 0 0 1px rgb(var(--accent) / 0.14), var(--shadow-card); }
+.glow-teal-sm { box-shadow: 0 0 0 1px rgb(var(--accent) / 0.12); }
 
 /* ========== BADGES ========== */
 
 /*
  * Status badges share one shape and differ only in hue, so the colour is doing
  * the work of distinguishing them. Each pairs a tinted fill with a matching
- * border, which holds up against both the card and the page background.
+ * border, which holds up against both the card and the page background in
+ * either theme.
  */
 .badge-success,
 .badge-warning {
@@ -374,15 +382,15 @@ h1, h2, h3, h4 {
 }
 
 .badge-success {
-  background: rgba(var(--success) / 0.12);
-  color: #6ee7a8;
-  border-color: rgba(var(--success) / 0.25);
+  background: rgb(var(--success) / 0.12);
+  color: rgb(var(--success));
+  border-color: rgb(var(--success) / 0.25);
 }
 
 .badge-warning {
-  background: rgba(var(--warning) / 0.12);
-  color: #fbbf24;
-  border-color: rgba(var(--warning) / 0.25);
+  background: rgb(var(--warning) / 0.12);
+  color: rgb(var(--warning));
+  border-color: rgb(var(--warning) / 0.25);
 }
 
 /* ========== SCROLLBAR ========== */
@@ -390,15 +398,15 @@ h1, h2, h3, h4 {
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgb(var(--border-strong));
   border-radius: 9999px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
-::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.18); background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--text-muted)); background-clip: content-box; }
 
 /* Firefox has no pseudo-element scrollbar; this is the equivalent. */
-* { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.12) transparent; }
+* { scrollbar-width: thin; scrollbar-color: rgb(var(--border-strong)) transparent; }
 
 /* ========== NUMBER INPUT ========== */
 
@@ -418,7 +426,12 @@ input[type="number"] { -moz-appearance: textfield; }
 /* Placeholder shimmer for loading states, so a pending card reads as loading
    rather than as empty. */
 .skeleton {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.04) 75%);
+  background: linear-gradient(
+    90deg,
+    rgb(var(--surface-hover) / 0.05) 25%,
+    rgb(var(--surface-hover) / 0.1) 50%,
+    rgb(var(--surface-hover) / 0.05) 75%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.6s linear infinite;
   border-radius: 0.75rem;

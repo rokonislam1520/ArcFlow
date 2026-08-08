@@ -277,7 +277,7 @@ export function Sparkline({
 export function Bar({ pct, color = '#14f1d9' }: { pct: number; color?: string }) {
   const clamped = Math.max(0, Math.min(100, pct));
   return (
-    <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+    <div className="h-1.5 rounded-full bg-surface-input overflow-hidden">
       <div
         className="h-full rounded-full transition-all duration-500 ease-premium"
         style={{ width: `${clamped}%`, backgroundColor: color }}

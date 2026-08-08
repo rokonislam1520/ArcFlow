@@ -39,12 +39,12 @@ function PortfolioView() {
             <h1 className="text-3xl sm:text-4xl font-bold">Portfolio</h1>
             <Link
               href="/dashboard"
-              className="text-sm px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-arc-500/30 transition-all"
+              className="text-sm px-4 py-2 rounded-xl bg-surface-input hover:bg-surface-hover/[0.06] border border-hairline hover:border-arc-500/30 transition-all"
             >
               ← Dashboard
             </Link>
           </div>
-          <p className="text-slate-400 text-sm sm:text-base">
+          <p className="text-ink-secondary text-sm sm:text-base">
             Complete breakdown across {portfolio.chains.length || 'all'} chains
           </p>
         </header>
@@ -52,7 +52,7 @@ function PortfolioView() {
         {/* Total + quick stats */}
         <section className="glass glow-teal p-6 sm:p-8 mb-6 sm:mb-8">
           <div className="mb-6">
-            <div className="text-slate-400 text-xs uppercase tracking-wider mb-2">
+            <div className="text-ink-secondary text-xs uppercase tracking-wider mb-2">
               Total Value
             </div>
             <div className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gradient tabular-nums">
@@ -122,7 +122,7 @@ function PortfolioView() {
                     const c = portfolio.chains.find((p) => p.chain.id === a.chain.id)!;
                     return (
                       <details key={a.chain.id} className="group">
-                        <summary className="cursor-pointer p-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] transition-colors list-none">
+                        <summary className="cursor-pointer p-4 rounded-xl bg-surface-input hover:bg-surface-hover/[0.06] transition-colors list-none">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3 min-w-0">
                               <span className="text-xl group-open:rotate-90 transition-transform">
@@ -132,7 +132,7 @@ function PortfolioView() {
                                 <div className="font-semibold text-sm truncate">
                                   {a.chain.label}
                                 </div>
-                                <div className="text-xs text-slate-500">
+                                <div className="text-xs text-ink-muted">
                                   {c.holdings.length}{' '}
                                   {c.holdings.length === 1 ? 'holding' : 'holdings'}
                                 </div>
@@ -140,14 +140,14 @@ function PortfolioView() {
                             </div>
                             <div className="text-right shrink-0 ml-3">
                               {a.error ? (
-                                <span className="text-xs text-red-300">unavailable</span>
+                                <span className="text-xs text-danger">unavailable</span>
                               ) : (
                                 <>
                                   <div className="font-semibold text-sm tabular-nums">
                                     {formatUSD(a.valueUSD)}
                                   </div>
                                   {a.sharePct !== null && (
-                                    <div className="text-xs text-slate-500 tabular-nums">
+                                    <div className="text-xs text-ink-muted tabular-nums">
                                       {a.sharePct.toFixed(1)}%
                                     </div>
                                   )}
@@ -157,19 +157,19 @@ function PortfolioView() {
                           </div>
                         </summary>
 
-                        <div className="mt-2 ml-4 pl-4 border-l border-white/10 space-y-2">
+                        <div className="mt-2 ml-4 pl-4 border-l border-hairline space-y-2">
                           {c.error ? (
                             <ErrorState message={c.error} onRetry={portfolio.refresh} />
                           ) : (
                             c.holdings.map((h: Holding, i: number) => (
                               <div
                                 key={`${h.symbol}-${h.address ?? 'native'}-${i}`}
-                                className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02]"
+                                className="flex items-center gap-3 p-3 rounded-xl bg-surface-input"
                               >
                                 <TokenBadge symbol={h.symbol} size={32} />
                                 <div className="min-w-0 flex-1">
                                   <div className="text-sm font-medium">{h.symbol}</div>
-                                  <div className="text-xs text-slate-500 tabular-nums truncate">
+                                  <div className="text-xs text-ink-muted tabular-nums truncate">
                                     {Number(h.amount).toLocaleString('en-US', {
                                       maximumFractionDigits: 6,
                                     })}
@@ -213,38 +213,38 @@ function PortfolioView() {
                     const sent = t.direction === 'sent';
 
                     const row = (
-                      <div className="p-3 rounded-xl hover:bg-white/[0.03] transition-colors">
+                      <div className="p-3 rounded-xl hover:bg-surface-hover/[0.06] transition-colors">
                         <div className="flex items-center gap-2.5 mb-1">
                           <span
                             className={`w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 ${
                               sent
-                                ? 'bg-white/[0.06] text-slate-300'
-                                : 'bg-mint-500/15 text-mint-300'
+                                ? 'bg-surface-input text-ink-secondary'
+                                : 'bg-mint-500/15 text-success'
                             }`}
                           >
                             {sent ? '↑' : '↓'}
                           </span>
                           <span className="text-xs font-medium min-w-0 truncate">
                             {sent ? 'To' : 'From'}{' '}
-                            <span className="font-mono text-slate-400">
+                            <span className="font-mono text-ink-secondary">
                               {shortAddress(t.counterparty)}
                             </span>
                           </span>
                         </div>
                         <div className="flex items-center justify-between ml-8 text-[11px]">
-                          <span className="text-slate-500">
+                          <span className="text-ink-muted">
                             {when ?? `block ${t.blockNumber.toString()}`}
                           </span>
                           <span
                             className={`font-semibold tabular-nums ${
-                              sent ? 'text-slate-200' : 'text-mint-300'
+                              sent ? 'text-ink-primary' : 'text-success'
                             }`}
                           >
                             {sent ? '−' : '+'}
                             {Number(t.amount).toLocaleString('en-US', {
                               maximumFractionDigits: 6,
                             })}{' '}
-                            <span className="font-normal text-slate-400">{t.symbol}</span>
+                            <span className="font-normal text-ink-secondary">{t.symbol}</span>
                           </span>
                         </div>
                       </div>

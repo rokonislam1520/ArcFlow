@@ -180,17 +180,17 @@ export function ProfileOnboarding() {
       aria-labelledby="onboarding-title"
     >
       <div className="w-full max-w-lg glass max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-white/10">
+        <div className="p-6 border-b border-hairline">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 id="onboarding-title" className="text-xl font-bold">
                 Complete your profile
               </h2>
-              <p className="text-sm text-slate-400 mt-1">
+              <p className="text-sm text-ink-secondary mt-1">
                 {address ? (
                   <>
                     Signed in as{' '}
-                    <span className="font-mono text-slate-300">{shortAddress(address)}</span>. A
+                    <span className="font-mono text-ink-secondary">{shortAddress(address)}</span>. A
                     name makes you recognisable to people you transact with.
                   </>
                 ) : (
@@ -200,7 +200,7 @@ export function ProfileOnboarding() {
             </div>
             <button
               onClick={dismiss}
-              className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/10 shrink-0"
+              className="p-1.5 rounded-lg text-ink-muted hover:text-ink-primary hover:bg-surface-hover/[0.06] shrink-0"
               aria-label="Close"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="w-4 h-4">
@@ -216,7 +216,7 @@ export function ProfileOnboarding() {
                 className={`h-1 flex-1 rounded-full ${
                   s === step || (step === 'links' && s === 'identity')
                     ? 'bg-arc-500'
-                    : 'bg-white/10'
+                    : 'bg-surface-input'
                 }`}
               />
             ))}
@@ -317,14 +317,14 @@ export function ProfileOnboarding() {
             </>
           )}
 
-          {profile.error && <p className="text-xs text-red-300">{profile.error}</p>}
+          {profile.error && <p className="text-xs text-danger">{profile.error}</p>}
         </div>
 
         <div className="p-6 pt-0 flex items-center gap-3">
           <button
             onClick={dismiss}
             disabled={profile.saving}
-            className="px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white hover:bg-white/5 disabled:opacity-50"
+            className="px-4 py-2.5 rounded-xl text-sm text-ink-secondary hover:text-ink-primary hover:bg-surface-hover/[0.06] disabled:opacity-50"
           >
             Skip for now
           </button>
@@ -335,7 +335,7 @@ export function ProfileOnboarding() {
             <button
               onClick={() => setStep('identity')}
               disabled={profile.saving}
-              className="px-4 py-2.5 rounded-xl text-sm border border-white/10 bg-white/5 hover:bg-white/10 disabled:opacity-50"
+              className="px-4 py-2.5 rounded-xl text-sm border border-hairline bg-surface-input hover:bg-surface-hover/[0.06] disabled:opacity-50"
             >
               Back
             </button>
@@ -391,15 +391,15 @@ function Field({
 }) {
   const id = `onboarding-${label.toLowerCase().replace(/[^a-z]+/g, '-')}`;
   const className =
-    'w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border text-sm placeholder:text-slate-600 outline-none transition-colors focus:bg-white/[0.06] ' +
-    (error ? 'border-red-500/50 focus:border-red-500/70' : 'border-white/10 focus:border-arc-500/40');
+    'w-full px-3 py-2.5 rounded-xl bg-surface-input border text-sm placeholder:text-ink-muted outline-none transition-colors focus:bg-surface-input ' +
+    (error ? 'border-red-500/50 focus:border-red-500/70' : 'border-hairline focus:border-arc-500/40');
 
   return (
     <div>
-      <label htmlFor={id} className="flex items-center gap-2 mb-1.5 text-xs font-medium text-slate-300">
+      <label htmlFor={id} className="flex items-center gap-2 mb-1.5 text-xs font-medium text-ink-secondary">
         {label}
-        {required && <span className="text-arc-400">required</span>}
-        {optional && <span className="text-slate-600">optional</span>}
+        {required && <span className="text-accent-text">required</span>}
+        {optional && <span className="text-ink-muted">optional</span>}
       </label>
 
       {multiline ? (
@@ -427,9 +427,9 @@ function Field({
       )}
 
       {error ? (
-        <p className="mt-1 text-[11px] text-red-300">{error}</p>
+        <p className="mt-1 text-[11px] text-danger">{error}</p>
       ) : hint ? (
-        <p className="mt-1 text-[11px] text-slate-500">{hint}</p>
+        <p className="mt-1 text-[11px] text-ink-muted">{hint}</p>
       ) : null}
     </div>
   );

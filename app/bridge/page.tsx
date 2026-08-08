@@ -155,21 +155,21 @@ function ChainChip({
         aria-expanded={open}
         aria-labelledby={`${id}-label`}
         className="group flex items-center gap-2 pl-1.5 pr-2.5 py-1.5 rounded-full
-                   bg-white/[0.06] border border-white/10 text-sm font-medium text-white
-                   hover:bg-white/10 hover:border-white/20 active:scale-[0.98]
-                   disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white/[0.06]
+                   bg-surface-input border border-hairline text-sm font-medium text-ink-primary
+                   hover:bg-surface-hover/[0.06] hover:border-hairline active:scale-[0.98]
+                   disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-surface-hover/[0.06]
                    shadow-card transition-all duration-200 ease-premium"
       >
         {value ? (
           <ChainMark chain={value} size={22} />
         ) : (
-          <span className="w-[22px] h-[22px] rounded-full bg-white/10" />
+          <span className="w-[22px] h-[22px] rounded-full bg-surface-input" />
         )}
         <span className="truncate max-w-[110px] sm:max-w-[140px]">
           {value?.label ?? 'Select'}
         </span>
         <CaretIcon
-          className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
+          className={`w-4 h-4 text-ink-secondary transition-transform duration-200 ${
             open ? 'rotate-180' : ''
           }`}
         />
@@ -180,7 +180,7 @@ function ChainChip({
           role="listbox"
           aria-labelledby={`${id}-label`}
           className="absolute z-30 mt-2 left-0 w-60 max-h-72 overflow-y-auto
-                     glass rounded-2xl border border-white/10 p-1.5
+                     glass rounded-2xl border border-hairline p-1.5
                      shadow-float animate-in"
         >
           {options.map((c) => {
@@ -199,18 +199,18 @@ function ChainChip({
                             transition-colors duration-150
                             ${
                               selected
-                                ? 'bg-arc-500/12 text-white'
-                                : 'text-slate-300 hover:bg-white/[0.07] hover:text-white'
+                                ? 'bg-accent/10 text-accent-text'
+                                : 'text-ink-secondary hover:bg-surface-hover/[0.06] hover:text-ink-primary'
                             }`}
               >
                 <ChainMark chain={c} size={22} />
                 <span className="flex-1 truncate">{c.label}</span>
-                {selected && <CheckIcon className="w-4 h-4 text-arc-400 shrink-0" />}
+                {selected && <CheckIcon className="w-4 h-4 text-accent-text shrink-0" />}
               </button>
             );
           })}
           {options.length === 0 && (
-            <p className="px-2.5 py-3 text-sm text-slate-500">No chains available</p>
+            <p className="px-2.5 py-3 text-sm text-ink-muted">No chains available</p>
           )}
         </div>
       )}
@@ -232,14 +232,14 @@ function TokenChip({ token }: { token: SwapToken | null }) {
     <div
       title="Bridging is USDC-only over Circle CCTP"
       className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full
-                 bg-white/[0.06] border border-white/10 shadow-card shrink-0"
+                 bg-surface-input border border-hairline shadow-card shrink-0"
     >
       {token ? (
         <TokenMark token={token} size={22} badge={false} />
       ) : (
-        <span className="w-[22px] h-[22px] rounded-full bg-white/10" />
+        <span className="w-[22px] h-[22px] rounded-full bg-surface-input" />
       )}
-      <span className="text-sm font-semibold text-white">USDC</span>
+      <span className="text-sm font-semibold text-ink-primary">USDC</span>
     </div>
   );
 }
@@ -458,20 +458,20 @@ export default function BridgePage() {
       {/* Header */}
       <div className="mb-7">
         <h1 className="text-3xl font-bold mb-1">Bridge</h1>
-        <p className="text-slate-400 text-sm">Move USDC across chains via Circle CCTP.</p>
+        <p className="text-ink-secondary text-sm">Move USDC across chains via Circle CCTP.</p>
       </div>
 
       {/* Network mismatch banner */}
       {networkMismatch && source && (
         <div className="mb-4 glass p-4 border border-amber-500/20 rounded-2xl">
-          <p className="text-amber-300 text-sm mb-2">
+          <p className="text-warning text-sm mb-2">
             Your wallet is on a different network. Switch to{' '}
             <strong>{source.label}</strong> to bridge from it.
           </p>
           <button
             onClick={() => void handleSourceChange(source)}
             className="px-3 py-1.5 text-xs rounded-lg bg-amber-500/15 border border-amber-500/30
-                       hover:bg-amber-500/25 text-amber-200 transition-colors"
+                       hover:bg-amber-500/25 text-warning transition-colors"
           >
             Switch to {source.label}
           </button>
@@ -481,11 +481,11 @@ export default function BridgePage() {
       {/* Wallet error banner (e.g. user declined) */}
       {walletError && (
         <div className="mb-4 glass p-3 border border-red-500/20 rounded-2xl flex items-start gap-2">
-          <span className="text-red-400 text-xs mt-0.5">⚠</span>
-          <p className="text-red-300 text-sm flex-1">{walletError}</p>
+          <span className="text-danger text-xs mt-0.5">⚠</span>
+          <p className="text-danger text-sm flex-1">{walletError}</p>
           <button
             onClick={clearError}
-            className="text-slate-500 hover:text-slate-300 text-xs shrink-0"
+            className="text-ink-muted hover:text-ink-secondary text-xs shrink-0"
             aria-label="Dismiss"
           >
             ✕
@@ -496,7 +496,7 @@ export default function BridgePage() {
       {/* ---- Send panel ---- */}
       <section className="glass rounded-3xl p-5 sm:p-6" aria-label="Send">
         <div className="flex items-center justify-between gap-3 mb-5">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+          <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
             From
           </span>
           <ChainChip
@@ -523,7 +523,7 @@ export default function BridgePage() {
               disabled={isBusy}
               className="w-full bg-transparent border-0 p-0 outline-none
                          text-[2rem] sm:text-[2.5rem] leading-none font-semibold tracking-tight
-                         text-white tabular-nums placeholder:text-slate-600
+                         text-ink-primary tabular-nums placeholder:text-ink-muted
                          disabled:opacity-40"
             />
           </div>
@@ -531,10 +531,10 @@ export default function BridgePage() {
         </div>
 
         <div className="mt-3 flex items-center justify-between gap-3">
-          <p className="text-sm text-slate-500 tabular-nums">{usdLine(amount)}</p>
+          <p className="text-sm text-ink-muted tabular-nums">{usdLine(amount)}</p>
 
-          <div className="flex items-center gap-2 text-sm text-slate-400 min-w-0">
-            <WalletIcon className="w-4 h-4 shrink-0 text-slate-500" />
+          <div className="flex items-center gap-2 text-sm text-ink-secondary min-w-0">
+            <WalletIcon className="w-4 h-4 shrink-0 text-ink-muted" />
             <span className="tabular-nums truncate">
               {switching ? 'Switching…' : usdc ? usdc.formatted : '—'}
             </span>
@@ -542,7 +542,7 @@ export default function BridgePage() {
               <button
                 onClick={() => setAmount(usdc.formatted.replace(/,/g, ''))}
                 className="px-2 py-0.5 rounded-md text-xs font-semibold
-                           bg-arc-500/12 text-arc-300 border border-arc-500/25
+                           bg-arc-500/12 text-accent-text border border-arc-500/25
                            hover:bg-arc-500/20 active:scale-95
                            transition-all duration-150 shrink-0"
               >
@@ -562,15 +562,15 @@ export default function BridgePage() {
           // The thick border matches the page background so the button reads as
           // a notch punched through the seam rather than a chip floating on it.
           className="w-12 h-12 grid place-items-center rounded-full
-                     bg-slate-850 border-4 border-slate-975 text-slate-300
-                     hover:text-arc-300 hover:bg-slate-800 hover:shadow-glow-arc
+                     bg-surface-card border-4 border-hairline text-ink-secondary
+                     hover:text-accent-text hover:bg-surface-raised hover:shadow-glow-arc
                      active:scale-95
                      disabled:opacity-40 disabled:cursor-not-allowed
                      shadow-float transition-all duration-300 ease-premium"
           aria-label="Swap source and destination"
         >
           {switching ? (
-            <span className="w-5 h-5 rounded-full border-2 border-slate-600 border-t-arc-400 animate-spin" />
+            <span className="w-5 h-5 rounded-full border-2 border-hairline border-t-arc-400 animate-spin" />
           ) : (
             <SwapIcon className="w-5 h-5" />
           )}
@@ -580,7 +580,7 @@ export default function BridgePage() {
       {/* ---- Receive panel ---- */}
       <section className="glass rounded-3xl p-5 sm:p-6" aria-label="Receive">
         <div className="flex items-center justify-between gap-3 mb-5">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+          <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
             To
           </span>
           <ChainChip
@@ -597,17 +597,17 @@ export default function BridgePage() {
           <p
             className="min-w-0 flex-1 text-[2rem] sm:text-[2.5rem] leading-none font-semibold
                        tracking-tight tabular-nums truncate
-                       text-white/90"
+                       text-ink-primary/90"
           >
-            {amount || <span className="text-slate-600">0.00</span>}
+            {amount || <span className="text-ink-muted">0.00</span>}
           </p>
           <TokenChip token={destToken} />
         </div>
 
         <div className="mt-3 flex items-center justify-between gap-3">
-          <p className="text-sm text-slate-500 tabular-nums">{usdLine(amount)}</p>
-          <div className="flex items-center gap-2 text-sm text-slate-400 min-w-0">
-            <WalletIcon className="w-4 h-4 shrink-0 text-slate-500" />
+          <p className="text-sm text-ink-muted tabular-nums">{usdLine(amount)}</p>
+          <div className="flex items-center gap-2 text-sm text-ink-secondary min-w-0">
+            <WalletIcon className="w-4 h-4 shrink-0 text-ink-muted" />
             <span className="tabular-nums truncate">
               {destUsdc ? destUsdc.formatted : '—'}
             </span>
@@ -619,12 +619,12 @@ export default function BridgePage() {
       <div className="mt-5 space-y-4">
         {/* Custom recipient */}
         <div className="glass rounded-2xl p-4">
-          <label className="flex items-center gap-2.5 text-sm text-slate-300 cursor-pointer select-none">
+          <label className="flex items-center gap-2.5 text-sm text-ink-secondary cursor-pointer select-none">
             <input
               type="checkbox"
               checked={useCustomRecipient}
               onChange={(e) => setUseCustomRecipient(e.target.checked)}
-              className="rounded border-white/20 bg-white/5 accent-arc-500"
+              className="rounded border-hairline bg-surface-input accent-arc-500"
             />
             Send to a different address
           </label>
@@ -635,8 +635,8 @@ export default function BridgePage() {
               placeholder="0x…"
               spellCheck={false}
               aria-label="Recipient address"
-              className="mt-3 w-full bg-black/25 border border-white/10 rounded-xl px-4 py-3 text-white
-                         font-mono text-sm hover:border-white/[0.14] transition-all duration-200
+              className="mt-3 w-full bg-black/25 border border-hairline rounded-xl px-4 py-3 text-ink-primary
+                         font-mono text-sm hover:border-hairline transition-all duration-200
                          focus:border-arc-500/50 focus:bg-black/35 focus:ring-[3px] focus:ring-arc-500/[0.12]
                          outline-none"
             />
@@ -645,7 +645,7 @@ export default function BridgePage() {
 
         {/* Inline validation */}
         {validationError && amount && (
-          <p className="text-sm text-amber-400">{validationError}</p>
+          <p className="text-sm text-warning">{validationError}</p>
         )}
 
         {/* Primary CTA */}
@@ -660,10 +660,10 @@ export default function BridgePage() {
         )}
 
         {/* Info line */}
-        <p className="text-xs text-slate-500 leading-relaxed">
+        <p className="text-xs text-ink-muted leading-relaxed">
           Bridging burns USDC on{' '}
-          <span className="text-slate-400">{source?.label ?? 'the source chain'}</span> and mints it
-          on <span className="text-slate-400">{destination?.label ?? 'the destination'}</span> after
+          <span className="text-ink-secondary">{source?.label ?? 'the source chain'}</span> and mints it
+          on <span className="text-ink-secondary">{destination?.label ?? 'the destination'}</span> after
           Circle attests the transfer. Keep this tab open — the sequence takes a few minutes.
         </p>
 
@@ -676,14 +676,14 @@ export default function BridgePage() {
         />
 
         {(state.stage === 'success' || state.stage === 'error') && !isBusy && (
-          <button onClick={reset} className="w-full text-sm text-slate-400 hover:text-white">
+          <button onClick={reset} className="w-full text-sm text-ink-secondary hover:text-ink-primary">
             New bridge
           </button>
         )}
       </div>
 
       {/* Unsupported chains note */}
-      <div className="mt-6 text-xs text-slate-600 space-y-0.5">
+      <div className="mt-6 text-xs text-ink-muted space-y-0.5">
         <p>Only networks supported by Circle CCTP appear in the lists above.</p>
         <p>BNB Chain is not a CCTP domain and cannot be routed to.</p>
       </div>

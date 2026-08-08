@@ -183,18 +183,18 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
         // mobile, where a sheet is the native-feeling shape for a picker.
         // Narrower when locked: without the chain rail, the full width would
         // leave a single short list stranded in a lot of empty space.
-        className={`w-full h-[88vh] sm:h-[600px] bg-slate-850/95 backdrop-blur-2xl border border-white/10
+        className={`w-full h-[88vh] sm:h-[600px] bg-surface-card/95 backdrop-blur-2xl border border-hairline
           rounded-t-3xl sm:rounded-4xl shadow-float flex flex-col overflow-hidden animate-scale-in
           ${lockedChain ? 'max-w-md sm:h-[560px]' : 'max-w-4xl'}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-white/10 shrink-0">
+        <header className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-hairline shrink-0">
           <h2 className="text-lg sm:text-xl font-semibold tracking-tight">
             {title ?? 'Select Token'}
           </h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-white/10
+            className="w-8 h-8 rounded-lg text-ink-secondary hover:text-ink-primary hover:bg-surface-hover/[0.06]
               active:scale-95 flex items-center justify-center transition-all duration-200"
             aria-label="Close"
           >
@@ -209,8 +209,8 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
             filter with exactly one valid answer. */}
         <div className="flex-1 flex flex-col sm:flex-row min-h-0">
           {!lockedChain && (
-          <div className="sm:w-60 shrink-0 border-b sm:border-b-0 sm:border-r border-white/10 flex flex-col min-h-0">
-            <div className="p-3 sm:p-4 sm:border-b border-white/10 shrink-0">
+          <div className="sm:w-60 shrink-0 border-b sm:border-b-0 sm:border-r border-hairline flex flex-col min-h-0">
+            <div className="p-3 sm:p-4 sm:border-b border-hairline shrink-0">
               <SearchInput
                 value={chainQuery}
                 onChange={setChainQuery}
@@ -231,11 +231,11 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
                   className={`shrink-0 sm:w-full flex items-center gap-2.5 px-2 py-2 rounded-xl text-sm whitespace-nowrap
                     transition-colors duration-200 ${
                     chainFilter === null
-                      ? 'bg-arc-500/15 text-arc-300 ring-1 ring-inset ring-arc-500/25'
-                      : 'hover:bg-white/[0.06] text-slate-300'
+                      ? 'bg-arc-500/15 text-accent-text ring-1 ring-inset ring-arc-500/25'
+                      : 'hover:bg-surface-hover/[0.06] text-ink-secondary'
                   }`}
                 >
-                  <span className="w-6 h-6 rounded-full bg-gradient-to-br from-arc-400 to-azure-500 ring-1 ring-inset ring-white/20 text-slate-950 flex items-center justify-center text-[10px] font-bold shrink-0">
+                  <span className="w-6 h-6 rounded-full bg-gradient-to-br from-arc-400 to-azure-500 ring-1 ring-inset ring-white/20 text-accent-contrast flex items-center justify-center text-[10px] font-bold shrink-0">
                     ∞
                   </span>
                   <span className="truncate font-medium">All Chains</span>
@@ -259,7 +259,7 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
               </div>
 
               {starredChains.length > 0 && (
-                <div className="hidden sm:block mx-2 mt-2 border-t border-white/10" />
+                <div className="hidden sm:block mx-2 mt-2 border-t border-hairline" />
               )}
             </div>
 
@@ -278,13 +278,13 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
               ))}
 
               {visibleChains.length === 0 && (
-                <p className="px-3 py-6 text-xs text-slate-500 whitespace-nowrap">
+                <p className="px-3 py-6 text-xs text-ink-muted whitespace-nowrap">
                   No chain matches that search.
                 </p>
               )}
 
               {otherChains.length === 0 && visibleChains.length > 0 && (
-                <p className="hidden sm:block px-3 py-4 text-xs text-slate-600">
+                <p className="hidden sm:block px-3 py-4 text-xs text-ink-muted">
                   Every chain is starred.
                 </p>
               )}
@@ -294,7 +294,7 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
 
           {/* Token list */}
           <div className="flex-1 flex flex-col min-w-0">
-            <div className="p-3 sm:p-4 border-b border-white/10 shrink-0">
+            <div className="p-3 sm:p-4 border-b border-hairline shrink-0">
               <SearchInput
                 value={tokenQuery}
                 onChange={setTokenQuery}
@@ -320,16 +320,16 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
                 <div className="py-12 px-4 text-center">
                   {isAddressQuery(tokenQuery) ? (
                     <>
-                      <p className="text-sm text-slate-300 mb-1.5">
+                      <p className="text-sm text-ink-secondary mb-1.5">
                         No supported token at that address.
                       </p>
-                      <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+                      <p className="text-xs text-ink-muted max-w-sm mx-auto leading-relaxed">
                         App Kit works with USDC, EURC, USDT and native assets. An arbitrary
                         ERC-20 cannot be handled here, so it is not offered.
                       </p>
                     </>
                   ) : (
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-ink-secondary">
                       Nothing matches that search on{' '}
                       {lockedChain
                         ? chainDisplayName(lockedChain)
@@ -360,7 +360,7 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
             </div>
 
             {portfolio.partial && (
-              <p className="px-4 py-2 text-[11px] text-amber-300/80 border-t border-white/10 shrink-0">
+              <p className="px-4 py-2 text-[11px] text-warning/80 border-t border-hairline shrink-0">
                 Some chains could not be reached, so a few balances are missing rather than
                 zero.
               </p>
@@ -386,7 +386,7 @@ function SearchInput({
   return (
     <div className="relative">
       <svg
-        className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"
+        className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -399,10 +399,10 @@ function SearchInput({
         placeholder={placeholder}
         // eslint-disable-next-line jsx-a11y/no-autofocus -- focus belongs in the search field of a search dialog
         autoFocus={autoFocus}
-        className="w-full pl-9 pr-3 py-2.5 bg-black/25 border border-white/10 rounded-xl text-sm text-white outline-none
-          hover:border-white/[0.14]
+        className="w-full pl-9 pr-3 py-2.5 bg-black/25 border border-hairline rounded-xl text-sm text-ink-primary outline-none
+          hover:border-hairline
           focus:border-arc-500/50 focus:bg-black/35 focus:ring-[3px] focus:ring-arc-500/[0.12]
-          transition-all duration-200 placeholder:text-slate-500"
+          transition-all duration-200 placeholder:text-ink-muted"
       />
     </div>
   );
@@ -410,7 +410,7 @@ function SearchInput({
 
 function RailHeading({ children }: { children: React.ReactNode }) {
   return (
-    <div className="hidden sm:block px-3 pt-4 pb-1.5 text-[10px] uppercase tracking-wider text-slate-600 font-semibold">
+    <div className="hidden sm:block px-3 pt-4 pb-1.5 text-[10px] uppercase tracking-wider text-ink-muted font-semibold">
       {children}
     </div>
   );
@@ -419,7 +419,7 @@ function RailHeading({ children }: { children: React.ReactNode }) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-4">
-      <div className="px-2 pb-1.5 text-[11px] uppercase tracking-wider text-slate-600 font-semibold">
+      <div className="px-2 pb-1.5 text-[11px] uppercase tracking-wider text-ink-muted font-semibold">
         {title}
       </div>
       <div className="space-y-0.5">{children}</div>
@@ -451,13 +451,13 @@ function ChainRow({
       className={`shrink-0 sm:w-full flex items-center rounded-xl group transition-colors duration-200 ${
         // The accent ring marks the active filter unambiguously; a tint alone
         // is easy to miss against a list of hovered rows.
-        active ? 'bg-arc-500/15 ring-1 ring-inset ring-arc-500/25' : 'hover:bg-white/[0.06]'
+        active ? 'bg-arc-500/15 ring-1 ring-inset ring-arc-500/25' : 'hover:bg-surface-hover/[0.06]'
       }`}
     >
       <button
         onClick={onSelect}
         className={`flex-1 min-w-0 flex items-center gap-2.5 px-2 py-2 text-sm whitespace-nowrap ${
-          active ? 'text-arc-300' : 'text-slate-300'
+          active ? 'text-accent-text' : 'text-ink-secondary'
         }`}
       >
         <ChainMark chain={chain} size={24} />
@@ -482,7 +482,7 @@ function TokenRow({
   onToggleStar: () => void;
 }) {
   return (
-    <div className="flex items-center rounded-xl hover:bg-white/[0.06] active:bg-white/[0.09] transition-colors duration-200 group">
+    <div className="flex items-center rounded-xl hover:bg-surface-hover/[0.06] active:bg-surface-input transition-colors duration-200 group">
       <button
         onClick={onSelect}
         className="flex-1 min-w-0 flex items-center gap-3 pl-2 pr-1 py-2.5 text-left"
@@ -492,11 +492,11 @@ function TokenRow({
 
         <span className="flex-1 min-w-0">
           <span className="flex items-center gap-1.5">
-            <span className="text-sm font-semibold truncate text-white">{token.symbol}</span>
+            <span className="text-sm font-semibold truncate text-ink-primary">{token.symbol}</span>
             {/* Registry tokens are the canonical issuances App Kit routes. */}
             {!token.isNative && (
               <svg
-                className="w-3.5 h-3.5 text-arc-400 shrink-0"
+                className="w-3.5 h-3.5 text-accent-text shrink-0"
                 fill="currentColor"
                 viewBox="0 0 20 20"
                 aria-label="In the App Kit registry"
@@ -506,10 +506,10 @@ function TokenRow({
               </svg>
             )}
           </span>
-          <span className="block text-[11px] text-slate-500 truncate">
+          <span className="block text-[11px] text-ink-muted truncate">
             {token.name} · {chainDisplayName(token.chain)}
             {token.address && (
-              <span className="ml-1.5 font-mono text-slate-600">
+              <span className="ml-1.5 font-mono text-ink-muted">
                 {shortAddress(token.address, 6, 4)}
               </span>
             )}
@@ -521,12 +521,12 @@ function TokenRow({
           {balance ? (
             <>
               <span className="block text-sm tabular-nums">{balance.amount}</span>
-              <span className="block text-[11px] text-slate-500 tabular-nums">
+              <span className="block text-[11px] text-ink-muted tabular-nums">
                 {balance.valueUSD === null ? 'Unpriced' : formatUSD(balance.valueUSD)}
               </span>
             </>
           ) : (
-            <span className="text-xs text-slate-600">—</span>
+            <span className="text-xs text-ink-muted">—</span>
           )}
         </span>
       </button>
@@ -553,8 +553,8 @@ function StarButton({
       aria-pressed={starred}
       className={`px-2 py-2 mr-1 rounded-lg transition-all ${
         starred
-          ? 'text-amber-400'
-          : 'text-slate-600 opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-amber-400'
+          ? 'text-warning'
+          : 'text-ink-muted opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-warning'
       }`}
     >
       <svg

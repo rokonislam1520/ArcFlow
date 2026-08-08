@@ -105,12 +105,12 @@ function HistoryView() {
             <button
               onClick={() => void history.refresh()}
               disabled={history.loading}
-              className="text-sm px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 disabled:opacity-50 transition-all"
+              className="text-sm px-4 py-2 rounded-xl bg-surface-input hover:bg-surface-hover/[0.06] border border-hairline disabled:opacity-50 transition-all"
             >
               {history.loading ? 'Refreshing…' : 'Refresh'}
             </button>
           </div>
-          <p className="text-slate-400 text-sm sm:text-base">
+          <p className="text-ink-secondary text-sm sm:text-base">
             Transfers across {history.total || 'all'} chains, read from on-chain logs
             {history.narrowestScan !== null && (
               <> · last {history.narrowestScan.toString()} blocks per chain</>
@@ -157,11 +157,11 @@ function HistoryView() {
                 resetPaging();
               }}
               placeholder="Search by address, tx hash, token or amount"
-              className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm placeholder:text-slate-600 focus:outline-none focus:border-arc-500/50"
+              className="w-full px-4 py-2.5 rounded-xl bg-surface-input border border-hairline text-sm placeholder:text-ink-muted focus:outline-none focus:border-arc-500/50"
             />
 
             <div className="flex flex-wrap gap-2">
-              <div className="flex rounded-xl bg-white/5 border border-white/10 p-1">
+              <div className="flex rounded-xl bg-surface-input border border-hairline p-1">
                 {(['all', 'sent', 'received'] as const).map((d) => (
                   <button
                     key={d}
@@ -171,8 +171,8 @@ function HistoryView() {
                     }}
                     className={`px-3 py-1.5 rounded-lg text-xs capitalize transition-colors ${
                       direction === d
-                        ? 'bg-arc-500/20 text-arc-300'
-                        : 'text-slate-400 hover:text-white'
+                        ? 'bg-arc-500/20 text-accent-text'
+                        : 'text-ink-secondary hover:text-ink-primary'
                     }`}
                   >
                     {d}
@@ -187,7 +187,7 @@ function HistoryView() {
                     setChainFilter(e.target.value);
                     resetPaging();
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs focus:outline-none focus:border-arc-500/50"
+                  className="px-3 py-1.5 rounded-xl bg-surface-input border border-hairline text-xs focus:outline-none focus:border-arc-500/50"
                 >
                   <option value="all">All chains</option>
                   {chainOptions.map(([id, label]) => (
@@ -205,7 +205,7 @@ function HistoryView() {
                     setTokenFilter(e.target.value);
                     resetPaging();
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs focus:outline-none focus:border-arc-500/50"
+                  className="px-3 py-1.5 rounded-xl bg-surface-input border border-hairline text-xs focus:outline-none focus:border-arc-500/50"
                 >
                   <option value="all">All tokens</option>
                   {tokenOptions.map((s) => (
@@ -254,7 +254,7 @@ function HistoryView() {
                 <div className="mt-5 text-center">
                   <button
                     onClick={() => setVisible((v) => v + PAGE_SIZE)}
-                    className="text-sm px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+                    className="text-sm px-5 py-2.5 rounded-xl bg-surface-input hover:bg-surface-hover/[0.06] border border-hairline transition-all"
                   >
                     Load more ({filtered.length - visible} remaining)
                   </button>
@@ -267,7 +267,7 @@ function HistoryView() {
         {/* The window is not a choice but a provider limit, and it is narrowed
             further at runtime when an RPC rejects the wider query. Stating the
             real number avoids implying this list is complete history. */}
-        <p className="text-xs text-slate-600 mt-4 text-center">
+        <p className="text-xs text-ink-muted mt-4 text-center">
           History is read from ERC-20 Transfer logs
           {history.narrowestScan !== null
             ? ` over the last ${history.narrowestScan.toString()} blocks of each chain`
@@ -292,35 +292,35 @@ function HistoryRow({ transfer: t }: { transfer: HistoryTransfer }) {
   }, [t.chainId, t.txHash, isTestnet]);
 
   const body = (
-    <div className="flex items-center gap-3 p-3.5 rounded-xl hover:bg-white/[0.04] transition-colors">
+    <div className="flex items-center gap-3 p-3.5 rounded-xl hover:bg-surface-hover/[0.06] transition-colors">
       <TokenBadge symbol={t.tokenSymbol} size={38} />
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-medium">
             {sent ? 'Sent to' : 'Received from'}{' '}
-            <span className="font-mono text-xs text-slate-400">
+            <span className="font-mono text-xs text-ink-secondary">
               {shortAddress(t.counterparty)}
             </span>
           </span>
           {/* Present because it is confirmed: a reverted tx emits no Transfer. */}
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-mint-500/15 text-mint-300">
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-mint-500/15 text-success">
             Confirmed
           </span>
         </div>
-        <div className="text-[11px] text-slate-500 mt-0.5">
+        <div className="text-[11px] text-ink-muted mt-0.5">
           {t.chainLabel} · {when ?? `block ${t.blockNumber.toString()}`}
         </div>
       </div>
 
       <div
         className={`text-sm font-semibold shrink-0 tabular-nums text-right ${
-          sent ? 'text-slate-200' : 'text-mint-300'
+          sent ? 'text-ink-primary' : 'text-success'
         }`}
       >
         {sent ? '−' : '+'}
         {Number(t.amount).toLocaleString('en-US', { maximumFractionDigits: 6 })}
-        <div className="text-[11px] font-normal text-slate-500">{t.tokenSymbol}</div>
+        <div className="text-[11px] font-normal text-ink-muted">{t.tokenSymbol}</div>
       </div>
     </div>
   );

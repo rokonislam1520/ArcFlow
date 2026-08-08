@@ -120,7 +120,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Mobile scrim */}
       {drawerOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
           onClick={() => setDrawerOpen(false)}
           aria-hidden="true"
         />
@@ -164,19 +164,22 @@ function Sidebar({
     <aside
       className={[
         'fixed lg:sticky top-0 z-50 h-screen shrink-0',
-        'bg-[#0b1120]/95 lg:bg-[#0b1120]/70 backdrop-blur-xl',
-        'border-r border-arc-500/10 flex flex-col',
-        'transition-[width,transform] duration-300 ease-out',
+        'bg-surface-card',
+        'border-r border-hairline flex flex-col',
+        // One transition declaration covering all four properties. Two separate
+        // `transition-*` classes would not merge — the later one wins outright,
+        // silently dropping the others.
+        'transition-[width,transform,background-color,border-color] duration-300 ease-premium',
         'w-[248px]',
         width,
         drawerOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
       ].join(' ')}
     >
       {/* Brand */}
-      <div className="h-16 flex items-center gap-3 px-4 border-b border-white/5 shrink-0">
+      <div className="h-16 flex items-center gap-3 px-4 border-b border-hairline shrink-0">
         <Link href="/" className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-arc-500 to-mint-500 flex items-center justify-center shrink-0">
-            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-9 h-9 rounded-xl bg-accent flex items-center justify-center shrink-0">
+            <svg className="w-5 h-5 text-accent-contrast" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
@@ -189,7 +192,7 @@ function Sidebar({
         {NAV_GROUPS.map((group, gi) => (
           <div key={group.heading ?? `group-${gi}`}>
             {group.heading && !collapsed && (
-              <div className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
+              <div className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-widest text-ink-muted">
                 {group.heading}
               </div>
             )}
@@ -207,13 +210,13 @@ function Sidebar({
                       'transition-colors duration-150',
                       collapsed ? 'justify-center' : '',
                       active
-                        ? 'bg-arc-500/12 text-arc-300 font-medium'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5',
+                        ? 'bg-accent/10 text-accent-text font-medium'
+                        : 'text-ink-secondary hover:text-ink-primary hover:bg-surface-hover/[0.06]',
                     ].join(' ')}
                   >
                     {/* Active marker doubles as the cue when collapsed hides labels. */}
                     {active && (
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r bg-arc-400" />
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r bg-accent" />
                     )}
                     {item.icon}
                     {!collapsed && <span className="truncate">{item.label}</span>}
@@ -225,14 +228,17 @@ function Sidebar({
         ))}
       </nav>
 
-      {/* Wallet status */}
-      <div className="p-3 border-t border-white/5 shrink-0">
+      {/* Wallet status.
+          The extra bottom padding reserves the corner the fixed theme toggle
+          occupies. Without it the toggle would sit on top of the collapse
+          button, which is the one control here that must stay clickable. */}
+      <div className="p-3 pb-16 border-t border-hairline shrink-0">
         {collapsed ? (
           <div className="flex justify-center py-2" title={address ? shortAddress(address) : 'Not connected'}>
             <StatusDot ok={address ? true : null} />
           </div>
         ) : (
-          <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3">
+          <div className="rounded-xl bg-surface-input border border-hairline p-3">
             <div className="flex items-center gap-2 mb-1.5">
               <StatusDot ok={address ? true : null} />
               <span className="text-xs font-medium truncate">
@@ -245,15 +251,15 @@ function Sidebar({
             </div>
             {address ? (
               <>
-                <div className="font-mono text-[11px] text-slate-400 truncate">
+                <div className="font-mono text-[11px] text-ink-secondary truncate">
                   {shortAddress(address)}
                 </div>
-                <div className="text-[11px] text-slate-500 mt-1 truncate">
+                <div className="text-[11px] text-ink-muted mt-1 truncate">
                   {chainDisplayName(chain)}
                 </div>
               </>
             ) : (
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-ink-muted">
                 Connect to see balances and act on them.
               </p>
             )}
@@ -262,7 +268,7 @@ function Sidebar({
 
         <button
           onClick={onToggleCollapse}
-          className="hidden lg:flex mt-2 w-full items-center justify-center gap-2 rounded-lg py-2 text-xs text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors"
+          className="hidden lg:flex mt-2 w-full items-center justify-center gap-2 rounded-lg py-2 text-xs text-ink-muted hover:text-ink-primary hover:bg-surface-hover/[0.06] transition-colors"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           <svg
@@ -288,11 +294,11 @@ function TopHeader({ onOpenDrawer }: { onOpenDrawer: () => void }) {
   const { isTestnet, ready } = useNetworkMode();
 
   return (
-    <header className="sticky top-0 z-30 h-16 flex items-center gap-3 px-4 sm:px-6 lg:px-8 border-b border-arc-500/10 bg-[#020617]/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 h-16 flex items-center gap-3 px-4 sm:px-6 lg:px-8 border-b border-hairline bg-surface-page/85 backdrop-blur-xl transition-colors duration-300 ease-premium">
       {/* Mobile menu */}
       <button
         onClick={onOpenDrawer}
-        className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-white/5 shrink-0"
+        className="lg:hidden p-2 -ml-2 rounded-lg text-ink-secondary hover:text-ink-primary hover:bg-surface-hover/[0.06] shrink-0"
         aria-label="Open navigation"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -316,8 +322,8 @@ function TopHeader({ onOpenDrawer }: { onOpenDrawer: () => void }) {
           className={[
             'hidden sm:inline-block text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-md border shrink-0',
             isTestnet
-              ? 'text-amber-300 border-amber-500/30 bg-amber-500/10'
-              : 'text-mint-300 border-mint-500/25 bg-mint-500/10',
+              ? 'text-warning border-warning/30 bg-warning/10'
+              : 'text-success border-success/25 bg-success/10',
           ].join(' ')}
           title={isTestnet ? 'Testnet funds have no value' : 'Live network — real funds'}
         >
@@ -367,7 +373,7 @@ function GlobalSearch() {
     <div className="relative w-full max-w-xs sm:max-w-sm">
       <div className="relative">
         <svg
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 pointer-events-none"
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none"
           fill="none"
           stroke="currentColor"
           strokeWidth={2}
@@ -387,11 +393,12 @@ function GlobalSearch() {
           // Delayed so a click on a result registers before the list unmounts.
           onBlur={() => window.setTimeout(() => setOpen(false), 120)}
           placeholder="Search pages…"
-          className="w-full h-9 pl-9 pr-12 rounded-xl bg-white/[0.04] border border-white/10 text-sm
-                     placeholder:text-slate-600 focus:border-arc-500/40 focus:bg-white/[0.06]
+          className="w-full h-9 pl-9 pr-12 rounded-xl bg-surface-input border border-hairline text-sm
+                     text-ink-primary placeholder:text-ink-muted
+                     focus:border-accent focus:ring-[3px] focus:ring-accent/[0.14]
                      outline-none transition-colors"
         />
-        <kbd className="hidden sm:block absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 border border-white/10 rounded px-1.5 py-0.5">
+        <kbd className="hidden sm:block absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-ink-muted border border-hairline rounded px-1.5 py-0.5">
           ⌘K
         </kbd>
       </div>
@@ -399,7 +406,7 @@ function GlobalSearch() {
       {open && query && (
         <div className="absolute top-11 left-0 right-0 glass p-1.5 z-50 max-h-72 overflow-y-auto">
           {matches.length === 0 ? (
-            <p className="px-3 py-2.5 text-xs text-slate-500">
+            <p className="px-3 py-2.5 text-xs text-ink-muted">
               No page matches “{query}”. Search covers navigation only.
             </p>
           ) : (
@@ -407,7 +414,7 @@ function GlobalSearch() {
               <Link
                 key={m.href}
                 href={m.href}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-white/5 hover:text-white"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-ink-secondary hover:bg-surface-hover/[0.06] hover:text-ink-primary"
               >
                 {m.icon}
                 {m.label}

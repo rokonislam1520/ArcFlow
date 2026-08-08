@@ -137,7 +137,7 @@ function LetterMark({
 }) {
   return (
     <span
-      className={`rounded-full flex items-center justify-center font-bold text-white shrink-0 ${className}`}
+      className={`rounded-full flex items-center justify-center font-bold text-ink-primary shrink-0 ${className}`}
       style={{
         width: size,
         height: size,
