@@ -580,7 +580,7 @@ function AllocationPanel({
                     </span>
                     <span className="flex items-center gap-2 shrink-0 text-xs">
                       <span className="text-ink-muted">{r.meta}</span>
-                      <UsdValue value={r.valueUSD} format={formatUSD} className="font-medium" />
+                      <UsdValue value={r.valueUSD} className="font-medium" />
                     </span>
                   </div>
                   <Bar pct={pct} color={seriesColor(i)} />
@@ -642,11 +642,7 @@ function TopHoldings({
                 <div className="text-sm tabular-nums">
                   {Number(h.amount).toLocaleString('en-US', { maximumFractionDigits: 6 })}
                 </div>
-                <UsdValue
-                  value={h.valueUSD}
-                  format={formatUSD}
-                  className="text-[11px] text-ink-muted"
-                />
+                <UsdValue value={h.valueUSD} className="text-[11px] text-ink-muted" />
               </div>
             </div>
           ))}

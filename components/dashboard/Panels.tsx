@@ -1,10 +1,23 @@
-'use client';
 /**
  * Dashboard panels. Each owns one question and one data source.
  *
  * Every number rendered here traces to a live read — an RPC call or the pricing
  * service. There are no seeded values, no illustrative figures, and no "—"
  * standing in for a number we could have fetched but didn't.
+ *
+ * Deliberately *not* marked `'use client'`. Nothing here holds state or uses a
+ * hook; these are pure renderers consumed by pages that already declare the
+ * directive, so they join the client bundle through their importer. The
+ * directive marks a boundary into client code, and putting one on every leaf
+ * both blurs where that boundary actually is and makes each export a notional
+ * entry point — which is what made `onRetry` and `onRefresh` illegal here, since
+ * a function cannot be serialized across a boundary these components never
+ * form. Keeping the callbacks honestly typed and dropping the redundant
+ * directive fixes the cause instead of the symptom.
+ *
+ * The consequence to know about: importing this file from a *server* component
+ * would now fail at runtime rather than being caught here. Any such caller
+ * needs its own `'use client'`, as every current one already has.
  */
 import Link from 'next/link';
 import type { ReactNode } from 'react';
@@ -176,7 +189,7 @@ export function TokenBreakdown({
                 </div>
                 <div className="text-right shrink-0">
                   <div className="font-semibold text-sm">
-                    <UsdValue value={t.valueUSD} format={formatUSD} />
+                    <UsdValue value={t.valueUSD} />
                   </div>
                   {share !== null && (
                     <div className="text-xs text-ink-muted tabular-nums">

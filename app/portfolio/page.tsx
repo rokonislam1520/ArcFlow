@@ -176,7 +176,7 @@ function PortfolioView() {
                                   </div>
                                 </div>
                                 <div className="text-sm font-semibold shrink-0">
-                                  <UsdValue value={h.valueUSD} format={formatUSD} />
+                                  <UsdValue value={h.valueUSD} />
                                 </div>
                               </div>
                             ))

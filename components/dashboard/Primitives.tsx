@@ -11,6 +11,7 @@
  *    a fact about money; it must not be used to mean "we don't know".
  */
 import type { ReactNode } from 'react';
+import { formatUSD } from '@/lib/portfolio';
 
 /** Panel shell with a title, optional action, and consistent spacing. */
 export function Panel({
@@ -220,14 +221,19 @@ export function TokenBadge({ symbol, size = 40 }: { symbol: string; size?: numbe
 /**
  * Renders a USD value, or an explicit "unavailable" when it could not be
  * priced. Never substitutes 0 for unknown.
+ *
+ * The formatter used to arrive as a `format` prop, which the `use client`
+ * boundary rejects: functions cannot cross it, so a component exported from an
+ * entry file may not declare one. Every call site passed the same `formatUSD`
+ * anyway, so the dependency is now imported directly rather than injected —
+ * identical output, and one fewer way for two panels to format money
+ * differently.
  */
 export function UsdValue({
   value,
-  format,
   className = '',
 }: {
   value: number | null;
-  format: (n: number) => string;
   className?: string;
 }) {
   if (value === null) {
@@ -240,7 +246,7 @@ export function UsdValue({
       </span>
     );
   }
-  return <span className={`tabular-nums ${className}`}>{format(value)}</span>;
+  return <span className={`tabular-nums ${className}`}>{formatUSD(value)}</span>;
 }
 
 /** "Updated 12s ago" line, so a stale panel is visibly stale. */
