@@ -54,14 +54,83 @@ export function SkeletonRows({ rows = 3 }: { rows?: number }) {
 }
 
 /**
+ * The accent icon container.
+ *
+ * One shape for every icon that sits on a tinted plate — quick actions, empty
+ * states, panel affordances. Previously each caller re-declared its own size,
+ * radius and tint, which is how a product ends up with four slightly different
+ * purple squares on one screen. Consistency here is most of what makes the
+ * pages feel like one product.
+ */
+export function IconTile({
+  d,
+  size = 'md',
+  className = '',
+}: {
+  /** SVG path data, stroked. */
+  d: string;
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+}) {
+  const box = size === 'sm' ? 'w-8 h-8 rounded-lg' : size === 'lg' ? 'w-12 h-12 rounded-2xl' : 'w-10 h-10 rounded-xl';
+  const glyph = size === 'sm' ? 'w-4 h-4' : size === 'lg' ? 'w-6 h-6' : 'w-[18px] h-[18px]';
+  return (
+    <span
+      className={`${box} shrink-0 grid place-items-center
+                  bg-accent/10 border border-accent/20 text-accent-text
+                  transition-colors duration-200 ease-premium ${className}`}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.9}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={glyph}
+        aria-hidden="true"
+      >
+        <path d={d} />
+      </svg>
+    </span>
+  );
+}
+
+/** Small caps section label. One weight and tracking for every one of them. */
+export function SectionLabel({ children }: { children: ReactNode }) {
+  return (
+    <h2 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-muted">
+      {children}
+    </h2>
+  );
+}
+
+/**
  * Empty state. Distinct from `ErrorState` on purpose — this means "we looked
  * and there is nothing", which is a legitimate answer.
+ *
+ * `icon` and `action` are optional so the small in-panel cases stay quiet while
+ * a first-run panel can afford a plate and a way forward. A bare sentence in a
+ * large card is what makes a page look unfinished rather than simply empty.
  */
-export function EmptyState({ message, hint }: { message: string; hint?: ReactNode }) {
+export function EmptyState({
+  message,
+  hint,
+  icon,
+  action,
+}: {
+  message: string;
+  hint?: ReactNode;
+  /** SVG path data for an `IconTile`. */
+  icon?: string;
+  action?: ReactNode;
+}) {
   return (
-    <div className="py-8 text-center">
-      <p className="text-sm text-ink-secondary">{message}</p>
-      {hint && <p className="text-xs text-ink-muted mt-1.5">{hint}</p>}
+    <div className="py-8 px-4 flex flex-col items-center text-center">
+      {icon && <IconTile d={icon} size="lg" className="mb-3.5" />}
+      <p className="text-sm font-medium text-ink-primary">{message}</p>
+      {hint && <p className="text-xs text-ink-muted mt-1.5 max-w-[34ch] leading-relaxed">{hint}</p>}
+      {action && <div className="mt-4">{action}</div>}
     </div>
   );
 }

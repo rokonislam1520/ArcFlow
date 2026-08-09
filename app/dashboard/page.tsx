@@ -21,7 +21,9 @@ import { AreaChart, Bar, Donut, seriesColor } from '@/components/dashboard/Chart
 import {
   EmptyState,
   ErrorState,
+  IconTile,
   Panel,
+  SectionLabel,
   SkeletonRows,
   StatusDot,
   TokenBadge,
@@ -57,27 +59,137 @@ function QuickActions() {
         <Link
           key={a.href}
           href={a.href}
-          className="group glass-sm p-3 sm:p-4 flex flex-col items-center gap-2 text-center
-                     hover:bg-surface-hover/[0.06] hover:border-arc-500/25 hover:-translate-y-0.5
-                     transition-all duration-200"
+          className="group glass-sm p-3 sm:p-4 flex flex-col items-center gap-2.5 text-center
+                     hover:bg-surface-hover/[0.06] hover:border-accent/25 hover:-translate-y-0.5
+                     hover:shadow-card-hover
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent
+                     transition-all duration-200 ease-premium"
         >
-          <span className="w-9 h-9 rounded-xl bg-arc-500/10 border border-arc-500/20 flex items-center justify-center group-hover:bg-arc-500/20 transition-colors">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.9}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-[18px] h-[18px] text-accent-text"
-            >
-              <path d={a.d} />
-            </svg>
-          </span>
-          <span className="text-xs font-medium">{a.label}</span>
+          {/* Shared tile, so these plates are identical to the ones in the
+              first-run panel and anywhere else an action is offered. */}
+          <IconTile d={a.d} className="group-hover:bg-accent/20 group-hover:border-accent/30" />
+          <span className="text-xs font-medium text-ink-primary">{a.label}</span>
         </Link>
       ))}
     </div>
+  );
+}
+
+/**
+ * First-run state, shown only once a read has completed and genuinely returned
+ * nothing.
+ *
+ * The page previously answered an empty wallet with a $0.00 hero, four dashes
+ * and five separate "No X found" sentences — every panel independently correct
+ * and the whole thing reading as broken. This says the same true things once,
+ * and adds what the scattered version never did: that the wallet and network
+ * are actually working, and where the numbers will appear when funds arrive.
+ *
+ * It states no balance, price or transaction it does not have.
+ */
+function GettingStarted({
+  walletName,
+  chainLabel,
+  isTestnet,
+  healthy,
+  total,
+}: {
+  walletName: string | null;
+  chainLabel: string;
+  isTestnet: boolean;
+  healthy: number;
+  total: number;
+}) {
+  const steps = [
+    {
+      d: 'M12 5v14M5 12l7 7 7-7',
+      title: 'Add funds',
+      body: isTestnet
+        ? 'Receive test stablecoins to this address, or use a faucet for the active network.'
+        : 'Receive stablecoins to your address, or transfer in from an exchange.',
+      href: '/receive',
+      cta: 'Show my address',
+    },
+    {
+      d: 'M3 7h14M14 3l4 4-4 4M17 13H3M6 9l-4 4 4 4',
+      title: 'Swap or bridge',
+      body: 'Exchange between stablecoins, or move balances across supported networks.',
+      href: '/swap',
+      cta: 'Open swap',
+    },
+    {
+      d: 'M12 19V5M5 12l7-7 7 7',
+      title: 'Send a payment',
+      body: 'Pay any address once a balance is available on the selected network.',
+      href: '/send',
+      cta: 'Open send',
+    },
+  ];
+
+  return (
+    <section className="glass p-5 sm:p-7 mb-5">
+      <div className="max-w-2xl">
+        <div className="flex items-center gap-2.5 mb-3">
+          {/* Connection is the first question an empty dashboard raises, so it
+              is answered before anything else and with live values only. */}
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded-full border border-success/25 bg-success/10 text-success">
+            <StatusDot ok={true} />
+            {walletName ? `${walletName} connected` : 'Wallet connected'}
+          </span>
+          {total > 0 && (
+            <span
+              className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded-full border border-hairline bg-surface-input text-ink-secondary"
+              title="Networks whose RPC responded to the last check"
+            >
+              <StatusDot ok={healthy === total ? true : healthy > 0 ? null : false} />
+              {healthy}/{total} networks reachable
+            </span>
+          )}
+        </div>
+
+        <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-ink-primary">
+          Your portfolio is ready and empty
+        </h2>
+        <p className="text-sm text-ink-secondary mt-1.5 leading-relaxed">
+          We checked every supported network and found no balance for this address on{' '}
+          {isTestnet ? 'testnet' : 'mainnet'}. Totals, allocation and activity below will fill in
+          automatically as soon as funds arrive — the current view is watching {chainLabel}.
+        </p>
+      </div>
+
+      <div className="grid sm:grid-cols-3 gap-3 mt-6">
+        {steps.map((s) => (
+          <Link
+            key={s.href}
+            href={s.href}
+            className="group glass-sm p-4 flex flex-col
+                       hover:bg-surface-hover/[0.06] hover:border-accent/25 hover:-translate-y-0.5
+                       hover:shadow-card-hover
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent
+                       transition-all duration-200 ease-premium"
+          >
+            <IconTile d={s.d} className="group-hover:bg-accent/20 group-hover:border-accent/30" />
+            <h3 className="text-sm font-semibold text-ink-primary mt-3">{s.title}</h3>
+            <p className="text-xs text-ink-muted mt-1 leading-relaxed flex-1">{s.body}</p>
+            <span className="text-xs font-medium text-accent-text mt-3 inline-flex items-center gap-1">
+              {s.cta}
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-3.5 h-3.5 transition-transform duration-200 ease-premium group-hover:translate-x-0.5"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -155,6 +267,13 @@ function DashboardView() {
   const priced = tokens.filter((t) => t.valueUSD !== null && t.valueUSD > 0);
   const fundedChains = portfolio.chains.filter((c) => c.holdings.length > 0);
   const loadingFirst = portfolio.loading && portfolio.updatedAt === null;
+
+  // Deliberately narrow. `updatedAt` proves a read actually completed, and
+  // `partial` excludes the case where chains failed — an unreachable RPC is not
+  // an empty wallet, and inviting someone to fund an account we simply could
+  // not read would be a lie. Both of those keep their existing treatments.
+  const isFirstRun =
+    !loadingFirst && portfolio.updatedAt !== null && !portfolio.partial && tokens.length === 0;
 
   return (
     <div className="max-w-[112rem] mx-auto animate-in">
@@ -248,11 +367,29 @@ function DashboardView() {
         </div>
       </div>
 
-      {/* Quick actions */}
-      <div className="mb-5">
-        <h2 className="text-xs uppercase tracking-widest text-ink-muted mb-2.5">Quick actions</h2>
-        <QuickActions />
-      </div>
+      {/* Sits between the overview and the panels: it explains the zeros
+          directly above it before the reader reaches the empty panels below. */}
+      {isFirstRun && (
+        <GettingStarted
+          walletName={wallet?.name ?? null}
+          chainLabel={chain.label}
+          isTestnet={isTestnet}
+          healthy={networkProbe.healthy}
+          total={networkProbe.total}
+        />
+      )}
+
+      {/* Quick actions. Suppressed on first run, where the panel above already
+          offers the same routes with room to say what each one does — the same
+          five icons twice in one screen is noise, not emphasis. */}
+      {!isFirstRun && (
+        <div className="mb-5">
+          <SectionLabel>Quick actions</SectionLabel>
+          <div className="mt-2.5">
+            <QuickActions />
+          </div>
+        </div>
+      )}
 
       {/* Main + right rail */}
       <div className="grid xl:grid-cols-12 gap-4">
@@ -409,7 +546,11 @@ function AllocationPanel({
       {loading ? (
         <SkeletonRows rows={3} />
       ) : rows.length === 0 ? (
-        <EmptyState message={emptyMessage} />
+        <EmptyState
+          message={emptyMessage}
+          hint="Allocation is drawn once a priced balance exists."
+          icon="M21 15.5A9 9 0 1112 3v9h9z"
+        />
       ) : (
         <>
           {slices.length > 0 && (
@@ -481,8 +622,9 @@ function TopHoldings({
         <SkeletonRows rows={4} />
       ) : all.length === 0 ? (
         <EmptyState
-          message="No balances found."
-          hint="Receive funds or switch network mode to see holdings here."
+          message="No balances found"
+          hint="Positions appear here per chain, largest first, as soon as this address holds a token."
+          icon="M3 7h18v12H3zM3 7l2-3h14l2 3M12 12v3"
         />
       ) : (
         <div className="space-y-1">
@@ -545,8 +687,9 @@ function RecentActivity({
         <ErrorState message={error} onRetry={onRetry} />
       ) : transfers.length === 0 ? (
         <EmptyState
-          message={`No transfers found on ${chain.label}.`}
-          hint="Only the recent block window is scanned, so older activity may not appear."
+          message={`No transfers on ${chain.label}`}
+          hint="Only the recent block window is scanned, so older activity may not appear here."
+          icon="M12 8v5l3 2M3 12a9 9 0 109-9 9 9 0 00-9 9zM3 12H1M3 12l2-2"
         />
       ) : (
         <div className="overflow-x-auto -mx-1">
