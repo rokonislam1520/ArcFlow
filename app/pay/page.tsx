@@ -337,17 +337,55 @@ function Checkout() {
   );
 }
 
-/** Landing state for someone who opens /pay without a request attached. */
+/**
+ * Landing state for someone who opens /pay with nothing attached.
+ *
+ * This is not an error: Pay is in the navigation, so arriving here empty is a
+ * normal thing to do. It reads as a starting point and offers the one route
+ * onward — creating a request — rather than leaving the visitor at a dead end
+ * wondering what they did wrong. No placeholder request is invented to fill the
+ * screen; there is genuinely nothing to pay until a real link arrives.
+ */
 function NoRequest() {
   return (
-    <Unusable icon="🧾" title="No payment request">
-      Open a merchant&apos;s payment link or scan their QR code to pay. Merchants can create a
-      request on the{' '}
-      <Link href="/merchant" className="text-accent-text hover:underline">
-        Merchant
-      </Link>{' '}
-      page.
-    </Unusable>
+    <Shell>
+      <h1 className="text-3xl font-bold mb-1">Pay</h1>
+      <p className="text-ink-secondary text-sm mb-8">Complete a merchant payment request.</p>
+
+      <div className="glass p-8 sm:p-10 text-center">
+        {/* Theme tokens throughout, so the panel follows light and dark. */}
+        <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.8}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-7 h-7 text-accent-text"
+            aria-hidden="true"
+          >
+            <path d="M2 7h20v10H2zM2 11h20M6 15h4" />
+          </svg>
+        </div>
+
+        <h2 className="text-lg font-semibold mb-2">No payment request yet</h2>
+        <p className="text-ink-secondary text-sm max-w-sm mx-auto">
+          Open a Merchant payment link or scan a QR code to continue.
+        </p>
+
+        <Link
+          href="/merchant"
+          className="btn-arc inline-flex items-center justify-center px-5 py-3 mt-6 w-full sm:w-auto"
+        >
+          Go to Merchant
+        </Link>
+
+        <p className="text-xs text-ink-muted mt-4">
+          Accepting payments yourself? Create a request on the Merchant page.
+        </p>
+      </div>
+    </Shell>
   );
 }
 
