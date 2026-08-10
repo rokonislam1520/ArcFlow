@@ -3,8 +3,11 @@
   "version": "1.0.0",
   "scripts": {
     "compile": "npx hardhat compile",
+    "preflight": "node scripts/preflight.js",
     "deploy:arc": "npx hardhat run scripts/deploy.ts --network arcTestnet",
     "deploy:localhost": "npx hardhat run scripts/deploy.ts --network localhost",
+    "deploy:pay:arc": "npx hardhat run scripts/deploy-pay.ts --network arcTestnet",
+    "deploy:pay:dry": "npx hardhat run scripts/deploy-pay.ts",
     "test": "npx hardhat test"
   },
   "devDependencies": {

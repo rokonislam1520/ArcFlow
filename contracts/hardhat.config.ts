@@ -23,6 +23,20 @@ try {
 const DEPLOYER_KEY = process.env.DEPLOYER_PRIVATE_KEY;
 const accounts = DEPLOYER_KEY ? [DEPLOYER_KEY] : [];
 
+/**
+ * Arc Testnet parameters, taken from @circle-fin/app-kit's chain registry (the
+ * same source the frontend uses) and confirmed against the live RPC:
+ * `eth_chainId` returns 0x4cef52 = 5042002.
+ *
+ * These are defaults, not overrides - `.env` still wins. The point is that a
+ * missing env var can no longer silently target a non-existent network: the
+ * previous defaults ("https://testnet.arc.io/rpc" and chainId 123456) were
+ * placeholders that do not resolve, so any deploy without a full .env failed
+ * with a confusing connection error.
+ */
+const ARC_TESTNET_RPC = "https://rpc.testnet.arc.network/";
+const ARC_TESTNET_CHAIN_ID = 5042002;
+
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.24",
@@ -35,12 +49,15 @@ const config: HardhatUserConfig = {
     localhost: {
       url: "http://127.0.0.1:8545",
     },
-    // ARC Testnet - replace with actual RPC when available
+    // Arc Testnet. Gas is paid in USDC rather than a separate gas token.
     arcTestnet: {
-      url: process.env.ARC_RPC_URL || "https://testnet.arc.io/rpc",
-      chainId: Number(process.env.ARC_CHAIN_ID || 123456),
+      url: process.env.ARC_RPC_URL || ARC_TESTNET_RPC,
+      chainId: Number(process.env.ARC_CHAIN_ID || ARC_TESTNET_CHAIN_ID),
       accounts,
-      gasPrice: 1000000000, // 1 gwei
+      // gasPrice is deliberately not pinned. It was hardcoded to 1 gwei while
+      // the network actually reports ~20 gwei, which underprices every
+      // transaction and leaves deploys pending indefinitely. Letting Hardhat
+      // read the live price keeps this correct as network conditions change.
     },
     // Ethereum Sepolia for testing
     sepolia: {
@@ -54,6 +71,29 @@ const config: HardhatUserConfig = {
     tests: "./test",
     cache: "./cache",
     artifacts: "./artifacts",
+  },
+  /**
+   * Source verification on ArcScan.
+   *
+   * ArcScan is a Blockscout instance, which exposes an Etherscan-compatible
+   * `/api` surface, so the standard hardhat-verify plugin works once the chain
+   * is registered here (it does not know chain 5042002 natively). Blockscout
+   * ignores the API key but hardhat-verify requires a non-empty string.
+   */
+  etherscan: {
+    apiKey: {
+      arcTestnet: process.env.ARCSCAN_API_KEY || "blockscout",
+    },
+    customChains: [
+      {
+        network: "arcTestnet",
+        chainId: ARC_TESTNET_CHAIN_ID,
+        urls: {
+          apiURL: "https://testnet.arcscan.app/api",
+          browserURL: "https://testnet.arcscan.app",
+        },
+      },
+    ],
   },
 };
 

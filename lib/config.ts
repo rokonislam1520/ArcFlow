@@ -203,6 +203,18 @@ export const arcFlowSwapAbi = [
   },
 ] as const;
 
+/**
+ * ArcFlowPay fragments.
+ *
+ * These are transcribed from `contracts/contracts/ArcFlowPay.sol` rather than
+ * written from the UI's point of view. The earlier version declared
+ * `pay(merchant, amount)` and returned `(…, totalReceived, txCount)` from
+ * `getMerchant`, neither of which exists on the contract: `pay` is multi-token
+ * and takes a memo, and per-token totals are read separately because the
+ * contract tracks them in a mapping that cannot be returned in a struct.
+ * A mismatched fragment produces a different function selector, so every call
+ * would have reverted against a real deployment.
+ */
 export const arcFlowPayAbi = [
   {
     type: 'function',
@@ -210,9 +222,11 @@ export const arcFlowPayAbi = [
     stateMutability: 'nonpayable',
     inputs: [
       { name: 'merchant', type: 'address' },
-      { name: 'amount', type: 'uint256' },
+      { name: 'token', type: 'address' },
+      { name: 'grossAmount', type: 'uint256' },
+      { name: 'memo', type: 'string' },
     ],
-    outputs: [],
+    outputs: [{ name: 'paymentId', type: 'uint256' }],
   },
   {
     type: 'function',
@@ -233,9 +247,27 @@ export const arcFlowPayAbi = [
       { name: 'name', type: 'string' },
       { name: 'category', type: 'string' },
       { name: 'active', type: 'bool' },
-      { name: 'totalReceived', type: 'uint256' },
-      { name: 'txCount', type: 'uint256' },
+      { name: 'registeredAt', type: 'uint64' },
+      { name: 'paymentCount', type: 'uint256' },
     ],
+  },
+  /** Totals are per-token, so a merchant's revenue is read one token at a time. */
+  {
+    type: 'function',
+    name: 'getMerchantTotalByToken',
+    stateMutability: 'view',
+    inputs: [
+      { name: 'merchant', type: 'address' },
+      { name: 'token', type: 'address' },
+    ],
+    outputs: [{ type: 'uint256' }],
+  },
+  {
+    type: 'function',
+    name: 'isRegistered',
+    stateMutability: 'view',
+    inputs: [{ name: 'wallet', type: 'address' }],
+    outputs: [{ type: 'bool' }],
   },
   {
     type: 'function',
@@ -244,12 +276,37 @@ export const arcFlowPayAbi = [
     inputs: [],
     outputs: [{ type: 'uint256' }],
   },
+  /**
+   * `_merchantList` is private, so the whole array is returned by an accessor
+   * rather than indexed one entry at a time as the previous `merchantList`
+   * fragment assumed.
+   */
   {
     type: 'function',
-    name: 'merchantList',
+    name: 'getMerchantList',
     stateMutability: 'view',
-    inputs: [{ name: '', type: 'uint256' }],
-    outputs: [{ type: 'address' }],
+    inputs: [],
+    outputs: [{ type: 'address[]' }],
+  },
+  {
+    type: 'function',
+    name: 'feeBps',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ type: 'uint256' }],
+  },
+  {
+    type: 'event',
+    name: 'PaymentMade',
+    inputs: [
+      { name: 'paymentId', type: 'uint256', indexed: true },
+      { name: 'customer', type: 'address', indexed: true },
+      { name: 'merchant', type: 'address', indexed: true },
+      { name: 'token', type: 'address', indexed: false },
+      { name: 'grossAmount', type: 'uint256', indexed: false },
+      { name: 'fee', type: 'uint256', indexed: false },
+      { name: 'netAmount', type: 'uint256', indexed: false },
+    ],
   },
 ] as const;
 
