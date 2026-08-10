@@ -147,10 +147,13 @@ export function decodeRequest(params: URLSearchParams): PaymentRequest | null {
   };
 }
 
+/** Path of the checkout, exported so callers link to one place. */
+export const PAY_PATH = '/pay';
+
 /** Absolute checkout URL for sharing. Falls back to a path during SSR. */
 export function requestUrl(request: PaymentRequest): string {
   const query = encodeRequest(request);
-  const path = `/merchant/pay?${query}`;
+  const path = `${PAY_PATH}?${query}`;
   if (typeof window === 'undefined') return path;
   return `${window.location.origin}${path}`;
 }

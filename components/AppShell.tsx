@@ -51,6 +51,7 @@ const NAV_GROUPS: Array<{
     heading: 'Business',
     items: [
       { label: 'Merchant', href: '/merchant', icon: <Icon d="M3 9l1-5h16l1 5M4 9v11h16V9M9 20v-6h6v6" /> },
+      { label: 'Pay', href: '/pay', icon: <Icon d="M2 7h20v10H2zM2 11h20M6 15h4" /> },
       { label: 'History', href: '/history', icon: <Icon d="M12 8v5l3 2M3 12a9 9 0 109-9 9 9 0 00-9 9zM3 12H1M3 12l2-2" /> },
     ],
   },

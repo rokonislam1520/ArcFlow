@@ -15,7 +15,11 @@ const links = [
   { name: 'Bridge', href: '/bridge' },
   { name: 'Portfolio', href: '/portfolio' },
   { name: 'History', href: '/history' },
-  { name: 'Pay', href: '/merchant' },
+  // Business pair: Merchant raises a request, Pay settles one. Both are
+  // top-level because a customer arriving from a link needs Pay to exist as a
+  // place, not just as a URL someone sent them.
+  { name: 'Merchant', href: '/merchant' },
+  { name: 'Pay', href: '/pay' },
 ];
 
 /**

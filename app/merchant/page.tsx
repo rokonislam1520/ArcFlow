@@ -28,6 +28,7 @@ import {
   newReference,
   requestUrl,
   saveProfile,
+  PAY_PATH,
   type MerchantProfile,
   type PaymentRequest,
 } from '@/lib/merchant';
@@ -297,7 +298,7 @@ function RequestBuilder({ profile, chainId }: { profile: MerchantProfile; chainI
           {copied ? 'Link copied' : 'Copy payment link'}
         </button>
         <Link
-          href={`/merchant/pay?${query}`}
+          href={`${PAY_PATH}?${query}`}
           className="px-4 py-3 rounded-xl text-sm bg-surface-input border border-hairline hover:bg-surface-hover/[0.06] shrink-0"
         >
           Preview
@@ -367,8 +368,16 @@ function Payments({ profile }: { profile: MerchantProfile }) {
                       {shortAddress(t.counterparty)}
                     </span>
                   </div>
-                  <div className="text-[11px] text-ink-muted">
-                    {relativeTime(t.timestamp) ?? `block ${t.blockNumber.toString()}`}
+                  <div className="text-[11px] text-ink-muted flex items-center gap-1.5 flex-wrap">
+                    {/* Anything listed here was read from a mined block's
+                        logs, so it is confirmed by definition — this label
+                        reports that fact rather than tracking a status we do
+                        not hold. Pending payments simply do not appear yet. */}
+                    <span className="text-success">Confirmed</span>
+                    <span aria-hidden="true">·</span>
+                    <span>{relativeTime(t.timestamp) ?? `block ${t.blockNumber.toString()}`}</span>
+                    <span aria-hidden="true">·</span>
+                    <span className="font-mono">{shortAddress(t.txHash)}</span>
                   </div>
                 </div>
                 <div className="text-sm font-semibold text-success tabular-nums shrink-0">
