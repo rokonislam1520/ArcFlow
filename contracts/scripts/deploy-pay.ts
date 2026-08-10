@@ -72,8 +72,11 @@ async function main() {
     throw new Error("Deployed feeCollector does not match the configured address");
   }
 
-  // Merged into the existing file so a single-contract deploy does not discard
-  // the record of contracts deployed previously.
+  // Previously deployed addresses are only carried forward when the existing
+  // record is for the *same* chain. Merging across chains once relabelled local
+  // hardhat addresses (0x5FbDB..., 0xe7f17...) as live Arc Testnet deployments,
+  // which is worse than having no record at all: those addresses hold no code,
+  // so anything trusting the file would call into nothing.
   const outPath = path.join(__dirname, "..", "deployments.json");
   let existing: Record<string, unknown> = {};
   if (fs.existsSync(outPath)) {
@@ -84,9 +87,15 @@ async function main() {
     }
   }
 
-  const previous = (existing.contracts as Record<string, string>) ?? {};
+  const sameChain = String(existing.chainId ?? "") === net.chainId.toString();
+  const previous = sameChain ? ((existing.contracts as Record<string, string>) ?? {}) : {};
+  if (!sameChain && existing.chainId) {
+    console.log(
+      `\nNote: existing record was for chain ${existing.chainId}; not carrying its addresses over.`
+    );
+  }
   const output = {
-    ...existing,
+    ...(sameChain ? existing : {}),
     network: network.name,
     chainId: net.chainId.toString(),
     deployer: deployer.address,
@@ -95,6 +104,7 @@ async function main() {
     contracts: { ...previous, ArcFlowPay: address },
     deploymentTx: deployTx?.hash,
     blockNumber: receipt.blockNumber,
+    verified: `https://testnet.arcscan.app/address/${address}#code`,
   };
   fs.writeFileSync(outPath, JSON.stringify(output, null, 2));
   console.log("\nSaved to", outPath);
