@@ -5,17 +5,22 @@
  * App Kit handles the ERC-20 mechanics; this page's job is to only ever submit
  * a valid request: real balance, checksummed recipient, amount within funds.
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { isAddress, parseUnits, type Address } from 'viem';
 import { getChainTokens, type TokenAlias } from '@/lib/chains';
 import { useWallet, useActiveChain } from '@/lib/WalletProvider';
+import { useNetworkMode } from '@/lib/network';
 import { useChainBalances } from '@/lib/useBalances';
 import { useAppKitOps } from '@/lib/useAppKitOps';
 import { useOpNotifications } from '@/lib/notifications';
 import { OpStatus } from '@/components/OpStatus';
 import { TokenSelector } from '@/components/TokenSelector';
+import { RecipientPicker } from '@/components/RecipientPicker';
 import { TokenMark } from '@/components/BrandMark';
-import { tokensForChain } from '@/lib/swapTokens';
+import { tokensForChain, shortAddress } from '@/lib/swapTokens';
+import { useAddressBook, MAX_LABEL_LENGTH } from '@/lib/addressBook';
+import { useRecentRecipients } from '@/lib/useRecentRecipients';
+import { checkRecipient, type SafetyReport } from '@/lib/safety';
 
 export default function SendPage() {
   const { address, adapter, isUnsupportedChain } = useWallet();
@@ -27,11 +32,25 @@ export default function SendPage() {
   // is still visible after navigating away from the success screen.
   useOpNotifications(state, chain);
 
+  const { isTestnet } = useNetworkMode();
+  const book = useAddressBook(address ?? null);
+  const recents = useRecentRecipients(address as Address | null, isTestnet);
+
   const tokens = useMemo(() => getChainTokens(chain), [chain]);
   const [token, setToken] = useState<TokenAlias>('USDC');
   const [to, setTo] = useState('');
   const [amount, setAmount] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [recipientPickerOpen, setRecipientPickerOpen] = useState(false);
+
+  /** Recipient checks for the address currently quoted. */
+  const [safety, setSafety] = useState<SafetyReport | null>(null);
+  const [safetyPending, setSafetyPending] = useState(false);
+
+  /** Name field for the post-transfer save prompt. */
+  const [saveLabel, setSaveLabel] = useState('');
+  /** The address just paid, held so it survives clearing the form. */
+  const [justSent, setJustSent] = useState('');
 
   // The selected token may not exist on a newly selected chain.
   const activeToken = tokens.includes(token) ? token : tokens[0];
@@ -82,6 +101,49 @@ export default function SendPage() {
   const canSubmit =
     !!address && !!adapter && !!to && !!amount && !validationError && !isBusy && !hasQuote;
 
+  /** The saved contact for the address in the field, when there is one. */
+  const matchedContact = useMemo(() => book.lookup(to), [book, to]);
+
+  /**
+   * Run the recipient checks when — and only when — a quote appears.
+   *
+   * Tied to the quote rather than to keystrokes for two reasons: every check
+   * costs RPC calls, which typing would fire on each character; and the report
+   * belongs to a specific reviewed transfer, so recomputing it while the
+   * confirm card is open would let the text change under the user's cursor.
+   */
+  useEffect(() => {
+    if (state.stage !== 'quoted' || !isAddress(to)) {
+      setSafety(null);
+      setSafetyPending(false);
+      return;
+    }
+
+    let active = true;
+    setSafetyPending(true);
+    setSafety(null);
+
+    void checkRecipient({
+      chain,
+      to,
+      knownRecipient: book.knownAddresses.has(to.toLowerCase()),
+      sentBefore: recents.sentBefore(to),
+    }).then((report) => {
+      // Discarded when the quote was cancelled or replaced mid-flight, so a
+      // stale report can never be attached to a different transfer.
+      if (!active) return;
+      setSafety(report);
+      setSafetyPending(false);
+    });
+
+    return () => {
+      active = false;
+    };
+    // `book` and `recents` are intentionally read at quote time only: adding
+    // them here would re-run the checks when an unrelated contact is saved.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.stage, to, chain]);
+
   /** Step 1: fetch a real quote. Nothing is signed here. */
   async function onQuote() {
     if (!canSubmit) return;
@@ -90,12 +152,29 @@ export default function SendPage() {
 
   /** Step 2: submit what was quoted, then clear the form on success. */
   async function onConfirm() {
+    const recipient = to;
     const result = await submit();
     if (result) {
+      // Counters move only for money that actually moved, which is why this
+      // sits after the SDK resolves rather than beside the quote.
+      book.recordUse(recipient);
+      setJustSent(recipient);
+      setSaveLabel('');
       setAmount('');
       setTo('');
       void refresh();
     }
+  }
+
+  /** Name the address just paid, from the success panel. */
+  function onSaveRecipient() {
+    if (!saveLabel.trim() || !isAddress(justSent)) return;
+    book.save({ address: justSent, label: saveLabel, chainId: chain.id });
+    // Credit the transfer that prompted the save: it happened, and a contact
+    // created this way would otherwise show a zero count next to it.
+    book.recordUse(justSent);
+    setJustSent('');
+    setSaveLabel('');
   }
 
   return (
@@ -152,14 +231,45 @@ export default function SendPage() {
         </div>
 
         <div>
-          <label className="block text-sm text-ink-secondary mb-2">Recipient</label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm text-ink-secondary">Recipient</label>
+            <button
+              onClick={() => setRecipientPickerOpen(true)}
+              disabled={isBusy}
+              aria-haspopup="dialog"
+              className="text-xs text-accent-text hover:underline disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Contacts
+              {book.contacts.length > 0 && ` (${book.contacts.length})`}
+            </button>
+          </div>
           <input
             value={to}
             onChange={(e) => setTo(e.target.value.trim())}
-            placeholder="0x…"
+            placeholder="0x… or pick a contact"
             spellCheck={false}
             className="w-full bg-surface-input border border-hairline rounded-xl px-4 py-3 font-mono text-sm focus:border-arc-500 outline-none"
           />
+
+          {/*
+            Naming the matched contact under the field is the confirmation that
+            the picker chose what the user intended — a hex string alone cannot
+            be checked by eye.
+          */}
+          {matchedContact && (
+            <p className="mt-2 flex items-center gap-1.5 text-xs text-success">
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="font-semibold">{matchedContact.label}</span>
+              {matchedContact.useCount > 0 && (
+                <span className="text-ink-muted">
+                  · paid {matchedContact.useCount}
+                  {matchedContact.useCount === 1 ? ' time' : ' times'}
+                </span>
+              )}
+            </p>
+          )}
         </div>
 
         <div>
@@ -201,7 +311,49 @@ export default function SendPage() {
           chain={chain}
           onConfirm={onConfirm}
           onCancel={cancelQuote}
+          safety={safety}
+          safetyPending={safetyPending}
         />
+
+        {/*
+          Offered after success, not before: at this point the transfer is known
+          to have worked, which is the evidence that the address was right. A
+          prompt beforehand would invite saving an address that is about to fail
+          — and quietly auto-saving every recipient would fill the book with
+          one-off addresses nobody chose to keep.
+        */}
+        {state.stage === 'success' && justSent && !book.knownAddresses.has(justSent.toLowerCase()) && (
+          <div className="rounded-xl border border-hairline bg-surface-input p-4 space-y-3">
+            <div>
+              <p className="text-sm font-semibold">Save this recipient?</p>
+              <p className="text-xs text-ink-muted font-mono mt-0.5">{shortAddress(justSent, 10, 8)}</p>
+            </div>
+            <div className="flex gap-2">
+              <input
+                value={saveLabel}
+                onChange={(e) => setSaveLabel(e.target.value.slice(0, MAX_LABEL_LENGTH))}
+                placeholder="Name, e.g. Alice"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') onSaveRecipient();
+                }}
+                className="flex-1 min-w-0 bg-surface-card border border-hairline rounded-xl px-3 py-2 text-sm focus:border-arc-500 outline-none"
+              />
+              <button
+                onClick={onSaveRecipient}
+                disabled={!saveLabel.trim()}
+                className="btn-arc px-4 py-2 text-sm disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setJustSent('')}
+                className="px-3 py-2 rounded-xl text-sm text-ink-secondary hover:text-ink-primary shrink-0"
+              >
+                Not now
+              </button>
+            </div>
+          </div>
+        )}
 
         {(state.stage === 'success' || state.stage === 'error') && !isBusy && (
           <button onClick={reset} className="w-full text-sm text-ink-secondary hover:text-ink-primary">
@@ -222,6 +374,23 @@ export default function SendPage() {
         onSelect={(t) => setToken(t.alias)}
         lockedChain={chain}
         title={`Send on ${chain.label}`}
+      />
+
+      {/*
+        Saved contacts plus counterparties from scanned history. Both write to
+        the same field the user can still edit by hand: the picker is a
+        shortcut, never a lock, so an address that is not in either list is
+        never harder to send to than before.
+      */}
+      <RecipientPicker
+        isOpen={recipientPickerOpen}
+        onClose={() => setRecipientPickerOpen(false)}
+        onSelect={setTo}
+        contacts={book.contacts}
+        recents={recents.recipients}
+        recentsLoading={recents.loading}
+        onSave={(input) => book.save({ ...input, chainId: chain.id })}
+        onRemove={book.remove}
       />
     </div>
   );

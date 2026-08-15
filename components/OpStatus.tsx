@@ -9,6 +9,63 @@
  */
 import { explorerTxUrl, type ArcChain } from '@/lib/chains';
 import type { OpState } from '@/lib/useAppKitOps';
+import type { SafetyReport } from '@/lib/safety';
+
+/**
+ * Recipient checks, shown between the fee table and the confirm button.
+ *
+ * Placed inside the quote card rather than beside the address field because
+ * this is the last moment before a signature, and it is the only moment the
+ * user is definitely reading. Nothing here disables Confirm: each warning has
+ * a legitimate case, so the honest design informs rather than obstructs — see
+ * `lib/safety.ts` for why blocking would be worse.
+ */
+function SafetyNotes({ report }: { report: SafetyReport | null }) {
+  if (!report || report.warnings.length === 0) return null;
+
+  return (
+    <ul className="space-y-2 pt-3 border-t border-hairline">
+      {report.warnings.map((w) => {
+        const caution = w.level === 'caution';
+        return (
+          <li
+            key={w.id}
+            className={`flex gap-2.5 text-xs rounded-lg px-3 py-2 ${
+              caution
+                ? 'bg-amber-500/10 border border-amber-500/30'
+                : 'bg-surface-input border border-hairline'
+            }`}
+          >
+            <span
+              className={`shrink-0 mt-0.5 ${caution ? 'text-warning' : 'text-ink-muted'}`}
+              aria-hidden
+            >
+              {caution ? (
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                  />
+                </svg>
+              ) : (
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
+            </span>
+            <span className="min-w-0">
+              <span className={`block font-semibold ${caution ? 'text-warning' : 'text-ink-secondary'}`}>
+                {w.title}
+              </span>
+              <span className="block text-ink-muted">{w.detail}</span>
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 function FeeTable({ state }: { state: OpState }) {
   const quote = state.quote;
@@ -77,12 +134,18 @@ export function OpStatus({
   chain,
   onConfirm,
   onCancel,
+  safety,
+  safetyPending,
 }: {
   state: OpState;
   chain: ArcChain;
   /** Provided by pages that use the quote → confirm flow. */
   onConfirm?: () => void;
   onCancel?: () => void;
+  /** Recipient checks for this quote. Omitted by operations that have no recipient. */
+  safety?: SafetyReport | null;
+  /** True while the checks are still running. */
+  safetyPending?: boolean;
 }) {
   if (state.stage === 'idle') return null;
 
@@ -92,6 +155,19 @@ export function OpStatus({
       <div className="rounded-xl border border-arc-500/30 bg-arc-500/5 p-4 space-y-4">
         <div className="text-sm font-semibold text-accent-text">Confirm details</div>
         <FeeTable state={state} />
+
+        {/*
+          Announced while running so Confirm is never pressed in the belief the
+          checks came back clean when they simply had not finished.
+        */}
+        {safetyPending ? (
+          <p className="flex items-center gap-2 text-xs text-ink-muted pt-3 border-t border-hairline">
+            <span className="inline-block w-3 h-3 border-2 border-arc-400 border-t-transparent rounded-full animate-spin" />
+            Checking recipient…
+          </p>
+        ) : (
+          <SafetyNotes report={safety ?? null} />
+        )}
 
         {state.kind === 'bridge' && (
           <p className="text-xs text-ink-muted">
