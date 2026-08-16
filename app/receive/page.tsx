@@ -7,78 +7,50 @@
  * the page dependent on a service that could go away.
  *
  * The encoded payload follows EIP-681, so a wallet scanning it can prefill the
- * chain, token and amount instead of the user retyping them.
+ * chain and token instead of the user retyping them. No amount is requested
+ * here: naming a figure belongs to an invoice, which is what the Merchant page
+ * produces, and asking for one on the page whose job is simply "here is where
+ * to pay me" made the common case do extra work for nothing.
  */
 import { useEffect, useMemo, useState } from 'react';
 import QRCode from 'qrcode';
-import { parseUnits } from 'viem';
 import { getChainTokens } from '@/lib/chains';
 import { useWallet, useActiveChain } from '@/lib/WalletProvider';
-import { useChainBalances } from '@/lib/useBalances';
 
 /**
  * Build an EIP-681 request URI.
  *
- * Native transfers use `ethereum:<addr>@<chainId>?value=`, whereas ERC-20s
- * address the *token* contract and call `transfer`. Getting this wrong makes a
- * scanning wallet send the wrong asset, so the two are kept distinct.
+ * Native transfers use `ethereum:<addr>@<chainId>`, whereas ERC-20s address the
+ * *token* contract and call `transfer`. Getting this wrong makes a scanning
+ * wallet send the wrong asset, so the two are kept distinct.
+ *
+ * Amount is deliberately absent: the scanning wallet asks for it, which is the
+ * right place for a figure only the sender knows.
  */
 function buildPaymentUri(args: {
   address: string;
   chainId: number;
   token: string;
   tokenAddress?: string;
-  amount?: string;
-  decimals: number;
 }): string {
-  const { address, chainId, token, tokenAddress, amount, decimals } = args;
-
-  let base: string;
-  const params: string[] = [];
+  const { address, chainId, token, tokenAddress } = args;
 
   if (token === 'NATIVE' || !tokenAddress) {
-    base = `ethereum:${address}@${chainId}`;
-    if (amount) {
-      try {
-        params.push(`value=${parseUnits(amount, decimals).toString()}`);
-      } catch {
-        // An unparseable amount simply yields an address-only request.
-      }
-    }
-  } else {
-    base = `ethereum:${tokenAddress}@${chainId}/transfer`;
-    params.push(`address=${address}`);
-    if (amount) {
-      try {
-        params.push(`uint256=${parseUnits(amount, decimals).toString()}`);
-      } catch {
-        /* ignore */
-      }
-    }
+    return `ethereum:${address}@${chainId}`;
   }
-
-  return params.length ? `${base}?${params.join('&')}` : base;
+  return `ethereum:${tokenAddress}@${chainId}/transfer?address=${address}`;
 }
 
 export default function ReceivePage() {
   const { address } = useWallet();
   const chain = useActiveChain();
-  const { balances } = useChainBalances(chain, (address as `0x${string}`) ?? null);
 
   const tokens = useMemo(() => getChainTokens(chain), [chain]);
   const [token, setToken] = useState('USDC');
-  const [amount, setAmount] = useState('');
   const [qr, setQr] = useState<string | null>(null);
   const [copied, setCopied] = useState<'address' | 'uri' | null>(null);
 
   const activeToken = tokens.includes(token as never) ? token : tokens[0];
-
-  // Decimals come from the live balance read, not a hardcoded 6, so the
-  // encoded amount is correct for tokens that differ.
-  const decimals =
-    balances.find((b) =>
-      activeToken === 'NATIVE' ? b.address === undefined : b.symbol === activeToken
-    )?.decimals ?? (activeToken === 'NATIVE' ? chain.nativeCurrency.decimals : 6);
 
   const uri = useMemo(() => {
     if (!address || chain.chainId === undefined) return '';
@@ -87,15 +59,13 @@ export default function ReceivePage() {
       chainId: chain.chainId,
       token: activeToken,
       // Narrowed to the registry's known symbols; anything else has no address
-      // and correctly falls back to a native-value request.
+      // and correctly falls back to a native request.
       tokenAddress:
         activeToken === 'NATIVE'
           ? undefined
           : chain.tokens[activeToken as keyof typeof chain.tokens],
-      amount: amount || undefined,
-      decimals,
     });
-  }, [address, chain, activeToken, amount, decimals]);
+  }, [address, chain, activeToken]);
 
   useEffect(() => {
     if (!uri) {
@@ -187,19 +157,6 @@ export default function ReceivePage() {
               </button>
             ))}
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm text-ink-secondary mb-2">
-            Requested amount <span className="text-ink-muted">(optional)</span>
-          </label>
-          <input
-            value={amount}
-            onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ''))}
-            inputMode="decimal"
-            placeholder="Any amount"
-            className="w-full bg-surface-input border border-hairline rounded-xl px-4 py-3 focus:border-arc-500 outline-none"
-          />
         </div>
 
         <div>
