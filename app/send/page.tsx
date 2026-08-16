@@ -20,7 +20,7 @@ import { TokenMark } from '@/components/BrandMark';
 import { tokensForChain, shortAddress } from '@/lib/swapTokens';
 import { useAddressBook, MAX_LABEL_LENGTH } from '@/lib/addressBook';
 import { useRecentRecipients } from '@/lib/useRecentRecipients';
-import { checkRecipient, type SafetyReport } from '@/lib/safety';
+import { checkGas, checkRecipient, mergeReports, type SafetyReport } from '@/lib/safety';
 
 export default function SendPage() {
   const { address, adapter, isUnsupportedChain } = useWallet();
@@ -43,7 +43,7 @@ export default function SendPage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [recipientPickerOpen, setRecipientPickerOpen] = useState(false);
 
-  /** Recipient checks for the address currently quoted. */
+  /** Recipient and gas checks for the transfer currently quoted. */
   const [safety, setSafety] = useState<SafetyReport | null>(null);
   const [safetyPending, setSafetyPending] = useState(false);
 
@@ -105,15 +105,36 @@ export default function SendPage() {
   const matchedContact = useMemo(() => book.lookup(to), [book, to]);
 
   /**
-   * Run the recipient checks when — and only when — a quote appears.
+   * The transfer amount in native base units, or zero when the asset is a token.
    *
-   * Tied to the quote rather than to keystrokes for two reasons: every check
-   * costs RPC calls, which typing would fire on each character; and the report
+   * Only meaningful for a native send, where the amount and the fee are drawn
+   * from the same balance — that is the case `checkGas` must add together, and
+   * the one where sending the full balance cannot succeed. A token transfer
+   * leaves the gas balance untouched, so it contributes nothing here.
+   */
+  const nativeValue = useMemo(() => {
+    if (activeToken !== 'NATIVE' || !amount) return 0n;
+    try {
+      return parseUnits(amount, chain.nativeCurrency.decimals);
+    } catch {
+      // Unparseable input is already reported by `validationError`; inventing a
+      // number here would produce a gas verdict about an amount nobody entered.
+      return 0n;
+    }
+  }, [activeToken, amount, chain]);
+
+  /**
+   * Run the recipient and gas checks when — and only when — a quote appears.
+   *
+   * Tied to the quote rather than to keystrokes for three reasons: every check
+   * costs RPC calls, which typing would fire on each character; the report
    * belongs to a specific reviewed transfer, so recomputing it while the
-   * confirm card is open would let the text change under the user's cursor.
+   * confirm card is open would let the text change under the user's cursor; and
+   * the gas check needs the quote's own fee lines, which do not exist until the
+   * SDK has answered.
    */
   useEffect(() => {
-    if (state.stage !== 'quoted' || !isAddress(to)) {
+    if (state.stage !== 'quoted' || !isAddress(to) || !address) {
       setSafety(null);
       setSafetyPending(false);
       return;
@@ -123,16 +144,21 @@ export default function SendPage() {
     setSafetyPending(true);
     setSafety(null);
 
-    void checkRecipient({
-      chain,
-      to,
-      knownRecipient: book.knownAddresses.has(to.toLowerCase()),
-      sentBefore: recents.sentBefore(to),
-    }).then((report) => {
+    // Both run together: one waiting on the other would double the delay in
+    // front of the confirm button for two independent reads.
+    void Promise.all([
+      checkRecipient({
+        chain,
+        to,
+        knownRecipient: book.knownAddresses.has(to.toLowerCase()),
+        sentBefore: recents.sentBefore(to),
+      }),
+      checkGas({ chain, from: address, quote: state.quote, value: nativeValue }),
+    ]).then(([recipient, gas]) => {
       // Discarded when the quote was cancelled or replaced mid-flight, so a
       // stale report can never be attached to a different transfer.
       if (!active) return;
-      setSafety(report);
+      setSafety(mergeReports(recipient, gas));
       setSafetyPending(false);
     });
 
@@ -142,7 +168,7 @@ export default function SendPage() {
     // `book` and `recents` are intentionally read at quote time only: adding
     // them here would re-run the checks when an unrelated contact is saved.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.stage, to, chain]);
+  }, [state.stage, state.quote, to, chain, address, nativeValue]);
 
   /** Step 1: fetch a real quote. Nothing is signed here. */
   async function onQuote() {

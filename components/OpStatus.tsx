@@ -163,7 +163,7 @@ export function OpStatus({
         {safetyPending ? (
           <p className="flex items-center gap-2 text-xs text-ink-muted pt-3 border-t border-hairline">
             <span className="inline-block w-3 h-3 border-2 border-arc-400 border-t-transparent rounded-full animate-spin" />
-            Checking recipient…
+            Running checks…
           </p>
         ) : (
           <SafetyNotes report={safety ?? null} />

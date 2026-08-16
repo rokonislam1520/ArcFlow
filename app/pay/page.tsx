@@ -16,15 +16,19 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import type { Address } from 'viem';
+import { isAddress, parseUnits, type Address } from 'viem';
 import { getChainById, explorerTxUrl } from '@/lib/chains';
 import { useWallet } from '@/lib/WalletProvider';
+import { useNetworkMode } from '@/lib/network';
 import { useChainBalances } from '@/lib/useBalances';
 import { useAppKitOps } from '@/lib/useAppKitOps';
 import { useOpNotifications } from '@/lib/notifications';
 import { OpStatus } from '@/components/OpStatus';
 import { ConnectButton } from '@/components/ConnectButton';
 import { decodeRequest } from '@/lib/merchant';
+import { useAddressBook } from '@/lib/addressBook';
+import { useRecentRecipients } from '@/lib/useRecentRecipients';
+import { checkGas, checkRecipient, mergeReports, type SafetyReport } from '@/lib/safety';
 
 function Shell({ children }: { children: React.ReactNode }) {
   return <div className="max-w-lg mx-auto animate-in">{children}</div>;
@@ -75,11 +79,90 @@ function Checkout() {
   const [amount, setAmount] = useState('');
   const [switching, setSwitching] = useState(false);
 
+  /** Recipient and gas checks for the payment currently quoted. */
+  const [safety, setSafety] = useState<SafetyReport | null>(null);
+  const [safetyPending, setSafetyPending] = useState(false);
+
   useEffect(() => {
     if (request?.amount) setAmount(request.amount);
   }, [request?.amount]);
 
   useOpNotifications(state, target ?? null);
+
+  /*
+   * The same local knowledge Send draws on, so a merchant already paid is
+   * recognised here too.
+   *
+   * Both hooks are called unconditionally and before any early return, because
+   * the request may be invalid on this render and hook order cannot vary. The
+   * mode comes from the app rather than the link: a request naming a testnet
+   * chain is still read against whichever history the user is actually browsing.
+   */
+  const { isTestnet } = useNetworkMode();
+  const book = useAddressBook(address ?? null);
+  const recents = useRecentRecipients(address as Address | null, isTestnet);
+
+  /**
+   * The payment in native base units, or zero when a token is being sent.
+   *
+   * A native payment competes with its own fee for one balance, which is the
+   * case `checkGas` has to add together; a token payment leaves gas untouched.
+   */
+  const nativeValue = useMemo(() => {
+    if (!target || request?.token !== 'NATIVE' || !amount) return 0n;
+    try {
+      return parseUnits(amount, target.nativeCurrency.decimals);
+    } catch {
+      // Unparseable input is already caught by `amountValid`; a guessed number
+      // here would produce a gas verdict about an amount nobody entered.
+      return 0n;
+    }
+  }, [target, request?.token, amount]);
+
+  /**
+   * Run the checks when — and only when — a quote appears.
+   *
+   * The recipient comes from a URL, which makes these more valuable here than
+   * on Send: the customer never typed the address and cannot spot a substituted
+   * one, so "this is a contract" or "this wallet has never transacted" may be
+   * the only signal that a link was tampered with. Nothing blocks — a legitimate
+   * first-time merchant looks identical — but it is said before the signature.
+   */
+  useEffect(() => {
+    const to = request?.to;
+    if (state.stage !== 'quoted' || !target || !to || !isAddress(to) || !address) {
+      setSafety(null);
+      setSafetyPending(false);
+      return;
+    }
+
+    let active = true;
+    setSafetyPending(true);
+    setSafety(null);
+
+    void Promise.all([
+      checkRecipient({
+        chain: target,
+        to,
+        knownRecipient: book.knownAddresses.has(to.toLowerCase()),
+        sentBefore: recents.sentBefore(to),
+      }),
+      checkGas({ chain: target, from: address, quote: state.quote, value: nativeValue }),
+    ]).then(([recipient, gas]) => {
+      // Dropped if the quote was cancelled or replaced while the reads were in
+      // flight, so a stale report can never sit beside a different payment.
+      if (!active) return;
+      setSafety(mergeReports(recipient, gas));
+      setSafetyPending(false);
+    });
+
+    return () => {
+      active = false;
+    };
+    // `book` and `recents` are read at quote time only: including them would
+    // re-run the checks whenever an unrelated contact or history entry changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.stage, state.quote, request?.to, target, address, nativeValue]);
 
   if (!request) {
     return (
@@ -292,6 +375,8 @@ function Checkout() {
           chain={target}
           onConfirm={() => void submit()}
           onCancel={cancelQuote}
+          safety={safety}
+          safetyPending={safetyPending}
         />
 
         {state.stage === 'success' && (
