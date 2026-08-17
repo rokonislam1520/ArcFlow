@@ -30,12 +30,15 @@ import { useChainBalances } from '@/lib/useBalances';
 import { useAppKitOps } from '@/lib/useAppKitOps';
 import { useOpNotifications } from '@/lib/notifications';
 import { useRates, rateFor, nativeRate } from '@/lib/rates';
-import { formatUSD } from '@/lib/portfolio';
 import { nativeFeeTotal } from '@/lib/safety';
+import { shortAddress } from '@/lib/profile';
+import { useViewingAddress } from '@/lib/useViewingAddress';
 import { OpStatus } from '@/components/OpStatus';
 import { TokenSelector } from '@/components/TokenSelector';
 import { TokenMark } from '@/components/BrandMark';
 import { SlippageControl } from '@/components/SlippageControl';
+import { AmountDisplay } from '@/components/swap/AmountDisplay';
+import { WalletSelector } from '@/components/swap/WalletSelector';
 import { chainDisplayName } from '@/lib/chainBrand';
 import {
   DEFAULT_SLIPPAGE_BPS,
@@ -76,6 +79,14 @@ export default function SwapPage() {
   const [buy, setBuy] = useState<SwapToken | null>(null);
   const [amountIn, setAmountIn] = useState('');
   const [picking, setPicking] = useState<'sell' | 'buy' | null>(null);
+  /*
+   * Which unit each card leads with. Presentation only — the amount traded is
+   * always `amountIn` in token units, whichever way these are set. Tracked per
+   * side because the two sides answer different questions: "how much of this am
+   * I giving up" and "what is that worth to me".
+   */
+  const [sellShowUsd, setSellShowUsd] = useState(false);
+  const [buyShowUsd, setBuyShowUsd] = useState(false);
   /**
    * Slippage tolerance in basis points, seeded from App Kit's own default so
    * the app never quietly quotes something tighter or looser than the SDK
@@ -112,7 +123,25 @@ export default function SwapPage() {
   // Prices and balances are read for the pair's chain, not the wallet's, so
   // figures are correct before the user has switched networks.
   const { rates } = useRates(pairChain);
-  const { balances, refresh } = useChainBalances(pairChain, address as Address | null);
+
+  /*
+   * Whose balances are on screen.
+   *
+   * Normally the connected wallet. A pasted address replaces it for reading
+   * only: balances are public, so showing them is safe, but the address has no
+   * provider behind it and cannot sign. `address` and `adapter` from
+   * `WalletProvider` remain the sole inputs to quoting and submission, so this
+   * cannot widen what the page is able to do.
+   */
+  const {
+    displayAddress,
+    kind: accountKind,
+    isViewingOnly,
+    setViewingAddress,
+    clearViewingAddress,
+  } = useViewingAddress(address as Address | null);
+
+  const { balances, refresh } = useChainBalances(pairChain, displayAddress);
 
   const priceOf = useCallback(
     (token: SwapToken | null): number | null => {
@@ -211,6 +240,11 @@ export default function SwapPage() {
     !insufficient &&
     !tooPrecise &&
     !needsChainSwitch &&
+    // While a pasted address is on screen, the balances and the signer are two
+    // different accounts. Quoting then would price a trade against funds the
+    // connected wallet does not hold, so the page asks the user to come back to
+    // their own account first rather than producing a quote it cannot honour.
+    !isViewingOnly &&
     !isBusy &&
     !hasQuote;
 
@@ -339,6 +373,14 @@ export default function SwapPage() {
 
   const cta = useMemo(() => {
     if (!address) return { label: 'Connect Wallet', action: () => void connect(), disabled: false };
+    // Stated as an offer to fix it, not as a refusal: the user asked to look at
+    // another address, and the way back to trading is one tap.
+    if (isViewingOnly)
+      return {
+        label: 'Return to your wallet to swap',
+        action: clearViewingAddress,
+        disabled: false,
+      };
     if (!sell || !buy) return { label: 'Select Token', action: () => setPicking('sell'), disabled: false };
     if (needsChainSwitch)
       return {
@@ -356,6 +398,8 @@ export default function SwapPage() {
   }, [
     address,
     connect,
+    isViewingOnly,
+    clearViewingAddress,
     sell,
     buy,
     needsChainSwitch,
@@ -374,19 +418,17 @@ export default function SwapPage() {
   return (
     <div className="animate-in">
       <div className="max-w-[480px] mx-auto">
-        <header className="flex items-end justify-between mb-5">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Swap</h1>
-            <p className="text-sm text-ink-muted mt-0.5">
-              Settles on <span className="text-accent-text">{chainDisplayName(pairChain)}</span>
-            </p>
-          </div>
-          <WalletChip
-            address={address}
-            walletName={wallet?.name}
-            multiple={wallets.length > 1}
-            onClick={() => void connect()}
-          />
+        {/*
+         * The header no longer carries an account chip. Each card names the
+         * account it reads from, and a second, less capable copy in the header
+         * would contradict them the moment a pasted address is in view — green
+         * dot and connected address up here, read-only address below.
+         */}
+        <header className="mb-5">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Swap</h1>
+          <p className="text-sm text-ink-muted mt-0.5">
+            Settles on <span className="text-accent-text">{chainDisplayName(pairChain)}</span>
+          </p>
         </header>
 
         {/* Sell */}
@@ -395,32 +437,50 @@ export default function SwapPage() {
             label="Sell"
             token={sell}
             onPickToken={() => setPicking('sell')}
-            amount={
-              <input
-                value={amountIn}
-                onChange={(e) => {
-                  // One dot, digits only: a malformed amount would be rejected
-                  // by parseUnits later with a far less obvious message.
-                  const cleaned = e.target.value.replace(/[^0-9.]/g, '');
-                  const parts = cleaned.split('.');
-                  setAmountIn(
-                    parts.length > 2 ? `${parts[0]}.${parts.slice(1).join('')}` : cleaned
-                  );
-                }}
-                inputMode="decimal"
-                placeholder="0"
-                aria-label="Amount to sell"
-                className="w-full bg-transparent text-4xl sm:text-[42px] font-semibold tracking-tight outline-none placeholder:text-ink-muted tabular-nums"
+            account={
+              <WalletSelector
+                kind={accountKind}
+                address={displayAddress}
+                walletName={wallet?.name}
+                walletIcon={wallet?.icon}
+                wallets={wallets}
+                onConnect={(uuid) => void connect(uuid)}
+                onUseViewingAddress={setViewingAddress}
+                onClearViewingAddress={clearViewingAddress}
+                label="Account selling from"
               />
             }
-            subValue={
-              sellValueUSD !== null ? (
-                formatUSD(sellValueUSD)
-              ) : amountValid ? (
-                <span title="No price quote for this token">Unpriced</span>
-              ) : (
-                formatUSD(0)
-              )
+            amount={
+              <AmountDisplay
+                // The input keeps owning the token amount. Only its position on
+                // the card changes when USD leads, so the value being typed is
+                // never rewritten and never reinterpreted as dollars.
+                tokenNode={
+                  <input
+                    value={amountIn}
+                    onChange={(e) => {
+                      // One dot, digits only: a malformed amount would be rejected
+                      // by parseUnits later with a far less obvious message.
+                      const cleaned = e.target.value.replace(/[^0-9.]/g, '');
+                      const parts = cleaned.split('.');
+                      setAmountIn(
+                        parts.length > 2 ? `${parts[0]}.${parts.slice(1).join('')}` : cleaned
+                      );
+                    }}
+                    inputMode="decimal"
+                    placeholder="0"
+                    aria-label="Amount to sell"
+                    className="w-full bg-transparent text-4xl sm:text-[42px] font-semibold tracking-tight outline-none placeholder:text-ink-muted tabular-nums"
+                  />
+                }
+                tokenText={amountIn === '' ? '0' : amountIn}
+                // Zero while nothing is typed, so the line reads $0.00 rather
+                // than an em dash on a card the user has not filled in yet.
+                usdValue={sellValueUSD ?? (sellPrice !== null ? 0 : null)}
+                showUsdFirst={sellShowUsd}
+                onToggle={() => setSellShowUsd((v) => !v)}
+                symbol={sell?.symbol}
+              />
             }
             footer={
               sellBalance ? (
@@ -428,24 +488,32 @@ export default function SwapPage() {
                   <span className="text-ink-muted">
                     Balance {sellBalance.formatted} {sell?.symbol}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <FractionButton onClick={() => applyFraction(1n, 4n)}>25%</FractionButton>
-                    <FractionButton onClick={() => applyFraction(1n, 2n)}>50%</FractionButton>
-                    <FractionButton
-                      onClick={() => applyFraction(1n, 1n)}
-                      title={
-                        maxReservesGas
-                          ? 'Leaves behind the gas this quote priced'
-                          : sell?.isNative
-                            ? 'Full balance — no quoted gas figure to reserve yet'
-                            : undefined
-                      }
-                    >
-                      {maxReservesGas ? 'MAX − GAS' : 'MAX'}
-                    </FractionButton>
-                  </span>
+                  {/*
+                   * Withheld while viewing someone else's address: these exist to
+                   * fill in an amount about to be traded, and this balance is not
+                   * tradable from here. Offering them would be an invitation the
+                   * confirm button then has to refuse.
+                   */}
+                  {!isViewingOnly && (
+                    <span className="flex items-center gap-1">
+                      <FractionButton onClick={() => applyFraction(1n, 4n)}>25%</FractionButton>
+                      <FractionButton onClick={() => applyFraction(1n, 2n)}>50%</FractionButton>
+                      <FractionButton
+                        onClick={() => applyFraction(1n, 1n)}
+                        title={
+                          maxReservesGas
+                            ? 'Leaves behind the gas this quote priced'
+                            : sell?.isNative
+                              ? 'Full balance — no quoted gas figure to reserve yet'
+                              : undefined
+                        }
+                      >
+                        {maxReservesGas ? 'MAX − GAS' : 'MAX'}
+                      </FractionButton>
+                    </span>
+                  )}
                 </div>
-              ) : address ? (
+              ) : displayAddress ? (
                 <span className="text-ink-muted">
                   No {sell?.symbol} on {chainDisplayName(pairChain)}
                 </span>
@@ -480,19 +548,39 @@ export default function SwapPage() {
             label="Buy"
             token={buy}
             onPickToken={() => setPicking('buy')}
-            amount={
-              <div className="text-4xl sm:text-[42px] font-semibold tracking-tight tabular-nums truncate">
-                {receivedAmount ?? <span className="text-ink-muted">0</span>}
-              </div>
+            /*
+             * A swap returns the bought token to the account that sold it, so
+             * this is the same account as the Sell side by construction — not a
+             * second recipient field. It is shown here because "where does the
+             * output land" is a fair question to ask of the Buy card, and the
+             * answer should not require scrolling back up.
+             */
+            account={
+              <WalletSelector
+                kind={accountKind}
+                address={displayAddress}
+                walletName={wallet?.name}
+                walletIcon={wallet?.icon}
+                wallets={wallets}
+                onConnect={(uuid) => void connect(uuid)}
+                onUseViewingAddress={setViewingAddress}
+                onClearViewingAddress={clearViewingAddress}
+                label="Account receiving the swap"
+              />
             }
-            subValue={
-              buyValueUSD !== null ? (
-                formatUSD(buyValueUSD)
-              ) : receivedAmount !== null ? (
-                <span title="No price quote for this token">Unpriced</span>
-              ) : (
-                formatUSD(0)
-              )
+            amount={
+              <AmountDisplay
+                tokenNode={
+                  <div className="text-4xl sm:text-[42px] font-semibold tracking-tight tabular-nums truncate">
+                    {receivedAmount ?? <span className="text-ink-muted">0</span>}
+                  </div>
+                }
+                tokenText={receivedAmount ?? '0'}
+                usdValue={buyValueUSD ?? (buyPrice !== null && receivedAmount === null ? 0 : null)}
+                showUsdFirst={buyShowUsd}
+                onToggle={() => setBuyShowUsd((v) => !v)}
+                symbol={buy?.symbol}
+              />
             }
             footer={
               <span className="text-ink-muted">
@@ -612,6 +700,23 @@ export default function SwapPage() {
           disabled={isBusy}
         />
 
+        {/*
+         * Said once, plainly, where the decision is made. The balances above are
+         * another account's, so the trade the cards describe is not one this
+         * session can sign — and that has to be stated before the button, not
+         * discovered by pressing it.
+         */}
+        {isViewingOnly && (
+          <Notice>
+            You are viewing {shortAddress(displayAddress ?? '')}, which this app cannot sign for.
+            Balances and values above are that address&apos;s.{' '}
+            <button onClick={clearViewingAddress} className="underline hover:text-warning">
+              Switch back to your wallet
+            </button>{' '}
+            to swap.
+          </Notice>
+        )}
+
         {/* Warnings that must not be buried in the button label. */}
         {priceImpact !== null && priceImpact <= -IMPACT_CAUTION && (
           <Notice>
@@ -701,14 +806,16 @@ function AssetCard({
   label,
   token,
   amount,
-  subValue,
+  account,
   footer,
   onPickToken,
 }: {
   label: string;
   token: SwapToken | null;
+  /** Already contains its own USD sub-line; see `AmountDisplay`. */
   amount: React.ReactNode;
-  subValue: React.ReactNode;
+  /** The account this side reads from, in the card header beside the label. */
+  account: React.ReactNode;
   footer: React.ReactNode;
   onPickToken: () => void;
 }) {
@@ -716,8 +823,14 @@ function AssetCard({
     // `card-float` lifts the panel on hover; the two swap cards are the subject
     // of this page, so they are where the effect belongs.
     <section className="glass card-float p-5 rounded-3xl">
-      <div className="flex items-center justify-between mb-3">
+      {/*
+       * "Sell" and the account sit on one line. The account belongs to the side,
+       * not to the page, so it reads as part of the sentence the card makes:
+       * sell — from this account.
+       */}
+      <div className="flex items-center justify-between gap-2 mb-3">
         <span className="text-sm text-ink-secondary">{label}</span>
+        {account}
       </div>
 
       <div className="flex items-center gap-3">
@@ -725,8 +838,7 @@ function AssetCard({
         <TokenPill token={token} onClick={onPickToken} />
       </div>
 
-      <div className="flex items-center justify-between gap-3 mt-3 text-xs">
-        <span className="text-ink-muted tabular-nums">{subValue}</span>
+      <div className="flex items-center justify-end gap-3 mt-3 text-xs">
         <span className="text-right">{footer}</span>
       </div>
     </section>
@@ -803,48 +915,6 @@ function FractionButton({
         hover:bg-arc-500/25 active:scale-95 transition-all duration-200 whitespace-nowrap"
     >
       {children}
-    </button>
-  );
-}
-
-/**
- * The connected account.
- *
- * Swaps return the bought token to the account that sold, so there is no
- * separate destination to choose; this names the one account involved. It
- * opens the wallet picker only when more than one wallet was discovered.
- */
-function WalletChip({
-  address,
-  walletName,
-  multiple,
-  onClick,
-}: {
-  address: string | null;
-  walletName?: string;
-  multiple: boolean;
-  onClick: () => void;
-}) {
-  if (!address) {
-    return (
-      <button onClick={onClick} className="text-sm font-semibold text-accent-text hover:text-accent-text">
-        Select wallet
-      </button>
-    );
-  }
-  return (
-    <button
-      onClick={multiple ? onClick : undefined}
-      title={multiple ? 'Switch wallet' : walletName}
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-input border border-hairline text-xs ${
-        multiple ? 'hover:bg-surface-hover/[0.06]' : 'cursor-default'
-      }`}
-    >
-      <span className="w-1.5 h-1.5 rounded-full bg-mint-400" />
-      <span className="font-mono">
-        {address.slice(0, 6)}…{address.slice(-4)}
-      </span>
-      {multiple && <Chevron />}
     </button>
   );
 }
