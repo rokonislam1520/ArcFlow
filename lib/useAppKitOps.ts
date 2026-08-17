@@ -228,9 +228,26 @@ export function useAppKitOps() {
     [adapter, address, quote]
   );
 
-  /** Same-chain swap. On Arc Testnet only USDC/EURC/cirBTC have liquidity. */
+  /**
+   * Same-chain swap. On Arc Testnet only USDC/EURC/cirBTC have liquidity.
+   *
+   * `slippageBps` is passed straight into App Kit's `SwapConfig`, which is the
+   * only place slippage is actually enforced — it sets the stop limit the route
+   * commits to on-chain. Because `submit` replays `pending.current.params`
+   * unchanged, the tolerance the user chose while quoting is the tolerance that
+   * gets signed; a UI-only control would let the two drift apart.
+   *
+   * Omitted rather than defaulted when undefined, so App Kit applies its own
+   * documented default (300 bps) instead of this app asserting one.
+   */
   const quoteSwap = useCallback(
-    (args: { chain: ArcChain; tokenIn: string; tokenOut: string; amountIn: string }) => {
+    (args: {
+      chain: ArcChain;
+      tokenIn: string;
+      tokenOut: string;
+      amountIn: string;
+      slippageBps?: number;
+    }) => {
       const kit = getKit();
       return quote(
         {
@@ -241,6 +258,9 @@ export function useAppKitOps() {
             tokenIn: args.tokenIn,
             tokenOut: args.tokenOut,
             amountIn: args.amountIn,
+            ...(args.slippageBps !== undefined
+              ? { config: { slippageBps: args.slippageBps } }
+              : {}),
           },
         },
         kit.estimateSwap.bind(kit)

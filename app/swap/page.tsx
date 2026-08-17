@@ -14,13 +14,16 @@
  *    reported as uncomputable rather than as 0%.
  *  - Route venue and confirmation time are not in App Kit's estimate, so they
  *    are labelled as undisclosed rather than guessed.
+ *  - MAX only reserves gas once a quote has priced it. Before that there is no
+ *    real gas figure to subtract, and a guessed reserve would silently withhold
+ *    funds the user asked to trade.
  *
  * Swaps settle on one chain, so the pair is always kept on a single chain and
  * the wallet is asked to switch when it is elsewhere.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { parseUnits, type Address } from 'viem';
+import { formatUnits, parseUnits, type Address } from 'viem';
 import { useNetworkMode } from '@/lib/network';
 import { useWallet, useActiveChain } from '@/lib/WalletProvider';
 import { useChainBalances } from '@/lib/useBalances';
@@ -28,16 +31,36 @@ import { useAppKitOps } from '@/lib/useAppKitOps';
 import { useOpNotifications } from '@/lib/notifications';
 import { useRates, rateFor, nativeRate } from '@/lib/rates';
 import { formatUSD } from '@/lib/portfolio';
+import { nativeFeeTotal } from '@/lib/safety';
 import { OpStatus } from '@/components/OpStatus';
 import { TokenSelector } from '@/components/TokenSelector';
 import { TokenMark } from '@/components/BrandMark';
+import { SlippageControl } from '@/components/SlippageControl';
 import { chainDisplayName } from '@/lib/chainBrand';
+import {
+  DEFAULT_SLIPPAGE_BPS,
+  bpsToFraction,
+  bpsToPercentText,
+} from '@/lib/slippage';
 import {
   type SwapToken,
   useTokenUniverse,
   tokensForChain,
   defaultPair,
 } from '@/lib/swapTokens';
+
+/**
+ * Price impact thresholds, as fractions of the input's market value.
+ *
+ * These bound a figure derived from real prices on both sides (see
+ * `priceImpact` below), and they describe the whole gap between market value and
+ * quoted value — which includes fees, not just pool depth. Naming that honestly
+ * matters: a 1.2% "impact" on a small stablecoin trade is usually the fee, and
+ * telling the user their trade moved the market would be wrong.
+ */
+const IMPACT_CAUTION = 0.01;
+const IMPACT_SEVERE = 0.05;
+
 
 export default function SwapPage() {
   const { address, adapter, switchChain, connect, wallets, wallet } = useWallet();
@@ -53,6 +76,12 @@ export default function SwapPage() {
   const [buy, setBuy] = useState<SwapToken | null>(null);
   const [amountIn, setAmountIn] = useState('');
   const [picking, setPicking] = useState<'sell' | 'buy' | null>(null);
+  /**
+   * Slippage tolerance in basis points, seeded from App Kit's own default so
+   * the app never quietly quotes something tighter or looser than the SDK
+   * would have on its own.
+   */
+  const [slippageBps, setSlippageBps] = useState(DEFAULT_SLIPPAGE_BPS);
 
   /**
    * Seed the pair once per network mode.
@@ -99,6 +128,13 @@ export default function SwapPage() {
     [balances, sell]
   );
 
+  // Shown on the Buy card so the user can see what they already hold of the
+  // token arriving. Same multicall as the Sell side; no extra request.
+  const buyBalance = useMemo(
+    () => balances.find((b) => b.symbol === buy?.symbol),
+    [balances, buy]
+  );
+
   /** Selecting on one side keeps the other side on the same chain. */
   const choose = useCallback(
     (side: 'sell' | 'buy', token: SwapToken) => {
@@ -128,8 +164,11 @@ export default function SwapPage() {
 
   /* ------------------------------------------------------- quote lifecycle */
 
-  // A quote is only valid for the exact inputs it was requested with.
-  const signature = `${sell?.key ?? ''}|${buy?.key ?? ''}|${amountIn}`;
+  // A quote is only valid for the exact inputs it was requested with — and the
+  // tolerance is one of those inputs, since it determines the stop limit the
+  // route commits to. Including it here means changing slippage invalidates the
+  // quote through the same guard that handles an edited amount.
+  const signature = `${sell?.key ?? ''}|${buy?.key ?? ''}|${amountIn}|${slippageBps}`;
   const quotedSignature = useRef<string | null>(null);
 
   useEffect(() => {
@@ -182,9 +221,10 @@ export default function SwapPage() {
       tokenIn: sell.alias,
       tokenOut: buy.alias,
       amountIn,
+      slippageBps,
     });
     if (result) quotedSignature.current = signature;
-  }, [canQuote, sell, buy, pairChain, amountIn, quoteSwap, signature]);
+  }, [canQuote, sell, buy, pairChain, amountIn, slippageBps, quoteSwap, signature]);
 
   const onConfirm = useCallback(async () => {
     const result = await submit();
@@ -223,13 +263,77 @@ export default function SwapPage() {
       ? (buyValueUSD - sellValueUSD) / sellValueUSD
       : null;
 
-  /** Slippage the route itself allows, from its stop limit. */
-  const slippage = useMemo(() => {
+  /**
+   * Slippage the route itself committed to, derived from its stop limit.
+   *
+   * Reported alongside the requested tolerance rather than instead of it: the
+   * service may return a tighter limit than asked for, and this is the figure
+   * that actually governs the on-chain revert.
+   */
+  const effectiveSlippage = useMemo(() => {
     const out = Number(quote?.output?.amount);
     const min = Number(quote?.minOutput?.amount);
     if (!Number.isFinite(out) || !Number.isFinite(min) || out <= 0) return null;
     return (out - min) / out;
   }, [quote]);
+
+  /**
+   * True when the route's own limit differs materially from what was requested.
+   *
+   * Half a basis point of tolerance absorbs the rounding inherent in deriving a
+   * percentage from two decimal strings; anything beyond that is a real
+   * difference and worth surfacing.
+   */
+  const slippageDiffers =
+    effectiveSlippage !== null &&
+    Math.abs(effectiveSlippage - bpsToFraction(slippageBps)) > 0.00005;
+
+  /* --------------------------------------------------- gas-aware percentages */
+
+  /**
+   * Native gas priced by the current quote, if it priced any.
+   *
+   * `nativeFeeTotal` sums only the fee lines denominated in this chain's native
+   * currency, so it returns null when the estimate contained no such line —
+   * which is the honest answer, not zero.
+   */
+  const quotedNativeFee = useMemo(
+    () => (quote ? nativeFeeTotal(quote, pairChain) : null),
+    [quote, pairChain]
+  );
+
+  /**
+   * Set the Sell amount to a fraction of the balance.
+   *
+   * Computed in base units from `raw`, never from the formatted string: the
+   * display value is truncated for reading, so `Number(formatted)` on a balance
+   * like 1,234.56789 would trade less than the user asked for and MAX would
+   * leave a dust remainder behind.
+   *
+   * On the token that pays for gas, a full-balance selection subtracts the gas
+   * the quote actually priced. Before a quote exists there is no real figure to
+   * subtract, so MAX stays literal and the standing warning explains why.
+   */
+  const applyFraction = useCallback(
+    (numerator: bigint, denominator: bigint) => {
+      if (!sellBalance) return;
+
+      let raw = (sellBalance.raw * numerator) / denominator;
+
+      const isFullBalance = numerator === denominator;
+      if (isFullBalance && sell?.isNative && quotedNativeFee !== null) {
+        // Never below zero: if gas exceeds the balance the swap cannot proceed
+        // anyway, and a negative amount would render as nonsense.
+        raw = raw > quotedNativeFee ? raw - quotedNativeFee : 0n;
+      }
+
+      setAmountIn(formatUnits(raw, sellBalance.decimals));
+    },
+    [sellBalance, sell, quotedNativeFee]
+  );
+
+  /** True when MAX is currently reserving a real, quoted gas amount. */
+  const maxReservesGas = !!sell?.isNative && quotedNativeFee !== null && quotedNativeFee > 0n;
 
   /* ------------------------------------------------------------ call to action */
 
@@ -320,17 +424,26 @@ export default function SwapPage() {
             }
             footer={
               sellBalance ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-end gap-2 flex-wrap">
                   <span className="text-ink-muted">
                     Balance {sellBalance.formatted} {sell?.symbol}
                   </span>
-                  <button
-                    onClick={() => setAmountIn(sellBalance.formatted.replace(/,/g, ''))}
-                    className="px-2 py-0.5 rounded-md text-[11px] font-semibold text-accent-text bg-arc-500/15
-                      hover:bg-arc-500/25 active:scale-95 transition-all duration-200"
-                  >
-                    MAX
-                  </button>
+                  <span className="flex items-center gap-1">
+                    <FractionButton onClick={() => applyFraction(1n, 4n)}>25%</FractionButton>
+                    <FractionButton onClick={() => applyFraction(1n, 2n)}>50%</FractionButton>
+                    <FractionButton
+                      onClick={() => applyFraction(1n, 1n)}
+                      title={
+                        maxReservesGas
+                          ? 'Leaves behind the gas this quote priced'
+                          : sell?.isNative
+                            ? 'Full balance — no quoted gas figure to reserve yet'
+                            : undefined
+                      }
+                    >
+                      {maxReservesGas ? 'MAX − GAS' : 'MAX'}
+                    </FractionButton>
+                  </span>
                 </div>
               ) : address ? (
                 <span className="text-ink-muted">
@@ -382,13 +495,17 @@ export default function SwapPage() {
               )
             }
             footer={
-              receivedAmount === null ? (
-                <span className="text-ink-muted">
-                  Quoted by the route, not estimated from a price.
-                </span>
-              ) : (
-                <span className="text-ink-muted">Estimated by App Kit</span>
-              )
+              <span className="text-ink-muted">
+                {buyBalance ? (
+                  <>
+                    Balance {buyBalance.formatted} {buy?.symbol}
+                  </>
+                ) : receivedAmount === null ? (
+                  'Quoted by the route, not from a price.'
+                ) : (
+                  'Estimated by App Kit'
+                )}
+              </span>
             }
           />
         </div>
@@ -408,29 +525,45 @@ export default function SwapPage() {
               )}
             </Row>
 
-            <Row label="Price impact">
+            <Row label="Quote vs. market">
               {priceImpact === null ? (
                 <Unknown>Needs a market price for both tokens</Unknown>
               ) : (
                 <span
                   className={
-                    priceImpact < -0.01
-                      ? 'text-warning'
-                      : priceImpact < 0
-                        ? 'text-ink-secondary'
-                        : 'text-success'
+                    priceImpact <= -IMPACT_SEVERE
+                      ? 'text-warning font-semibold'
+                      : priceImpact <= -IMPACT_CAUTION
+                        ? 'text-warning'
+                        : priceImpact < 0
+                          ? 'text-ink-secondary'
+                          : 'text-success'
                   }
                 >
+                  {priceImpact > 0 ? '+' : ''}
                   {(priceImpact * 100).toFixed(2)}%
                 </span>
               )}
             </Row>
 
             <Row label="Max slippage">
-              {slippage === null ? (
-                <Unknown>Not disclosed</Unknown>
+              {effectiveSlippage === null ? (
+                // The requested tolerance is still worth stating: it was sent
+                // to the service even when the response gave no stop limit to
+                // derive the applied figure from.
+                <>
+                  {bpsToPercentText(slippageBps)}%{' '}
+                  <span className="text-ink-muted">requested · limit not disclosed</span>
+                </>
+              ) : slippageDiffers ? (
+                <>
+                  {(effectiveSlippage * 100).toFixed(2)}%{' '}
+                  <span className="text-ink-muted">
+                    applied · {bpsToPercentText(slippageBps)}% requested
+                  </span>
+                </>
               ) : (
-                `${(slippage * 100).toFixed(2)}%`
+                `${(effectiveSlippage * 100).toFixed(2)}%`
               )}
             </Row>
 
@@ -465,11 +598,55 @@ export default function SwapPage() {
           </div>
         )}
 
+        {/*
+         * Slippage sits between the quote detail and the confirm button: it is
+         * the one figure here the user can change, and it belongs next to the
+         * decision it affects.
+         */}
+        <SlippageControl
+          bps={slippageBps}
+          onChange={setSlippageBps}
+          // Locked once a signature has been requested: the params are already
+          // in flight, so accepting a change would show a tolerance that is not
+          // the one being signed.
+          disabled={isBusy}
+        />
+
         {/* Warnings that must not be buried in the button label. */}
+        {priceImpact !== null && priceImpact <= -IMPACT_CAUTION && (
+          <Notice>
+            {priceImpact <= -IMPACT_SEVERE ? (
+              <>
+                This quote returns {Math.abs(priceImpact * 100).toFixed(2)}% less than the market
+                value of what you are selling.
+              </>
+            ) : (
+              <>
+                This quote is {Math.abs(priceImpact * 100).toFixed(2)}% below market value.
+              </>
+            )}{' '}
+            The gap covers fees and the route&apos;s own pricing — compare it against the fee lines
+            above before confirming.
+          </Notice>
+        )}
+        {/*
+         * Gas warning, in the two states that are actually true. Once a quote
+         * has priced gas, MAX reserves it, so the blanket "leaves nothing for
+         * gas" claim would be false.
+         */}
         {sell?.isNative && amountValid && (
           <Notice>
-            {sell.symbol} pays for gas on {chainDisplayName(pairChain)}. Selling the full balance will
-            leave nothing to cover the transaction.
+            {maxReservesGas ? (
+              <>
+                MAX now holds back the {chainDisplayName(pairChain)} gas this quote priced. Re-quote
+                after changing the amount, since the fee moves with it.
+              </>
+            ) : (
+              <>
+                {sell.symbol} pays for gas on {chainDisplayName(pairChain)}. Until a quote prices
+                that gas, selling the full balance may leave nothing to cover the transaction.
+              </>
+            )}
           </Notice>
         )}
         {sell && buy && sell.chain.id !== buy.chain.id && (
@@ -600,6 +777,33 @@ function Chevron() {
     <svg className="w-4 h-4 text-ink-muted shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
     </svg>
+  );
+}
+
+/**
+ * A one-tap portion of the balance.
+ *
+ * `title` carries the explanation for MAX, whose meaning shifts once a quote
+ * has priced gas — the label alone cannot say whether a reserve was applied.
+ */
+function FractionButton({
+  onClick,
+  title,
+  children,
+}: {
+  onClick: () => void;
+  title?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      className="px-2 py-0.5 rounded-md text-[11px] font-semibold text-accent-text bg-arc-500/15
+        hover:bg-arc-500/25 active:scale-95 transition-all duration-200 whitespace-nowrap"
+    >
+      {children}
+    </button>
   );
 }
 
