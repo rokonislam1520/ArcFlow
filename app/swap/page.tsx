@@ -23,7 +23,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { formatUnits, parseUnits, type Address } from 'viem';
+import { formatUnits, parseUnits } from 'viem';
 import { useNetworkMode } from '@/lib/network';
 import { useWallet, useActiveChain } from '@/lib/WalletProvider';
 import { useChainBalances } from '@/lib/useBalances';
@@ -31,8 +31,6 @@ import { useAppKitOps } from '@/lib/useAppKitOps';
 import { useOpNotifications } from '@/lib/notifications';
 import { useRates, rateFor, nativeRate } from '@/lib/rates';
 import { nativeFeeTotal } from '@/lib/safety';
-import { shortAddress } from '@/lib/profile';
-import { useViewingAddress } from '@/lib/useViewingAddress';
 import { OpStatus } from '@/components/OpStatus';
 import { TokenSelector } from '@/components/TokenSelector';
 import { TokenMark } from '@/components/BrandMark';
@@ -66,7 +64,7 @@ const IMPACT_SEVERE = 0.05;
 
 
 export default function SwapPage() {
-  const { address, adapter, switchChain, connect, wallets, wallet } = useWallet();
+  const { address, adapter, switchChain, connect, wallet } = useWallet();
   const activeChain = useActiveChain();
   const { isTestnet } = useNetworkMode();
   const { state, isBusy, hasQuote, quoteSwap, submit, cancelQuote, reset } = useAppKitOps();
@@ -125,23 +123,11 @@ export default function SwapPage() {
   const { rates } = useRates(pairChain);
 
   /*
-   * Whose balances are on screen.
-   *
-   * Normally the connected wallet. A pasted address replaces it for reading
-   * only: balances are public, so showing them is safe, but the address has no
-   * provider behind it and cannot sign. `address` and `adapter` from
-   * `WalletProvider` remain the sole inputs to quoting and submission, so this
-   * cannot widen what the page is able to do.
+   * Balances are the connected wallet's, always. There is one account involved
+   * in a swap — the one that sells, receives, and signs — so the cards, the
+   * quote, and the signature all read from `address` and cannot disagree.
    */
-  const {
-    displayAddress,
-    kind: accountKind,
-    isViewingOnly,
-    setViewingAddress,
-    clearViewingAddress,
-  } = useViewingAddress(address as Address | null);
-
-  const { balances, refresh } = useChainBalances(pairChain, displayAddress);
+  const { balances, refresh } = useChainBalances(pairChain, address);
 
   const priceOf = useCallback(
     (token: SwapToken | null): number | null => {
@@ -240,11 +226,6 @@ export default function SwapPage() {
     !insufficient &&
     !tooPrecise &&
     !needsChainSwitch &&
-    // While a pasted address is on screen, the balances and the signer are two
-    // different accounts. Quoting then would price a trade against funds the
-    // connected wallet does not hold, so the page asks the user to come back to
-    // their own account first rather than producing a quote it cannot honour.
-    !isViewingOnly &&
     !isBusy &&
     !hasQuote;
 
@@ -373,14 +354,6 @@ export default function SwapPage() {
 
   const cta = useMemo(() => {
     if (!address) return { label: 'Connect Wallet', action: () => void connect(), disabled: false };
-    // Stated as an offer to fix it, not as a refusal: the user asked to look at
-    // another address, and the way back to trading is one tap.
-    if (isViewingOnly)
-      return {
-        label: 'Return to your wallet to swap',
-        action: clearViewingAddress,
-        disabled: false,
-      };
     if (!sell || !buy) return { label: 'Select Token', action: () => setPicking('sell'), disabled: false };
     if (needsChainSwitch)
       return {
@@ -398,8 +371,6 @@ export default function SwapPage() {
   }, [
     address,
     connect,
-    isViewingOnly,
-    clearViewingAddress,
     sell,
     buy,
     needsChainSwitch,
@@ -419,10 +390,9 @@ export default function SwapPage() {
     <div className="animate-in">
       <div className="max-w-[480px] mx-auto">
         {/*
-         * The header no longer carries an account chip. Each card names the
-         * account it reads from, and a second, less capable copy in the header
-         * would contradict them the moment a pasted address is in view — green
-         * dot and connected address up here, read-only address below.
+         * No account chip in the header: each card already names the account it
+         * reads from, and a second copy would be one more thing to keep in sync
+         * for no added information.
          */}
         <header className="mb-5">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Swap</h1>
@@ -439,14 +409,11 @@ export default function SwapPage() {
             onPickToken={() => setPicking('sell')}
             account={
               <WalletSelector
-                kind={accountKind}
-                address={displayAddress}
+                address={address}
+                // Name and icon as the wallet announced them, so the chip shows
+                // the provider that actually connected.
                 walletName={wallet?.name}
                 walletIcon={wallet?.icon}
-                wallets={wallets}
-                onConnect={(uuid) => void connect(uuid)}
-                onUseViewingAddress={setViewingAddress}
-                onClearViewingAddress={clearViewingAddress}
                 label="Account selling from"
               />
             }
@@ -488,32 +455,24 @@ export default function SwapPage() {
                   <span className="text-ink-muted">
                     Balance {sellBalance.formatted} {sell?.symbol}
                   </span>
-                  {/*
-                   * Withheld while viewing someone else's address: these exist to
-                   * fill in an amount about to be traded, and this balance is not
-                   * tradable from here. Offering them would be an invitation the
-                   * confirm button then has to refuse.
-                   */}
-                  {!isViewingOnly && (
-                    <span className="flex items-center gap-1">
-                      <FractionButton onClick={() => applyFraction(1n, 4n)}>25%</FractionButton>
-                      <FractionButton onClick={() => applyFraction(1n, 2n)}>50%</FractionButton>
-                      <FractionButton
-                        onClick={() => applyFraction(1n, 1n)}
-                        title={
-                          maxReservesGas
-                            ? 'Leaves behind the gas this quote priced'
-                            : sell?.isNative
-                              ? 'Full balance — no quoted gas figure to reserve yet'
-                              : undefined
-                        }
-                      >
-                        {maxReservesGas ? 'MAX − GAS' : 'MAX'}
-                      </FractionButton>
-                    </span>
-                  )}
+                  <span className="flex items-center gap-1">
+                    <FractionButton onClick={() => applyFraction(1n, 4n)}>25%</FractionButton>
+                    <FractionButton onClick={() => applyFraction(1n, 2n)}>50%</FractionButton>
+                    <FractionButton
+                      onClick={() => applyFraction(1n, 1n)}
+                      title={
+                        maxReservesGas
+                          ? 'Leaves behind the gas this quote priced'
+                          : sell?.isNative
+                            ? 'Full balance — no quoted gas figure to reserve yet'
+                            : undefined
+                      }
+                    >
+                      {maxReservesGas ? 'MAX − GAS' : 'MAX'}
+                    </FractionButton>
+                  </span>
                 </div>
-              ) : displayAddress ? (
+              ) : address ? (
                 <span className="text-ink-muted">
                   No {sell?.symbol} on {chainDisplayName(pairChain)}
                 </span>
@@ -557,14 +516,9 @@ export default function SwapPage() {
              */
             account={
               <WalletSelector
-                kind={accountKind}
-                address={displayAddress}
+                address={address}
                 walletName={wallet?.name}
                 walletIcon={wallet?.icon}
-                wallets={wallets}
-                onConnect={(uuid) => void connect(uuid)}
-                onUseViewingAddress={setViewingAddress}
-                onClearViewingAddress={clearViewingAddress}
                 label="Account receiving the swap"
               />
             }
@@ -699,23 +653,6 @@ export default function SwapPage() {
           // the one being signed.
           disabled={isBusy}
         />
-
-        {/*
-         * Said once, plainly, where the decision is made. The balances above are
-         * another account's, so the trade the cards describe is not one this
-         * session can sign — and that has to be stated before the button, not
-         * discovered by pressing it.
-         */}
-        {isViewingOnly && (
-          <Notice>
-            You are viewing {shortAddress(displayAddress ?? '')}, which this app cannot sign for.
-            Balances and values above are that address&apos;s.{' '}
-            <button onClick={clearViewingAddress} className="underline hover:text-warning">
-              Switch back to your wallet
-            </button>{' '}
-            to swap.
-          </Notice>
-        )}
 
         {/* Warnings that must not be buried in the button label. */}
         {priceImpact !== null && priceImpact <= -IMPACT_CAUTION && (
