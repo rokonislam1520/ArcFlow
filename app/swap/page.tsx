@@ -23,7 +23,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { formatUnits, parseUnits } from 'viem';
+import { formatUnits, parseUnits, type Address } from 'viem';
 import { useNetworkMode } from '@/lib/network';
 import { useWallet, useActiveChain } from '@/lib/WalletProvider';
 import { useChainBalances } from '@/lib/useBalances';
@@ -31,18 +31,16 @@ import { useAppKitOps } from '@/lib/useAppKitOps';
 import { useOpNotifications } from '@/lib/notifications';
 import { useRates, rateFor, nativeRate } from '@/lib/rates';
 import { nativeFeeTotal } from '@/lib/safety';
+import { shortAddress } from '@/lib/profile';
+import { useViewingAddress } from '@/lib/useViewingAddress';
 import { OpStatus } from '@/components/OpStatus';
 import { TokenSelector } from '@/components/TokenSelector';
 import { TokenMark } from '@/components/BrandMark';
-import { SlippageControl } from '@/components/SlippageControl';
 import { AmountDisplay } from '@/components/swap/AmountDisplay';
 import { WalletSelector } from '@/components/swap/WalletSelector';
+import { SwapSettings, type SlippageMode } from '@/components/swap/SwapSettings';
 import { chainDisplayName } from '@/lib/chainBrand';
-import {
-  DEFAULT_SLIPPAGE_BPS,
-  bpsToFraction,
-  bpsToPercentText,
-} from '@/lib/slippage';
+import { DEFAULT_SLIPPAGE_BPS, bpsToFraction, bpsToPercentText } from '@/lib/slippage';
 import {
   type SwapToken,
   useTokenUniverse,
@@ -89,7 +87,12 @@ export default function SwapPage() {
    * Slippage tolerance in basis points, seeded from App Kit's own default so
    * the app never quietly quotes something tighter or looser than the SDK
    * would have on its own.
+   *
+   * `mode` records only how the figure was arrived at — Auto means the SDK
+   * default, held fixed — so the settings panel can show which state it is in
+   * without a second source of truth for the tolerance itself.
    */
+  const [slippageMode, setSlippageMode] = useState<SlippageMode>('auto');
   const [slippageBps, setSlippageBps] = useState(DEFAULT_SLIPPAGE_BPS);
 
   /**
@@ -123,11 +126,23 @@ export default function SwapPage() {
   const { rates } = useRates(pairChain);
 
   /*
-   * Balances are the connected wallet's, always. There is one account involved
-   * in a swap — the one that sells, receives, and signs — so the cards, the
-   * quote, and the signature all read from `address` and cannot disagree.
+   * Whose balances are on screen.
+   *
+   * Normally the connected wallet. A pasted address replaces it for reading
+   * only: balances are public, so showing them is safe, but the address has no
+   * provider behind it and cannot sign. `address` and `adapter` from
+   * `WalletProvider` remain the sole inputs to quoting and submission, so this
+   * cannot widen what the page is able to do.
    */
-  const { balances, refresh } = useChainBalances(pairChain, address);
+  const {
+    displayAddress,
+    kind: accountKind,
+    isViewingOnly,
+    setViewingAddress,
+    clearViewingAddress,
+  } = useViewingAddress(address as Address | null);
+
+  const { balances, refresh } = useChainBalances(pairChain, displayAddress);
 
   const priceOf = useCallback(
     (token: SwapToken | null): number | null => {
@@ -226,6 +241,11 @@ export default function SwapPage() {
     !insufficient &&
     !tooPrecise &&
     !needsChainSwitch &&
+    // While a pasted address is on screen, the balances and the signer are two
+    // different accounts. Quoting then would price a trade against funds the
+    // connected wallet does not hold, so the page asks the user to come back to
+    // their own account first rather than producing a quote it cannot honour.
+    !isViewingOnly &&
     !isBusy &&
     !hasQuote;
 
@@ -354,6 +374,14 @@ export default function SwapPage() {
 
   const cta = useMemo(() => {
     if (!address) return { label: 'Connect Wallet', action: () => void connect(), disabled: false };
+    // Stated as an offer to fix it, not as a refusal: the user asked to look at
+    // another address, and the way back to trading is one tap.
+    if (isViewingOnly)
+      return {
+        label: 'Return to your wallet to swap',
+        action: clearViewingAddress,
+        disabled: false,
+      };
     if (!sell || !buy) return { label: 'Select Token', action: () => setPicking('sell'), disabled: false };
     if (needsChainSwitch)
       return {
@@ -371,6 +399,8 @@ export default function SwapPage() {
   }, [
     address,
     connect,
+    isViewingOnly,
+    clearViewingAddress,
     sell,
     buy,
     needsChainSwitch,
@@ -392,13 +422,28 @@ export default function SwapPage() {
         {/*
          * No account chip in the header: each card already names the account it
          * reads from, and a second copy would be one more thing to keep in sync
-         * for no added information.
+         * for no added information. The gear is the exception — slippage applies
+         * to the whole trade, not to one side of it.
          */}
-        <header className="mb-5">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Swap</h1>
-          <p className="text-sm text-ink-muted mt-0.5">
-            Settles on <span className="text-accent-text">{chainDisplayName(pairChain)}</span>
-          </p>
+        <header className="mb-5 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Swap</h1>
+            <p className="text-sm text-ink-muted mt-0.5">
+              Settles on <span className="text-accent-text">{chainDisplayName(pairChain)}</span>
+            </p>
+          </div>
+          <SwapSettings
+            mode={slippageMode}
+            bps={slippageBps}
+            onChange={({ mode, bps }) => {
+              setSlippageMode(mode);
+              setSlippageBps(bps);
+            }}
+            // Locked once a signature has been requested: the params are already
+            // in flight, so accepting a change would show a tolerance that is
+            // not the one being signed.
+            disabled={isBusy}
+          />
         </header>
 
         {/* Sell */}
@@ -409,11 +454,15 @@ export default function SwapPage() {
             onPickToken={() => setPicking('sell')}
             account={
               <WalletSelector
-                address={address}
+                kind={accountKind}
+                address={displayAddress}
+                connectedAddress={address}
                 // Name and icon as the wallet announced them, so the chip shows
                 // the provider that actually connected.
                 walletName={wallet?.name}
                 walletIcon={wallet?.icon}
+                onUseViewingAddress={setViewingAddress}
+                onClearViewingAddress={clearViewingAddress}
                 label="Account selling from"
               />
             }
@@ -455,24 +504,32 @@ export default function SwapPage() {
                   <span className="text-ink-muted">
                     Balance {sellBalance.formatted} {sell?.symbol}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <FractionButton onClick={() => applyFraction(1n, 4n)}>25%</FractionButton>
-                    <FractionButton onClick={() => applyFraction(1n, 2n)}>50%</FractionButton>
-                    <FractionButton
-                      onClick={() => applyFraction(1n, 1n)}
-                      title={
-                        maxReservesGas
-                          ? 'Leaves behind the gas this quote priced'
-                          : sell?.isNative
-                            ? 'Full balance — no quoted gas figure to reserve yet'
-                            : undefined
-                      }
-                    >
-                      {maxReservesGas ? 'MAX − GAS' : 'MAX'}
-                    </FractionButton>
-                  </span>
+                  {/*
+                   * Withheld while viewing someone else's address: these exist
+                   * to fill in an amount about to be traded, and this balance is
+                   * not tradable from here. Offering them would be an invitation
+                   * the confirm button then has to refuse.
+                   */}
+                  {!isViewingOnly && (
+                    <span className="flex items-center gap-1">
+                      <FractionButton onClick={() => applyFraction(1n, 4n)}>25%</FractionButton>
+                      <FractionButton onClick={() => applyFraction(1n, 2n)}>50%</FractionButton>
+                      <FractionButton
+                        onClick={() => applyFraction(1n, 1n)}
+                        title={
+                          maxReservesGas
+                            ? 'Leaves behind the gas this quote priced'
+                            : sell?.isNative
+                              ? 'Full balance — no quoted gas figure to reserve yet'
+                              : undefined
+                        }
+                      >
+                        {maxReservesGas ? 'MAX − GAS' : 'MAX'}
+                      </FractionButton>
+                    </span>
+                  )}
                 </div>
-              ) : address ? (
+              ) : displayAddress ? (
                 <span className="text-ink-muted">
                   No {sell?.symbol} on {chainDisplayName(pairChain)}
                 </span>
@@ -516,9 +573,13 @@ export default function SwapPage() {
              */
             account={
               <WalletSelector
-                address={address}
+                kind={accountKind}
+                address={displayAddress}
+                connectedAddress={address}
                 walletName={wallet?.name}
                 walletIcon={wallet?.icon}
+                onUseViewingAddress={setViewingAddress}
+                onClearViewingAddress={clearViewingAddress}
                 label="Account receiving the swap"
               />
             }
@@ -641,18 +702,21 @@ export default function SwapPage() {
         )}
 
         {/*
-         * Slippage sits between the quote detail and the confirm button: it is
-         * the one figure here the user can change, and it belongs next to the
-         * decision it affects.
+         * Said once, plainly, where the decision is made. The balances above are
+         * another account's, so the trade the cards describe is not one this
+         * session can sign — and that has to be stated before the button, not
+         * discovered by pressing it.
          */}
-        <SlippageControl
-          bps={slippageBps}
-          onChange={setSlippageBps}
-          // Locked once a signature has been requested: the params are already
-          // in flight, so accepting a change would show a tolerance that is not
-          // the one being signed.
-          disabled={isBusy}
-        />
+        {isViewingOnly && (
+          <Notice>
+            You are viewing {shortAddress(displayAddress ?? '')}, which this app cannot sign for.
+            Balances and values above are that address&apos;s.{' '}
+            <button onClick={clearViewingAddress} className="underline hover:text-warning">
+              Switch back to your wallet
+            </button>{' '}
+            to swap.
+          </Notice>
+        )}
 
         {/* Warnings that must not be buried in the button label. */}
         {priceImpact !== null && priceImpact <= -IMPACT_CAUTION && (
