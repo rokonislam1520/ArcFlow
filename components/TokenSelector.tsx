@@ -158,6 +158,29 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
   const starredChains = visibleChains.filter((c) => favoriteChains.has(c.id));
   const otherChains = visibleChains.filter((c) => !favoriteChains.has(c.id));
 
+  /**
+   * Tokens this wallet actually holds, richest first.
+   *
+   * Surfaced above the full catalogue because holding a token is the strongest
+   * signal that it is the one being reached for — otherwise picking the asset
+   * you own means scrolling past every chain that offers it. Unpriced holdings
+   * sort last but are kept: a balance with no quote is still a balance, and
+   * dropping it would hide funds the user has.
+   *
+   * Derived from the same `balanceIndex` the rows read, so a token can never
+   * appear here with a balance the row below it disagrees about.
+   */
+  const heldTokens = useMemo(() => {
+    if (tokenQuery || chainFilter) return [];
+    return universe
+      .filter((t) => t.key !== exclude?.key && balanceIndex.has(`${t.chain.id}:${t.symbol}`))
+      .sort((a, b) => {
+        const av = balanceIndex.get(`${a.chain.id}:${a.symbol}`)?.valueUSD;
+        const bv = balanceIndex.get(`${b.chain.id}:${b.symbol}`)?.valueUSD;
+        return (bv ?? -1) - (av ?? -1);
+      });
+  }, [universe, exclude, balanceIndex, tokenQuery, chainFilter]);
+
   /** Row renderer shared by every token section. */
   const row = (t: SwapToken) => (
     <TokenRow
@@ -172,24 +195,36 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/70 backdrop-blur-sm animate-in"
+      // A lighter scrim and no blur on the backdrop: the page behind should stay
+      // legible around a modal this size, and heavy blurring made the app feel
+      // like it had navigated away rather than opened a picker over it.
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/50 animate-in"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={title ?? 'Select token'}
     >
       <div
-        // Floats above the page on desktop, and rises from the bottom edge on
-        // mobile, where a sheet is the native-feeling shape for a picker.
-        // Narrower when locked: without the chain rail, the full width would
-        // leave a single short list stranded in a lot of empty space.
-        className={`w-full h-[88vh] sm:h-[600px] bg-surface-card/95 backdrop-blur-2xl border border-hairline
-          rounded-t-3xl sm:rounded-4xl shadow-float flex flex-col overflow-hidden animate-scale-in
-          ${lockedChain ? 'max-w-md sm:h-[560px]' : 'max-w-4xl'}`}
+        /*
+         * Floats above the page on desktop, and rises from the bottom edge on
+         * mobile, where a sheet is the native-feeling shape for a picker.
+         * Narrower when locked: without the chain rail, the full width would
+         * leave a single short list stranded in a lot of empty space.
+         *
+         * Sized by `max-h` against a natural height rather than a fixed
+         * `h-[600px]`, so a short list (one chain, three tokens) produces a
+         * short modal instead of a tall box padded with empty space, while a
+         * long one stops at 78vh and scrolls internally. `min-h` keeps it from
+         * collapsing to something cramped while balances are still arriving.
+         */
+        className={`w-full bg-surface-card/95 backdrop-blur-2xl border border-hairline
+          rounded-t-3xl sm:rounded-3xl shadow-float flex flex-col overflow-hidden animate-scale-in
+          max-h-[88vh] sm:max-h-[78vh] sm:min-h-[420px]
+          ${lockedChain ? 'max-w-md' : 'max-w-[940px]'}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-hairline shrink-0">
-          <h2 className="text-lg sm:text-xl font-semibold tracking-tight">
+        <header className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 border-b border-hairline shrink-0">
+          <h2 className="text-base font-semibold tracking-tight truncate">
             {title ?? 'Select Token'}
           </h2>
           <button
@@ -209,8 +244,8 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
             filter with exactly one valid answer. */}
         <div className="flex-1 flex flex-col sm:flex-row min-h-0">
           {!lockedChain && (
-          <div className="sm:w-60 shrink-0 border-b sm:border-b-0 sm:border-r border-hairline flex flex-col min-h-0">
-            <div className="p-3 sm:p-4 sm:border-b border-hairline shrink-0">
+          <div className="sm:w-[228px] shrink-0 border-b sm:border-b-0 sm:border-r border-hairline flex flex-col min-h-0">
+            <div className="p-3 shrink-0">
               <SearchInput
                 value={chainQuery}
                 onChange={setChainQuery}
@@ -294,7 +329,7 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
 
           {/* Token list */}
           <div className="flex-1 flex flex-col min-w-0">
-            <div className="p-3 sm:p-4 border-b border-hairline shrink-0">
+            <div className="p-3 shrink-0">
               <SearchInput
                 value={tokenQuery}
                 onChange={setTokenQuery}
@@ -307,7 +342,13 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
               />
             </div>
 
-            <div className="flex-1 overflow-y-auto px-2 sm:px-4 py-3">
+            <div className="flex-1 overflow-y-auto px-2 sm:px-3 pb-3">
+              {/* Held tokens lead, since the asset you own is the likeliest
+                  pick; favourites and recents follow as deliberate choices. */}
+              {heldTokens.length > 0 && (
+                <Section title="Your Tokens">{heldTokens.map(row)}</Section>
+              )}
+
               {!tokenQuery && favoriteTokenList.length > 0 && (
                 <Section title="Favorites">{favoriteTokenList.map(row)}</Section>
               )}
@@ -418,11 +459,16 @@ function RailHeading({ children }: { children: React.ReactNode }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="mb-4">
-      <div className="px-2 pb-1.5 text-[11px] uppercase tracking-wider text-ink-muted font-semibold">
+    <div className="mb-2.5">
+      {/*
+        Sticky, so the group a row belongs to stays named while scrolling. With
+        a cross-chain list the chain heading *is* the row's context — once it
+        scrolls away, "USDC" alone does not say which network it is on.
+      */}
+      <div className="sticky top-0 z-10 px-2 py-1.5 bg-surface-card/95 backdrop-blur-sm text-[10px] uppercase tracking-wider text-ink-muted font-semibold">
         {title}
       </div>
-      <div className="space-y-0.5">{children}</div>
+      <div className="space-y-px">{children}</div>
     </div>
   );
 }
@@ -485,10 +531,10 @@ function TokenRow({
     <div className="flex items-center rounded-xl hover:bg-surface-hover/[0.06] active:bg-surface-input transition-colors duration-200 group">
       <button
         onClick={onSelect}
-        className="flex-1 min-w-0 flex items-center gap-3 pl-2 pr-1 py-2.5 text-left"
+        className="flex-1 min-w-0 flex items-center gap-2.5 pl-2 pr-1 py-2 text-left"
       >
         {/* Real token logo, badged with its chain's real logo. */}
-        <TokenMark token={token} size={40} />
+        <TokenMark token={token} size={32} />
 
         <span className="flex-1 min-w-0">
           <span className="flex items-center gap-1.5">
@@ -516,11 +562,17 @@ function TokenRow({
           </span>
         </span>
 
-        {/* Balance, or an explicit dash when this wallet holds none. */}
-        <span className="text-right shrink-0 pl-2">
+        {/*
+          Balance, or an explicit dash when this wallet holds none — a blank
+          would read as "not loaded yet" rather than "you have none of this".
+          `max-w` with truncation because a raw on-chain amount can run to
+          eighteen decimals and would otherwise push the symbol off the row.
+        */}
+        <span className="text-right shrink-0 pl-2 max-w-[42%]">
           {balance ? (
             <>
-              <span className="block text-sm tabular-nums">{balance.amount}</span>
+              <span className="block text-[13px] tabular-nums truncate">{balance.amount}</span>
+              {/* Only when a real quote exists; never a fabricated price. */}
               <span className="block text-[11px] text-ink-muted tabular-nums">
                 {balance.valueUSD === null ? 'Unpriced' : formatUSD(balance.valueUSD)}
               </span>
