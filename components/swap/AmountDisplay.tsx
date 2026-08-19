@@ -116,8 +116,22 @@ export function AmountValueLine({
           aria-pressed={usdIsPrimary}
           aria-label={usdIsPrimary ? 'Show token amount first' : 'Show USD value first'}
           title={usdIsPrimary ? 'Show token amount first' : 'Show USD value first'}
-          className="group shrink-0 p-0.5 rounded-md text-ink-muted hover:text-accent-text
-            hover:bg-arc-500/15 active:scale-90 transition-all duration-200"
+          /*
+           * A bordered circle, so this reads as a control rather than an icon
+           * printed beside the figure — it changes what the card shows, and
+           * something clickable should look clickable before it is hovered.
+           *
+           * Fixed 28px with `shrink-0` and `justify-center`: the width is not
+           * derived from the glyph, so the icon stays centred and the circle
+           * stays a circle whatever the row does around it. Surface and hairline
+           * tokens rather than literal colours, so both themes follow the card
+           * it sits on. The focus ring is the app's existing one.
+           */
+          className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full
+            bg-surface-input border border-hairline text-ink-muted
+            hover:text-accent-text hover:border-arc-500/40 hover:bg-arc-500/15
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent
+            active:scale-90 transition-all duration-200 ease-premium"
         >
           <svg
             // A half-turn on press mirrors the exchange that just happened, so
