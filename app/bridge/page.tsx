@@ -456,7 +456,7 @@ export default function BridgePage() {
   return (
     <div className="max-w-xl mx-auto animate-in">
       {/* Header */}
-      <div className="mb-7">
+      <div className="mb-5">
         <h1 className="text-3xl font-bold mb-1">Bridge</h1>
         <p className="text-ink-secondary text-sm">Move USDC across chains via Circle CCTP.</p>
       </div>
@@ -494,8 +494,8 @@ export default function BridgePage() {
       )}
 
       {/* ---- Send panel ---- */}
-      <section className="glass rounded-3xl p-5 sm:p-6" aria-label="Send">
-        <div className="flex items-center justify-between gap-3 mb-5">
+      <section className="glass rounded-3xl p-4 sm:p-5" aria-label="Send">
+        <div className="flex items-center justify-between gap-3 mb-4">
           <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
             From
           </span>
@@ -578,8 +578,8 @@ export default function BridgePage() {
       </div>
 
       {/* ---- Receive panel ---- */}
-      <section className="glass rounded-3xl p-5 sm:p-6" aria-label="Receive">
-        <div className="flex items-center justify-between gap-3 mb-5">
+      <section className="glass rounded-3xl p-4 sm:p-5" aria-label="Receive">
+        <div className="flex items-center justify-between gap-3 mb-4">
           <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
             To
           </span>
@@ -616,7 +616,7 @@ export default function BridgePage() {
       </section>
 
       {/* ---- Options, validation, CTA ---- */}
-      <div className="mt-5 space-y-4">
+      <div className="mt-4 space-y-4">
         {/* Custom recipient */}
         <div className="glass rounded-2xl p-4">
           <label className="flex items-center gap-2.5 text-sm text-ink-secondary cursor-pointer select-none">
@@ -683,7 +683,7 @@ export default function BridgePage() {
       </div>
 
       {/* Unsupported chains note */}
-      <div className="mt-6 text-xs text-ink-muted space-y-0.5">
+      <div className="mt-4 text-xs text-ink-muted space-y-0.5">
         <p>Only networks supported by Circle CCTP appear in the lists above.</p>
         <p>BNB Chain is not a CCTP domain and cannot be routed to.</p>
       </div>

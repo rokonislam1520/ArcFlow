@@ -137,7 +137,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* The single <main> for every app route. Pages supply their own
             max-width and centering inside it, never their own page padding, so
             the gutter is identical everywhere. */}
-        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6">{children}</main>
+        {/* `py-5`: one step in from the old `py-6`. Every route's top and bottom
+            gutter comes from this one declaration, so the space below a short
+            page's last card closes everywhere at once. The horizontal gutter is
+            untouched — the complaint was vertical, and narrowing the sides would
+            crowd text against the frame. */}
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5">{children}</main>
       </div>
 
       {/* Mobile's theme switcher. The footer group that owns it on desktop is

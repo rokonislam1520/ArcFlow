@@ -19,7 +19,7 @@ interface Props {
 function Panel({ children }: { children: ReactNode }) {
   return (
     <div className="max-w-lg mx-auto animate-in">
-      <div className="glass p-10 text-center">{children}</div>
+      <div className="glass p-8 text-center">{children}</div>
     </div>
   );
 }
@@ -48,7 +48,7 @@ export function WalletGuard({ children, configured = true, featureName = 'This f
       <Panel>
         <div className="text-5xl mb-4">🦊</div>
         <h2 className="text-2xl font-bold mb-2">No Wallet Detected</h2>
-        <p className="text-ink-secondary mb-6">
+        <p className="text-ink-secondary mb-4">
           Install MetaMask (or another EIP-1193 wallet) to use ArcFlow.
         </p>
         <a
@@ -68,7 +68,7 @@ export function WalletGuard({ children, configured = true, featureName = 'This f
       <Panel>
         <div className="text-5xl mb-4">🔒</div>
         <h2 className="text-2xl font-bold mb-2">Wallet Not Connected</h2>
-        <p className="text-ink-secondary mb-6">Connect your wallet to continue.</p>
+        <p className="text-ink-secondary mb-4">Connect your wallet to continue.</p>
         <button onClick={connect} disabled={isConnecting} className="btn-arc px-8 py-3 text-lg">
           {isConnecting ? 'Connecting…' : 'Connect Wallet'}
         </button>
@@ -82,7 +82,7 @@ export function WalletGuard({ children, configured = true, featureName = 'This f
       <Panel>
         <div className="text-5xl mb-4">🌐</div>
         <h2 className="text-2xl font-bold mb-2">Wrong Network</h2>
-        <p className="text-ink-secondary mb-6">
+        <p className="text-ink-secondary mb-4">
           ArcFlow runs on <span className="text-accent-text font-semibold">{expectedChainName}</span>{' '}
           (chain {expectedChainId}). Your wallet is on chain {chainId ?? 'unknown'}.
         </p>

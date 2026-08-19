@@ -198,7 +198,7 @@ function RecipientPickerBody({
           /* Naming form. Replaces the list rather than stacking a second dialog
              on top of it, which on a phone-sized sheet would leave neither
              usable. */
-          <div className="flex-1 flex flex-col p-5 sm:p-6 gap-4 overflow-y-auto">
+          <div className="flex-1 flex flex-col p-4 sm:p-5 gap-4 overflow-y-auto">
             <div>
               <label className="block text-sm text-ink-secondary mb-2">Address</label>
               <input

@@ -206,12 +206,12 @@ export default function SendPage() {
   return (
     <div className="max-w-lg mx-auto animate-in">
       <h1 className="text-3xl font-bold mb-1">Send</h1>
-      <p className="text-ink-secondary text-sm mb-8">
+      <p className="text-ink-secondary text-sm mb-5">
         Transfer on <span className="text-accent-text">{chain.label}</span>. Change networks from the
         navbar.
       </p>
 
-      <div className="glass p-6 space-y-5">
+      <div className="glass p-5 space-y-4">
         <div>
           <label className="block text-sm text-ink-secondary mb-2">Token</label>
           {/*

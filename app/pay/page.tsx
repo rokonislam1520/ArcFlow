@@ -39,8 +39,8 @@ function Unusable({ title, icon, children }: { title: string; icon: string; chil
   return (
     <Shell>
       <h1 className="text-3xl font-bold mb-1">Pay</h1>
-      <p className="text-ink-secondary text-sm mb-8">Complete a merchant payment request.</p>
-      <div className="glass p-8 sm:p-10 text-center">
+      <p className="text-ink-secondary text-sm mb-5">Complete a merchant payment request.</p>
+      <div className="glass p-6 sm:p-8 text-center">
         <div className="text-4xl mb-3">{icon}</div>
         <h2 className="text-lg font-semibold mb-2">{title}</h2>
         <p className="text-ink-secondary text-sm">{children}</p>
@@ -254,11 +254,11 @@ function Checkout() {
   return (
     <Shell>
       <h1 className="text-3xl font-bold mb-1">Pay</h1>
-      <p className="text-ink-secondary text-sm mb-8">
+      <p className="text-ink-secondary text-sm mb-5">
         {request.name ? `Payment request from ${request.name}` : 'Merchant payment request'}
       </p>
 
-      <div className="glass p-5 sm:p-6 space-y-5">
+      <div className="glass p-4 sm:p-5 space-y-4">
         {/* The amount leads: it is the decision being made. */}
         <div className="text-center py-2">
           {fixedAmount ? (
@@ -435,9 +435,9 @@ function NoRequest() {
   return (
     <Shell>
       <h1 className="text-3xl font-bold mb-1">Pay</h1>
-      <p className="text-ink-secondary text-sm mb-8">Complete a merchant payment request.</p>
+      <p className="text-ink-secondary text-sm mb-5">Complete a merchant payment request.</p>
 
-      <div className="glass p-8 sm:p-10 text-center">
+      <div className="glass p-6 sm:p-8 text-center">
         {/* Theme tokens throughout, so the panel follows light and dark. */}
         <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center">
           <svg
@@ -461,7 +461,7 @@ function NoRequest() {
 
         <Link
           href="/merchant"
-          className="btn-arc inline-flex items-center justify-center px-5 py-3 mt-6 w-full sm:w-auto"
+          className="btn-arc inline-flex items-center justify-center px-5 py-3 mt-4 w-full sm:w-auto"
         >
           Go to Merchant
         </Link>
@@ -489,7 +489,7 @@ export default function PayPage() {
     <Suspense
       fallback={
         <Shell>
-          <div className="glass p-10 text-center text-sm text-ink-muted">
+          <div className="glass p-8 text-center text-sm text-ink-muted">
             Loading payment request…
           </div>
         </Shell>

@@ -180,7 +180,7 @@ export function ProfileOnboarding() {
       aria-labelledby="onboarding-title"
     >
       <div className="w-full max-w-lg glass max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-hairline">
+        <div className="p-5 border-b border-hairline">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 id="onboarding-title" className="text-xl font-bold">
@@ -223,7 +223,7 @@ export function ProfileOnboarding() {
           </div>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="p-5 space-y-4">
           {step === 'identity' ? (
             <>
               <AvatarPicker
@@ -320,7 +320,7 @@ export function ProfileOnboarding() {
           {profile.error && <p className="text-xs text-danger">{profile.error}</p>}
         </div>
 
-        <div className="p-6 pt-0 flex items-center gap-3">
+        <div className="p-5 pt-0 flex items-center gap-3">
           <button
             onClick={dismiss}
             disabled={profile.saving}

@@ -34,7 +34,7 @@ function PortfolioView() {
     <div className="animate-in">
       <div className="max-w-[90rem] mx-auto">
         {/* Header */}
-        <header className="mb-8">
+        <header className="mb-5">
           <div className="flex flex-wrap items-end justify-between gap-4 mb-2">
             <h1 className="text-3xl sm:text-4xl font-bold">Portfolio</h1>
             <Link
@@ -50,8 +50,8 @@ function PortfolioView() {
         </header>
 
         {/* Total + quick stats */}
-        <section className="glass glow-teal p-6 sm:p-8 mb-6 sm:mb-8">
-          <div className="mb-6">
+        <section className="glass glow-teal p-5 sm:p-6 mb-4 sm:mb-5">
+          <div className="mb-4">
             <div className="text-ink-secondary text-xs uppercase tracking-wider mb-2">
               Total Value
             </div>
@@ -73,7 +73,7 @@ function PortfolioView() {
             </PartialNotice>
           )}
 
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mt-6">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mt-4">
             <Stat
               label="Chains"
               value={portfolio.chains.length || '—'}
@@ -89,9 +89,9 @@ function PortfolioView() {
         </section>
 
         {/* Main grid */}
-        <div className="grid lg:grid-cols-12 gap-5 sm:gap-6">
+        <div className="grid lg:grid-cols-12 gap-4 sm:gap-5">
           {/* Left: token + chain summaries */}
-          <div className="lg:col-span-5 space-y-5 sm:space-y-6">
+          <div className="lg:col-span-5 space-y-4 sm:space-y-5">
             <TokenBreakdown
               tokens={tokens}
               loading={portfolio.loading}

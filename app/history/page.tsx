@@ -99,7 +99,7 @@ function HistoryView() {
   return (
     <div className="animate-in">
       <div className="max-w-6xl mx-auto">
-        <header className="mb-8">
+        <header className="mb-5">
           <div className="flex flex-wrap items-end justify-between gap-4 mb-2">
             <h1 className="text-3xl sm:text-4xl font-bold">History</h1>
             <button
@@ -118,7 +118,7 @@ function HistoryView() {
           </p>
         </header>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
           <Stat label="Transfers" value={all.length || '—'} hint="In scanned range" />
           <Stat label="Sent" value={totals.sent || '—'} />
           <Stat label="Received" value={totals.received || '—'} tone="accent" />
@@ -130,7 +130,7 @@ function HistoryView() {
         </div>
 
         {failedChains.length > 0 && (
-          <div className="mb-6">
+          <div className="mb-4">
             <PartialNotice>
               {failedChains.length === 1
                 ? `${failedChains[0].chain.label} could not be read, so its transfers are missing from this list.`
@@ -148,7 +148,7 @@ function HistoryView() {
           }
         >
           {/* Filters */}
-          <div className="space-y-3 mb-5">
+          <div className="space-y-3 mb-4">
             <input
               type="search"
               value={query}
@@ -251,7 +251,7 @@ function HistoryView() {
               </ul>
 
               {visible < filtered.length && (
-                <div className="mt-5 text-center">
+                <div className="mt-4 text-center">
                   <button
                     onClick={() => setVisible((v) => v + PAGE_SIZE)}
                     className="text-sm px-5 py-2.5 rounded-xl bg-surface-input hover:bg-surface-hover/[0.06] border border-hairline transition-all"
@@ -292,7 +292,11 @@ function HistoryRow({ transfer: t }: { transfer: HistoryTransfer }) {
   }, [t.chainId, t.txHash, isTestnet]);
 
   const body = (
-    <div className="flex items-center gap-3 p-3.5 rounded-xl hover:bg-surface-hover/[0.06] transition-colors">
+    // `p-3`: rows are the repeated unit here, so half a step off each one is
+    // where the list actually tightens. Kept as padding rather than a fixed
+    // height so a wrapped label still has somewhere to go, and the hover
+    // background stays large enough to read as one target per transaction.
+    <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface-hover/[0.06] transition-colors">
       <TokenBadge symbol={t.tokenSymbol} size={38} />
 
       <div className="min-w-0 flex-1">

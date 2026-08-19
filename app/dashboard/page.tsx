@@ -127,7 +127,7 @@ function GettingStarted({
   ];
 
   return (
-    <section className="glass p-5 sm:p-7 mb-5">
+    <section className="glass p-4 sm:p-6 mb-4">
       <div className="max-w-2xl">
         <div className="flex items-center gap-2.5 mb-3">
           {/* Connection is the first question an empty dashboard raises, so it
@@ -157,7 +157,7 @@ function GettingStarted({
         </p>
       </div>
 
-      <div className="grid sm:grid-cols-3 gap-3 mt-6">
+      <div className="grid sm:grid-cols-3 gap-3 mt-4">
         {steps.map((s) => (
           <Link
             key={s.href}
@@ -217,7 +217,7 @@ function MetricCard({
           ? 'text-ink-muted'
           : 'text-ink-primary';
   return (
-    <div className="glass p-4 sm:p-5" title={title}>
+    <div className="glass p-4" title={title}>
       <div className="text-[10px] uppercase tracking-widest text-ink-muted mb-2">{label}</div>
       <div className={`text-xl sm:text-2xl font-bold tabular-nums leading-tight ${valueClass}`}>
         {value}
@@ -278,7 +278,7 @@ function DashboardView() {
   return (
     <div className="max-w-[112rem] mx-auto animate-in">
       {/* Greeting */}
-      <div className="flex flex-wrap items-end justify-between gap-3 mb-5">
+      <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
           <p className="text-sm text-ink-secondary mt-0.5">
@@ -301,8 +301,8 @@ function DashboardView() {
       )}
 
       {/* Overview: hero value + metrics */}
-      <div className="grid lg:grid-cols-12 gap-4 mb-5">
-        <section className="lg:col-span-5 glass glow-teal p-5 sm:p-6 flex flex-col justify-between">
+      <div className="grid lg:grid-cols-12 gap-4 mb-4">
+        <section className="lg:col-span-5 glass glow-teal p-4 sm:p-5 flex flex-col justify-between">
           <div>
             <div className="text-[10px] uppercase tracking-widest text-ink-muted mb-2">
               Total portfolio value
@@ -315,7 +315,7 @@ function DashboardView() {
 
           {/* Inline value chart. Absent, with a reason, until two observations
               exist — a single point has no trend to draw. */}
-          <div className="mt-5 -mx-1">
+          <div className="mt-4 -mx-1">
             {history.points.length >= 2 ? (
               <AreaChart
                 points={history.points.map((p) => ({ at: p.at, value: p.totalUSD }))}
@@ -383,7 +383,7 @@ function DashboardView() {
           offers the same routes with room to say what each one does — the same
           five icons twice in one screen is noise, not emphasis. */}
       {!isFirstRun && (
-        <div className="mb-5">
+        <div className="mb-4">
           <SectionLabel>Quick actions</SectionLabel>
           <div className="mt-2.5">
             <QuickActions />
@@ -554,7 +554,7 @@ function AllocationPanel({
       ) : (
         <>
           {slices.length > 0 && (
-            <div className="flex justify-center mb-5">
+            <div className="flex justify-center mb-4">
               <Donut
                 slices={slices}
                 size={156}

@@ -28,8 +28,11 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <section className={`glass p-5 sm:p-6 ${className}`}>
-      <header className="flex items-start justify-between gap-3 mb-5">
+    // One step down at both breakpoints. Every dashboard and portfolio panel
+    // comes through here, so this is the single highest-leverage change in the
+    // pass — and the reason none of those pages needed touching individually.
+    <section className={`glass p-4 sm:p-5 ${className}`}>
+      <header className="flex items-start justify-between gap-3 mb-4">
         <div className="min-w-0">
           <h2 className="text-base font-semibold tracking-tight text-ink-primary">{title}</h2>
           {subtitle && <p className="text-xs text-ink-secondary mt-0.5">{subtitle}</p>}
@@ -127,7 +130,9 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="py-8 px-4 flex flex-col items-center text-center">
+    // Still generous enough to read as a deliberate state rather than a failure
+    // to load, which is the whole job of an empty state.
+    <div className="py-6 px-4 flex flex-col items-center text-center">
       {icon && <IconTile d={icon} size="lg" className="mb-3.5" />}
       <p className="text-sm font-medium text-ink-primary">{message}</p>
       {hint && <p className="text-xs text-ink-muted mt-1.5 max-w-[34ch] leading-relaxed">{hint}</p>}
@@ -139,7 +144,7 @@ export function EmptyState({
 /** Failure state. Says what broke and offers a retry rather than showing zeros. */
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
-    <div className="py-6 px-4 rounded-xl border border-red-500/20 bg-red-500/[0.06] text-center">
+    <div className="py-5 px-4 rounded-xl border border-red-500/20 bg-red-500/[0.06] text-center">
       <p className="text-sm text-danger">{message}</p>
       {onRetry && (
         <button
@@ -174,7 +179,7 @@ export function Stat({
   return (
     // Lifts on hover: a stat is a headline figure, so it is one of the few
     // things on a page that earns the emphasis.
-    <div className="glass card-float p-5">
+    <div className="glass card-float p-4">
       <div className="text-[11px] uppercase tracking-[0.08em] font-medium text-ink-secondary mb-1.5">
         {label}
       </div>

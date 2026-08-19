@@ -190,13 +190,20 @@ function AssistantView() {
   return (
     <div className="animate-in">
       <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-8">
+        <div className="text-center mb-5">
           <h1 className="text-3xl font-bold mb-2">Assistant</h1>
           <p className="text-ink-secondary">Answers read directly from {chain.label}</p>
         </div>
 
-        <div className="glass p-6 min-h-[500px] flex flex-col">
-          <div className="flex-1 overflow-y-auto space-y-4 mb-6">
+        {/*
+         * `min-h` down from 500px: this, not the padding, was the empty space on
+         * this page. A short conversation could not fill the box, so the gap sat
+         * under the last message. 380px still gives the thread room to establish
+         * itself before it starts scrolling, and `min-h` means it continues to
+         * grow with content rather than clipping it.
+         */}
+        <div className="glass p-5 min-h-[380px] flex flex-col">
+          <div className="flex-1 overflow-y-auto space-y-4 mb-4">
             {messages.map((msg, i) => (
               <div
                 key={i}

@@ -105,7 +105,7 @@ function CompletionMeter({ fields }: { fields: ProfileFields }) {
   const missing = missingFields(fields);
 
   return (
-    <div className="glass p-5">
+    <div className="glass p-4">
       <div className="mb-2 flex items-baseline justify-between">
         <span className="text-sm font-medium text-ink-secondary">Profile completion</span>
         <span className="text-sm font-semibold text-accent-text">{percent}%</span>
@@ -206,10 +206,10 @@ function ProfileInner() {
   if (status !== 'signed-in') {
     return (
       <div className="mx-auto max-w-lg">
-        <div className="glass p-10 text-center">
+        <div className="glass p-8 text-center">
           <div className="mb-4 text-5xl">✍️</div>
           <h2 className="mb-2 text-2xl font-bold">Sign in to continue</h2>
-          <p className="mb-6 text-ink-secondary">
+          <p className="mb-4 text-ink-secondary">
             Your profile is tied to your address. Sign a message to prove it is yours — this costs no
             gas and authorizes no transactions.
           </p>
@@ -234,7 +234,7 @@ function ProfileInner() {
     (address ? address.slice(2, 4).toUpperCase() : '??');
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 animate-in">
+    <div className="mx-auto max-w-3xl space-y-5 animate-in">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gradient">Profile</h1>
@@ -249,7 +249,7 @@ function ProfileInner() {
         )}
       </header>
 
-      {loading && <div className="glass p-6 text-sm text-ink-secondary">Loading your profile…</div>}
+      {loading && <div className="glass p-5 text-sm text-ink-secondary">Loading your profile…</div>}
 
       {error && (
         <div className="glass border border-red-500/30 p-4">
@@ -266,8 +266,8 @@ function ProfileInner() {
         </div>
       )}
 
-      <div className="glass p-6">
-        <div className="flex flex-wrap items-center gap-5">
+      <div className="glass p-5">
+        <div className="flex flex-wrap items-center gap-4">
           {editing ? (
             <AvatarPicker
               value={draft.avatar}
@@ -303,7 +303,7 @@ function ProfileInner() {
         </div>
 
         {!editing && draft.bio && (
-          <p className="mt-5 whitespace-pre-wrap text-sm leading-relaxed text-ink-secondary">
+          <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-ink-secondary">
             {draft.bio}
           </p>
         )}
@@ -350,9 +350,9 @@ function ProfileInner() {
 
       {editing && (
         <>
-          <div className="glass space-y-5 p-6">
+          <div className="glass space-y-4 p-5">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">Identity</h3>
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <Field
                 label="Username"
                 value={draft.username}
@@ -399,9 +399,9 @@ function ProfileInner() {
             />
           </div>
 
-          <div className="glass space-y-5 p-6">
+          <div className="glass space-y-4 p-5">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">Links</h3>
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               {SOCIALS.map((s) => (
                 <Field
                   key={s.key}

@@ -90,12 +90,12 @@ function Setup({
   return (
     <div className="max-w-lg mx-auto animate-in">
       <h1 className="text-3xl font-bold mb-1">Set up Merchant</h1>
-      <p className="text-ink-secondary text-sm mb-8">
+      <p className="text-ink-secondary text-sm mb-5">
         Add your business details to start accepting payments. This is saved on this device
         only — nothing is published and no account is created.
       </p>
 
-      <div className="glass p-6 space-y-5">
+      <div className="glass p-5 space-y-4">
         <Field label="Business name">
           <input
             value={name}
@@ -218,7 +218,7 @@ function RequestBuilder({ profile, chainId }: { profile: MerchantProfile; chainI
   }
 
   return (
-    <div className="glass p-6 space-y-5">
+    <div className="glass p-5 space-y-4">
       <div className="flex justify-center">
         {qr ? (
           // The QR is a data: URL generated in the browser, so next/image has
@@ -330,7 +330,7 @@ function Payments({ profile }: { profile: MerchantProfile }) {
   );
 
   return (
-    <div className="glass p-6">
+    <div className="glass p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-semibold">Payments received</h2>
         <button
@@ -346,7 +346,7 @@ function Payments({ profile }: { profile: MerchantProfile }) {
       ) : loading && received.length === 0 ? (
         <p className="text-sm text-ink-secondary">Reading from {chain.label}…</p>
       ) : received.length === 0 ? (
-        <div className="text-center py-8">
+        <div className="text-center py-6">
           <p className="text-sm text-ink-secondary">No payments yet.</p>
           <p className="text-xs text-ink-muted mt-1">
             Share a payment link and confirmed payments appear here.
@@ -436,7 +436,7 @@ export default function MerchantPage() {
   if (!ready) {
     return (
       <div className="max-w-lg mx-auto animate-in">
-        <div className="glass p-10 text-center text-sm text-ink-muted">Loading…</div>
+        <div className="glass p-8 text-center text-sm text-ink-muted">Loading…</div>
       </div>
     );
   }
@@ -445,10 +445,10 @@ export default function MerchantPage() {
     return (
       <div className="max-w-lg mx-auto animate-in">
         <h1 className="text-3xl font-bold mb-1">Merchant</h1>
-        <p className="text-ink-secondary text-sm mb-8">
+        <p className="text-ink-secondary text-sm mb-5">
           Accept stablecoin payments with a shareable link or QR code.
         </p>
-        <div className="glass p-10 text-center">
+        <div className="glass p-8 text-center">
           <div className="text-5xl mb-4">🏪</div>
           <h2 className="text-2xl font-bold mb-2">Set up Merchant</h2>
           <p className="text-ink-secondary">
@@ -481,12 +481,12 @@ export default function MerchantPage() {
           Edit
         </button>
       </div>
-      <p className="text-ink-secondary text-sm mb-8">
+      <p className="text-ink-secondary text-sm mb-5">
         {profile.category ? `${profile.category} · ` : ''}Accepting on{' '}
         <span className="text-accent-text">{chain.label}</span>
       </p>
 
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-4">
         {(
           [
             ['request', 'Payment request'],
@@ -516,7 +516,7 @@ export default function MerchantPage() {
 
       {/* The payout address is the one detail that, if wrong, misdirects every
           future payment, so it stays visible rather than hidden behind Edit. */}
-      <div className="mt-6 flex items-center justify-between gap-3 text-xs text-ink-muted">
+      <div className="mt-4 flex items-center justify-between gap-3 text-xs text-ink-muted">
         <span className="font-mono truncate">{profile.wallet}</span>
         <button
           onClick={() => {

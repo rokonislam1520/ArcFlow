@@ -105,7 +105,7 @@ export default function ReceivePage() {
     return (
       <div className="max-w-lg mx-auto animate-in">
         <h1 className="text-3xl font-bold mb-1">Receive</h1>
-        <div className="glass p-6 mt-8 text-center text-ink-secondary text-sm">
+        <div className="glass p-5 mt-5 text-center text-ink-secondary text-sm">
           Connect your wallet to show your address.
         </div>
       </div>
@@ -115,11 +115,11 @@ export default function ReceivePage() {
   return (
     <div className="max-w-lg mx-auto animate-in">
       <h1 className="text-3xl font-bold mb-1">Receive</h1>
-      <p className="text-ink-secondary text-sm mb-8">
+      <p className="text-ink-secondary text-sm mb-5">
         Share this to be paid on <span className="text-accent-text">{chain.label}</span>.
       </p>
 
-      <div className="glass p-6 space-y-5">
+      <div className="glass p-5 space-y-4">
         <div className="flex justify-center">
           {qr ? (
             <img
