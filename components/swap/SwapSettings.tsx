@@ -130,7 +130,10 @@ export function SwapSettings({
               : 'bg-surface-input border-hairline text-ink-secondary hover:text-ink-primary hover:border-arc-500/30'
           }`}
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        {/* 18px and a heavier stroke so the gear carries at a glance. The 36px
+            button is unchanged — the icon was under-weighted inside it, not the
+            button too small. */}
+        <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"

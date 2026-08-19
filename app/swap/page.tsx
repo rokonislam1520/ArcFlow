@@ -428,8 +428,16 @@ export default function SwapPage() {
          * reads from, and a second copy would be one more thing to keep in sync
          * for no added information. The gear is the exception — slippage applies
          * to the whole trade, not to one side of it.
+         *
+         * `items-end` rather than `items-start`: the gear sat level with the top
+         * of the "Swap" heading because the row aligned both children to their
+         * top edge. Aligning to the bottom drops it beside the "Settles on…"
+         * line, next to the card it configures rather than to the page title.
+         * Done with alignment so the button stays in normal flow — a margin or
+         * absolute offset would need re-tuning per breakpoint and could ride
+         * over the heading when a long chain name wraps on a narrow screen.
          */}
-        <header className="mb-5 flex items-start justify-between gap-3">
+        <header className="mb-5 flex items-end justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Swap</h1>
             <p className="text-sm text-ink-muted mt-0.5">
