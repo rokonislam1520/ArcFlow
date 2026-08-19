@@ -115,11 +115,12 @@ export function WalletSelector({
   }, [pasting]);
 
   const openPicker = () => {
-    // The menu closes first: leaving it open behind the modal would show two
-    // layers of the same decision.
+    // The menu closes first: leaving it open would stack two popovers on the
+    // same anchor, both offering the same decision.
     close();
     setPicking(true);
   };
+
 
   const commitDraft = () => {
     const trimmed = draft.trim();
@@ -139,9 +140,20 @@ export function WalletSelector({
     <div ref={rootRef} className="relative">
       <button
         ref={buttonRef}
-        onClick={() => setOpen((v) => !v)}
+        /*
+         * The chip anchors both the small menu and the wallet list, so it closes
+         * whichever is up rather than opening a second popover over the first.
+         */
+        onClick={() => {
+          if (picking) {
+            setPicking(false);
+            return;
+          }
+          setOpen((v) => !v);
+        }}
         aria-haspopup="menu"
-        aria-expanded={open}
+        aria-expanded={open || picking}
+
         aria-label={address ? `${label}: ${shortAddress(address)}` : label}
         className="flex items-center gap-1.5 max-w-[170px] sm:max-w-none pl-1.5 pr-1 py-1 rounded-xl
           border border-transparent text-ink-primary
@@ -339,8 +351,18 @@ export function WalletSelector({
        * The app's one provider list, shared with ConnectButton. Opening it here
        * does not fork the connect flow — `WalletProvider.connect` still performs
        * it, and the chip above re-renders from that state once it resolves.
+       *
+       * Anchored to the chip itself, so the list appears under the control that
+       * opened it. It portals out to the body rather than nesting here, because
+       * this chip sits inside a Swap card that clips its overflow — anchored
+       * inside that card, the list would be cut off by its edge.
        */}
-      <WalletPicker isOpen={picking} onClose={() => setPicking(false)} />
+      <WalletPicker
+        isOpen={picking}
+        onClose={() => setPicking(false)}
+        anchorRef={buttonRef}
+      />
+
     </div>
   );
 }

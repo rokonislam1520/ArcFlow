@@ -10,28 +10,48 @@
  * address, network, mode and disconnect all belong together in one place, and
  * this component used to carry a second copy of them. Two controls that both
  * claimed to show the current chain could disagree, so only one owns that now.
+ *
+ * The picker opens anchored to the button below, not centered on the page, so a
+ * click here reads as this control's own menu rather than as a page-level
+ * interruption over Swap or Bridge. The ref is what gives it something to anchor
+ * to; the click behaviour and connect logic are unchanged.
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useWallet } from '@/lib/WalletProvider';
 import { WalletPicker } from '@/components/WalletPicker';
 
 export function ConnectButton() {
   const { wallets, isConnecting, error, connect } = useWallet();
   const [picking, setPicking] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   return (
-    <div className="relative">
+    <div className="relative shrink-0">
       <button
-        // With one wallet the picker would be a dialog over a single item, so go
+        ref={buttonRef}
+        // With one wallet the picker would be a menu over a single item, so go
         // straight to connecting.
-        onClick={() => (wallets.length === 1 ? void connect() : setPicking(true))}
+        //
+        // Toggles rather than only opening: the button is the popover's anchor,
+        // and a second click on an open menu's own trigger is expected to shut
+        // it.
+        onClick={() =>
+          wallets.length === 1 ? void connect() : setPicking((v) => !v)
+        }
         disabled={isConnecting}
+        aria-haspopup="menu"
+        aria-expanded={picking}
         className="btn-arc px-5 py-2 text-sm disabled:opacity-60"
       >
         {isConnecting ? 'Connecting…' : 'Connect Wallet'}
       </button>
 
-      <WalletPicker isOpen={picking} onClose={() => setPicking(false)} />
+      <WalletPicker
+        isOpen={picking}
+        onClose={() => setPicking(false)}
+        anchorRef={buttonRef}
+      />
+
 
       {/* Errors from the single-wallet path above; the dialog shows its own. */}
       {error && !picking && (
