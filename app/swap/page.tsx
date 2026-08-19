@@ -500,8 +500,17 @@ export default function SwapPage() {
             }
             footer={
               sellBalance ? (
-                <div className="flex items-center justify-end gap-2 flex-wrap">
-                  <span className="text-ink-muted">
+                // Fragments, not a nested flex box: the row in `AssetCard` is
+                // the single line these share, so the figure and the buttons
+                // are siblings in it rather than a group that can break away.
+                <>
+                  <span
+                    className="text-ink-muted truncate"
+                    // The full figure stays reachable when a long balance is
+                    // ellipsised — a balance that silently drops digits would
+                    // be worse than one that visibly runs out of room.
+                    title={`${sellBalance.formatted} ${sell?.symbol ?? ''}`}
+                  >
                     Balance {sellBalance.formatted} {sell?.symbol}
                   </span>
                   {/*
@@ -511,7 +520,9 @@ export default function SwapPage() {
                    * the confirm button then has to refuse.
                    */}
                   {!isViewingOnly && (
-                    <span className="flex items-center gap-1">
+                    // `shrink-0` keeps the buttons at full size and lets the
+                    // balance text give up the width instead.
+                    <span className="flex items-center gap-1 shrink-0">
                       <FractionButton onClick={() => applyFraction(1n, 4n)}>25%</FractionButton>
                       <FractionButton onClick={() => applyFraction(1n, 2n)}>50%</FractionButton>
                       <FractionButton
@@ -528,7 +539,7 @@ export default function SwapPage() {
                       </FractionButton>
                     </span>
                   )}
-                </div>
+                </>
               ) : displayAddress ? (
                 <span className="text-ink-muted">
                   No {sell?.symbol} on {chainDisplayName(pairChain)}
@@ -598,17 +609,23 @@ export default function SwapPage() {
               />
             }
             footer={
-              <span className="text-ink-muted">
-                {buyBalance ? (
-                  <>
-                    Balance {buyBalance.formatted} {buy?.symbol}
-                  </>
-                ) : receivedAmount === null ? (
-                  'Quoted by the route, not from a price.'
-                ) : (
-                  'Estimated by App Kit'
-                )}
-              </span>
+              // Same row as Sell, so the two cards' bottom lines agree. The
+              // balance truncates; the two explanatory strings are sentences
+              // with nothing beside them, so they keep their full text.
+              buyBalance ? (
+                <span
+                  className="text-ink-muted truncate"
+                  title={`${buyBalance.formatted} ${buy?.symbol ?? ''}`}
+                >
+                  Balance {buyBalance.formatted} {buy?.symbol}
+                </span>
+              ) : (
+                <span className="text-ink-muted">
+                  {receivedAmount === null
+                    ? 'Quoted by the route, not from a price.'
+                    : 'Estimated by App Kit'}
+                </span>
+              )
             }
           />
         </div>
@@ -839,8 +856,15 @@ function AssetCard({
         <TokenPill token={token} onClick={onPickToken} />
       </div>
 
-      <div className="flex items-center justify-end gap-3 mt-3 text-xs">
-        <span className="text-right">{footer}</span>
+      {/*
+       * The bottom line of the card: the balance and whatever acts on it, on one
+       * row. `flex-nowrap` is the point — the buttons must not drop beneath the
+       * figure they apply to — and it holds because the balance carries
+       * `truncate` and the buttons `shrink-0`, so the text yields the width
+       * rather than the row breaking. Right-aligned to sit under the token pill.
+       */}
+      <div className="flex flex-nowrap items-center justify-end gap-x-3 mt-3 text-xs">
+        {footer}
       </div>
     </section>
   );
