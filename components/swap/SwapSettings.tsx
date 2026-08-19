@@ -157,9 +157,10 @@ export function SwapSettings({
               onClick={() => setShowInfo((v) => !v)}
               aria-label="What is max slippage?"
               aria-expanded={showInfo}
-              className="w-4 h-4 rounded-full bg-surface-input border border-hairline text-ink-muted
-                hover:text-accent-text hover:border-arc-500/30 flex items-center justify-center
-                text-[10px] font-bold leading-none transition-colors"
+              className="w-[18px] h-[18px] shrink-0 rounded-full bg-surface-input border border-hairline text-ink-muted
+                hover:text-accent-text hover:border-arc-500/40 flex items-center justify-center
+                text-[11px] font-bold leading-none transition-colors
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               i
             </button>
@@ -192,12 +193,24 @@ export function SwapSettings({
             </p>
           ) : (
             <>
+              {/*
+               * The field is the accent-focused element in the panel, so the
+               * purple lives on its border and deepens into a ring while it
+               * holds focus. `focus-within` rather than `focus`, because the
+               * ring belongs on the whole field — the label is the visible box
+               * and the input inside it is transparent.
+               *
+               * Amber takes over the same slots when the entry is unusable, so
+               * the field's own colour reports its state and the message below
+               * is not the only signal.
+               */}
               <label
                 htmlFor={inputId}
-                className={`mt-2.5 flex items-center gap-1 pl-3 pr-2.5 py-2 rounded-xl border transition-colors duration-200 ${
+                className={`mt-2.5 flex items-center justify-end gap-1.5 px-3 py-2.5 rounded-xl border
+                  transition-colors duration-200 focus-within:ring-[3px] ${
                   customInvalid
-                    ? 'border-amber-500/40 bg-amber-500/[0.07]'
-                    : 'border-arc-500/40 bg-arc-500/[0.08]'
+                    ? 'border-amber-500/50 bg-amber-500/[0.07] focus-within:ring-amber-500/20'
+                    : 'border-arc-500/60 bg-arc-500/[0.06] focus-within:border-arc-500 focus-within:ring-arc-500/25'
                 }`}
               >
                 <input
@@ -219,10 +232,14 @@ export function SwapSettings({
                   placeholder={bpsToPercentText(DEFAULT_SLIPPAGE_BPS)}
                   aria-label="Custom slippage percentage"
                   aria-invalid={customInvalid}
-                  className="flex-1 min-w-0 bg-transparent text-sm font-semibold tabular-nums outline-none
+                  // Right-aligned so the digits sit against the `%`, which
+                  // reads as one quantity — "2 %" — rather than a number
+                  // stranded at the far edge of the box. `tabular-nums` keeps
+                  // the sign from shifting sideways as digits are typed.
+                  className="flex-1 min-w-0 bg-transparent text-right text-base font-semibold tabular-nums outline-none
                     placeholder:text-ink-muted placeholder:font-normal disabled:cursor-not-allowed"
                 />
-                <span className="text-sm text-ink-muted">%</span>
+                <span className="text-base font-semibold text-ink-secondary shrink-0">%</span>
               </label>
 
               {/*
@@ -278,7 +295,8 @@ function ModeButton({
       disabled={disabled}
       aria-pressed={active}
       className={`py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ease-premium
-        disabled:opacity-40 disabled:cursor-not-allowed ${
+        disabled:opacity-40 disabled:cursor-not-allowed
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
           active
             ? 'bg-surface-card text-ink-primary shadow-card'
             : 'text-ink-muted hover:text-ink-secondary'
