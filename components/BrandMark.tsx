@@ -195,8 +195,16 @@ export function TokenMark({
   size?: number;
   badge?: boolean;
 }) {
-  const Mark = TOKEN_MARKS[token.symbol.toUpperCase()];
+  /*
+   * Brand logos are matched by symbol, so they are only safe for tokens the
+   * registry vouched for. A contract resolved from a pasted address can call
+   * itself whatever it likes — "USDC" included — and lending it Circle's mark
+   * would turn this component into the most convincing part of an impersonation.
+   * Unverified tokens therefore always get the neutral letter mark.
+   */
+  const Mark = token.unverified ? undefined : TOKEN_MARKS[token.symbol.toUpperCase()];
   const badgeSize = Math.round(size * 0.42);
+
 
   return (
     <span className="relative inline-flex shrink-0" style={{ width: size, height: size }}>
