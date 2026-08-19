@@ -36,7 +36,7 @@ import { useViewingAddress } from '@/lib/useViewingAddress';
 import { OpStatus } from '@/components/OpStatus';
 import { TokenSelector } from '@/components/TokenSelector';
 import { TokenMark } from '@/components/BrandMark';
-import { AmountDisplay } from '@/components/swap/AmountDisplay';
+import { AmountDisplay, AmountValueLine } from '@/components/swap/AmountDisplay';
 import { WalletSelector } from '@/components/swap/WalletSelector';
 import { SwapSettings, type SlippageMode } from '@/components/swap/SwapSettings';
 import { chainDisplayName } from '@/lib/chainBrand';
@@ -489,9 +489,15 @@ export default function SwapPage() {
                     className="w-full bg-transparent text-4xl sm:text-[42px] font-semibold tracking-tight outline-none placeholder:text-ink-muted tabular-nums"
                   />
                 }
-                tokenText={amountIn === '' ? '0' : amountIn}
                 // Zero while nothing is typed, so the line reads $0.00 rather
                 // than an em dash on a card the user has not filled in yet.
+                usdValue={sellValueUSD ?? (sellPrice !== null ? 0 : null)}
+                showUsdFirst={sellShowUsd}
+              />
+            }
+            value={
+              <AmountValueLine
+                tokenText={amountIn === '' ? '0' : amountIn}
                 usdValue={sellValueUSD ?? (sellPrice !== null ? 0 : null)}
                 showUsdFirst={sellShowUsd}
                 onToggle={() => setSellShowUsd((v) => !v)}
@@ -500,9 +506,10 @@ export default function SwapPage() {
             }
             footer={
               sellBalance ? (
-                // Fragments, not a nested flex box: the row in `AssetCard` is
-                // the single line these share, so the figure and the buttons
-                // are siblings in it rather than a group that can break away.
+                // A fragment, so the figure and the buttons are siblings in the
+                // card's right-hand slot and centre with it. Wrapping them in
+                // another flex box here would add a second set of alignment
+                // rules for the same line.
                 <>
                   <span
                     className="text-ink-muted truncate"
@@ -601,6 +608,12 @@ export default function SwapPage() {
                     {receivedAmount ?? <span className="text-ink-muted">0</span>}
                   </div>
                 }
+                usdValue={buyValueUSD ?? (buyPrice !== null && receivedAmount === null ? 0 : null)}
+                showUsdFirst={buyShowUsd}
+              />
+            }
+            value={
+              <AmountValueLine
                 tokenText={receivedAmount ?? '0'}
                 usdValue={buyValueUSD ?? (buyPrice !== null && receivedAmount === null ? 0 : null)}
                 showUsdFirst={buyShowUsd}
@@ -824,16 +837,20 @@ function AssetCard({
   label,
   token,
   amount,
+  value,
   account,
   footer,
   onPickToken,
 }: {
   label: string;
   token: SwapToken | null;
-  /** Already contains its own USD sub-line; see `AmountDisplay`. */
+  /** The large figure, beside the token pill. */
   amount: React.ReactNode;
+  /** The secondary value line and its unit toggle; see `AmountValueLine`. */
+  value: React.ReactNode;
   /** The account this side reads from, in the card header beside the label. */
   account: React.ReactNode;
+  /** The balance and anything acting on it, opposite `value`. */
   footer: React.ReactNode;
   onPickToken: () => void;
 }) {
@@ -857,14 +874,21 @@ function AssetCard({
       </div>
 
       {/*
-       * The bottom line of the card: the balance and whatever acts on it, on one
-       * row. `flex-nowrap` is the point — the buttons must not drop beneath the
-       * figure they apply to — and it holds because the balance carries
-       * `truncate` and the buttons `shrink-0`, so the text yields the width
-       * rather than the row breaking. Right-aligned to sit under the token pill.
+       * The bottom line: the secondary value on the left, the balance and
+       * whatever acts on it on the right, all vertically centred on one row.
+       *
+       * `justify-between` puts the gap between the two groups rather than
+       * distributing it, so each stays anchored to its own edge — the value line
+       * under the amount it restates, the balance under the token pill it
+       * describes. The row does not wrap, because the buttons must not drop
+       * beneath the figure they apply to; the balance text carries `truncate` and
+       * the buttons `shrink-0`, so on a narrow screen the text yields the width
+       * instead of the row breaking.
        */}
-      <div className="flex flex-nowrap items-center justify-end gap-x-3 mt-3 text-xs">
-        {footer}
+      <div className="flex flex-nowrap items-center justify-between gap-x-3 mt-3 text-xs">
+        {/* Both groups are flex rows themselves, so their contents centre too. */}
+        <div className="flex items-center gap-1.5 min-w-0">{value}</div>
+        <div className="flex items-center gap-2 min-w-0">{footer}</div>
       </div>
     </section>
   );
