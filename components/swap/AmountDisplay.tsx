@@ -25,6 +25,20 @@
 import { formatUSD } from '@/lib/portfolio';
 
 /**
+ * Type treatment for the large figure, shared by every amount on the page.
+ *
+ * Exported because the same figure is rendered three ways — the Sell input, the
+ * Buy readout, and the USD promotion below — and they have to be the same size
+ * to be the same figure. Three literal copies would be three chances for the
+ * card to change height when the toggle is pressed.
+ *
+ * Sized down from 42px: still clearly the primary value, but no longer leaving
+ * the empty band the reference does not have.
+ */
+export const AMOUNT_TEXT_CLASS =
+  'text-3xl sm:text-[34px] font-semibold tracking-tight tabular-nums';
+
+/**
  * Whether the dollar figure may take the large slot.
  *
  * A preference for USD is not enough on its own: without a price there is no
@@ -55,9 +69,7 @@ export function AmountDisplay({
        * would assert that on no evidence.
        */}
       {showUsdFirst && usdValue !== null ? (
-        <div className="text-4xl sm:text-[42px] font-semibold tracking-tight tabular-nums truncate">
-          {formatUSD(usdValue)}
-        </div>
+        <div className={`${AMOUNT_TEXT_CLASS} truncate`}>{formatUSD(usdValue)}</div>
       ) : (
         tokenNode
       )}
@@ -121,13 +133,17 @@ export function AmountValueLine({
            * printed beside the figure — it changes what the card shows, and
            * something clickable should look clickable before it is hovered.
            *
-           * Fixed 28px with `shrink-0` and `justify-center`: the width is not
+           * Fixed 24px with `shrink-0` and `justify-center`: the width is not
            * derived from the glyph, so the icon stays centred and the circle
            * stays a circle whatever the row does around it. Surface and hairline
            * tokens rather than literal colours, so both themes follow the card
            * it sits on. The focus ring is the app's existing one.
+           *
+           * Kept a touch above the 12px text it sits beside — a control needs
+           * more of a target than the label next to it, and this is still a
+           * comfortable tap on a phone.
            */
-          className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full
+          className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full
             bg-surface-input border border-hairline text-ink-muted
             hover:text-accent-text hover:border-arc-500/40 hover:bg-arc-500/15
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent
@@ -136,7 +152,7 @@ export function AmountValueLine({
           <svg
             // A half-turn on press mirrors the exchange that just happened, so
             // the animation explains the state change rather than decorating it.
-            className={`w-3.5 h-3.5 transition-transform duration-300 ease-premium ${
+            className={`w-3 h-3 transition-transform duration-300 ease-premium ${
               usdIsPrimary ? 'rotate-180' : ''
             }`}
             fill="none"

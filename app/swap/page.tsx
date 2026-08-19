@@ -36,7 +36,11 @@ import { useViewingAddress } from '@/lib/useViewingAddress';
 import { OpStatus } from '@/components/OpStatus';
 import { TokenSelector } from '@/components/TokenSelector';
 import { TokenMark } from '@/components/BrandMark';
-import { AmountDisplay, AmountValueLine } from '@/components/swap/AmountDisplay';
+import {
+  AmountDisplay,
+  AmountValueLine,
+  AMOUNT_TEXT_CLASS,
+} from '@/components/swap/AmountDisplay';
 import { WalletSelector } from '@/components/swap/WalletSelector';
 import { SwapSettings, type SlippageMode } from '@/components/swap/SwapSettings';
 import { chainDisplayName } from '@/lib/chainBrand';
@@ -486,7 +490,9 @@ export default function SwapPage() {
                     inputMode="decimal"
                     placeholder="0"
                     aria-label="Amount to sell"
-                    className="w-full bg-transparent text-4xl sm:text-[42px] font-semibold tracking-tight outline-none placeholder:text-ink-muted tabular-nums"
+                    // Same type scale as the Buy readout and the USD promotion,
+                    // so the figure does not resize as the card changes state.
+                    className={`${AMOUNT_TEXT_CLASS} w-full bg-transparent outline-none placeholder:text-ink-muted`}
                   />
                 }
                 // Zero while nothing is typed, so the line reads $0.00 rather
@@ -604,7 +610,7 @@ export default function SwapPage() {
             amount={
               <AmountDisplay
                 tokenNode={
-                  <div className="text-4xl sm:text-[42px] font-semibold tracking-tight tabular-nums truncate">
+                  <div className={`${AMOUNT_TEXT_CLASS} truncate`}>
                     {receivedAmount ?? <span className="text-ink-muted">0</span>}
                   </div>
                 }
@@ -857,13 +863,15 @@ function AssetCard({
   return (
     // `card-float` lifts the panel on hover; the two swap cards are the subject
     // of this page, so they are where the effect belongs.
-    <section className="glass card-float p-5 rounded-3xl">
+    // `p-4` rather than `p-5`: the card's three rows are each self-contained, so
+    // the padding was doing more separating than it needed to.
+    <section className="glass card-float p-4 rounded-3xl">
       {/*
        * "Sell" and the account sit on one line. The account belongs to the side,
        * not to the page, so it reads as part of the sentence the card makes:
        * sell — from this account.
        */}
-      <div className="flex items-center justify-between gap-2 mb-3">
+      <div className="flex items-center justify-between gap-2 mb-2">
         <span className="text-sm text-ink-secondary">{label}</span>
         {account}
       </div>
@@ -885,7 +893,7 @@ function AssetCard({
        * the buttons `shrink-0`, so on a narrow screen the text yields the width
        * instead of the row breaking.
        */}
-      <div className="flex flex-nowrap items-center justify-between gap-x-3 mt-3 text-xs">
+      <div className="flex flex-nowrap items-center justify-between gap-x-3 mt-2 text-xs">
         {/* Both groups are flex rows themselves, so their contents centre too. */}
         <div className="flex items-center gap-1.5 min-w-0">{value}</div>
         <div className="flex items-center gap-2 min-w-0">{footer}</div>
@@ -902,7 +910,7 @@ function TokenPill({ token, onClick }: { token: SwapToken | null; onClick: () =>
         onClick={onClick}
         // The empty state is the call to action on a fresh swap, so it carries
         // the accent glow that the filled state does not need.
-        className="shrink-0 flex items-center gap-2 pl-4 pr-3 py-3 rounded-2xl bg-arc-500/15 border border-arc-500/30
+        className="shrink-0 flex items-center gap-2 pl-4 pr-3 py-2.5 rounded-2xl bg-arc-500/15 border border-arc-500/30
           text-accent-text font-medium hover:bg-arc-500/25 hover:shadow-glow-arc active:scale-[0.98]
           transition-all duration-200 ease-premium"
       >
@@ -917,11 +925,15 @@ function TokenPill({ token, onClick }: { token: SwapToken | null; onClick: () =>
   return (
     <button
       onClick={onClick}
-      className="shrink-0 flex items-center gap-2.5 pl-2 pr-2.5 py-2 rounded-2xl bg-surface-input border border-hairline
+      className="shrink-0 flex items-center gap-2.5 pl-2 pr-2.5 py-1.5 rounded-2xl bg-surface-input border border-hairline
         hover:bg-surface-hover/[0.06] hover:border-arc-500/30 active:scale-[0.98]
         transition-all duration-200 ease-premium"
     >
-      <TokenMark token={token} size={36} />
+      {/*
+       * 32px keeps the pill inside the height of the amount beside it, so the
+       * pill is no longer what sets how tall the middle row is.
+       */}
+      <TokenMark token={token} size={32} />
       <span className="text-left leading-tight">
         <span className="block text-sm font-bold">{token.symbol}</span>
         <span className="block text-[11px] text-ink-muted max-w-[92px] truncate">
