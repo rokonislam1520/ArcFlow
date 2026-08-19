@@ -13,8 +13,10 @@
  * settings belong in navigation with the rest of the app's pages.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { Address } from 'viem';
 import { getSelectableChains, type ArcChain } from '@/lib/chains';
 import { chainDisplayName } from '@/lib/chainBrand';
+import { formatUSD, usePortfolio } from '@/lib/portfolio';
 import { useModeSwitch } from '@/lib/useModeSwitch';
 import { useWallet } from '@/lib/WalletProvider';
 import { useSession } from '@/lib/SessionProvider';
@@ -24,6 +26,17 @@ import { ChainMark } from '@/components/BrandMark';
 
 /** How long the "Copied" confirmation stays up, in ms. */
 const COPY_FEEDBACK_MS = 1600;
+
+/**
+ * How often the header re-reads the portfolio.
+ *
+ * Slower than the /portfolio page's 30s. This total is ambient — it sits in the
+ * chrome of every screen, so its poll is a cost the whole app pays, and a
+ * balance that is a minute stale is not misleading in the way a stale quote
+ * would be. The value still refreshes immediately on a wallet or network
+ * change, because those remount the query rather than wait for the timer.
+ */
+const HEADER_POLL_MS = 60_000;
 
 export function AccountMenu() {
   const {
@@ -41,6 +54,21 @@ export function AccountMenu() {
   // A mode change is one operation: it flips the mode, moves the wallet to that
   // mode's default chain, and refreshes every chain-dependent screen.
   const { isTestnet, ready, switching: switchingMode, switchMode } = useModeSwitch();
+
+  /*
+   * The same hook /portfolio uses, and its `totalUSD` is taken as given rather
+   * than recomputed here. That total is already sum(balance × price) over the
+   * supported chains, and it already drops assets with no reliable price — so
+   * re-deriving it in the header would be a second implementation free to
+   * disagree with the portfolio page about the user's own net worth.
+   *
+   * Keyed on address and mode, so a wallet or mainnet/testnet change refetches
+   * on its own; no extra wiring, and no chance of showing one wallet's total
+   * next to another's address.
+   */
+  const portfolio = usePortfolio(address as Address | null, isTestnet, {
+    pollMs: HEADER_POLL_MS,
+  });
 
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<'root' | 'networks'>('root');
@@ -89,6 +117,17 @@ export function AccountMenu() {
   if (!address) return null;
 
   const displayName = profile.fields.displayName || profile.fields.username || null;
+
+  /*
+   * An em dash until the first result lands, never a $0.00 that later jumps to
+   * a real figure — a total is the one number where a wrong-then-corrected
+   * value is worse than an obvious absence. `updatedAt` marks a completed
+   * fetch, so this is false only before the first one, not during a refresh:
+   * a poll should not blank a figure the user is already reading.
+   *
+   * Once a fetch has completed, 0 is a real answer and is shown as $0.00.
+   */
+  const totalPending = portfolio.updatedAt === null;
 
   const copyAddress = async () => {
     try {
@@ -147,6 +186,42 @@ export function AccountMenu() {
             {shortAddress(address)}
           </span>
         </span>
+
+        {/*
+         * The total, weighted above the address on purpose: the address is an
+         * identifier you check occasionally, the balance is the number you came
+         * to read. A rule separates them so two unrelated values do not read as
+         * one string.
+         *
+         * `tabular-nums` holds the pill's width steady as the figure changes,
+         * which matters here because this sits in the header of every page —
+         * digits of differing widths would nudge the whole row on each poll.
+         * It stays visible at all breakpoints while the address collapses below
+         * md, since dropping the more useful of the two on a phone would be the
+         * wrong way round.
+         */}
+        <span className="flex items-center gap-2 min-w-0" aria-live="polite" aria-atomic="true">
+          <span className="w-px h-4 bg-hairline shrink-0" aria-hidden />
+          {totalPending ? (
+            <span className="text-sm font-bold text-ink-muted tabular-nums" title="Loading balances">
+              $—
+            </span>
+          ) : (
+            <span
+              className="text-sm font-bold tabular-nums truncate"
+              // Only surfaced when a chain actually failed, so the tooltip is
+              // absent in the normal case rather than crying wolf on every load.
+              title={
+                portfolio.partial
+                  ? 'Some networks could not be read, so this total is understated'
+                  : 'Total value of priced assets'
+              }
+            >
+              {formatUSD(portfolio.totalUSD)}
+            </span>
+          )}
+        </span>
+
         <svg
           viewBox="0 0 24 24"
           fill="none"
