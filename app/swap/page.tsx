@@ -50,7 +50,9 @@ import {
   useTokenUniverse,
   tokensForChain,
   defaultPair,
+  routeOf,
 } from '@/lib/swapTokens';
+
 
 /**
  * Price impact thresholds, as fractions of the input's market value.
@@ -257,8 +259,12 @@ export default function SwapPage() {
     if (!canQuote || !sell || !buy) return;
     const result = await quoteSwap({
       chain: pairChain,
-      tokenIn: sell.alias,
-      tokenOut: buy.alias,
+      // `routeOf`, not `.alias`: an address-resolved token carries its contract
+      // in `route` and only a placeholder alias, so reading the alias would
+      // submit a different asset than the one on screen.
+      tokenIn: routeOf(sell),
+      tokenOut: routeOf(buy),
+
       amountIn,
       slippageBps,
     });

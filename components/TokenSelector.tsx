@@ -8,12 +8,20 @@
  * own, persisted locally. Balances and USD values are read from chain RPCs via
  * `usePortfolio` — nothing here is placeholder data.
  *
- * One deliberate honesty: the list is the routable universe, which App Kit
- * defines as USDC, EURC, USDT and the native asset per chain. There is no
- * token-list endpoint to enumerate more, and `swap()` accepts only those
- * aliases, so a pasted address that is not one of them is reported as
- * unroutable rather than being shown as if it could be traded.
+ * Two limits, stated because they shape the UI:
+ *
+ * The *browsable* list is what App Kit can enumerate — USDC, EURC, USDT and the
+ * native asset per chain. There is no token-list endpoint, and no provider here
+ * can list the arbitrary ERC-20s a wallet holds, so "Your Tokens" covers those
+ * assets and not every last airdrop.
+ *
+ * Trading is not limited that way. `swap()` accepts a raw contract address, so
+ * pasting one resolves it against the chain itself (`lib/tokenResolve.ts`) and
+ * offers it for selection — marked unverified, since it came from a contract
+ * rather than from the registry. An address that no chain recognises is
+ * reported as not found instead of being listed as tradable.
  */
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { type Address } from 'viem';
 import { useNetworkMode } from '@/lib/network';
@@ -37,6 +45,9 @@ import {
   shortAddress,
   isAddressQuery,
 } from '@/lib/swapTokens';
+import { useResolvedToken } from '@/lib/tokenResolve';
+
+
 
 interface Props {
   isOpen: boolean;
@@ -105,6 +116,24 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  /*
+   * Hold the page still while the dialog is up.
+   *
+   * The token list scrolls internally, and once it hits its end the browser
+   * hands the gesture to the page behind — so the swap form drifts under a modal
+   * the user is only scrolling. The previous value is restored rather than being
+   * cleared to '', so a page that sets its own overflow keeps it afterwards.
+   */
+  useEffect(() => {
+    const { body } = document;
+    const previous = body.style.overflow;
+    body.style.overflow = 'hidden';
+    return () => {
+      body.style.overflow = previous;
+    };
+  }, []);
+
+
   const visibleChains = useMemo(() => searchChains(chains, chainQuery), [chains, chainQuery]);
 
   const filteredTokens = useMemo(() => {
@@ -114,7 +143,30 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
     return searchTokens(scoped, tokenQuery).filter((t) => t.key !== exclude?.key);
   }, [universe, chainFilter, tokenQuery, exclude]);
 
+  /**
+   * Chains a pasted address is looked up on.
+   *
+   * Narrowed to the locked or filtered chain when there is one, so the user gets
+   * one answer for the chain they are actually looking at rather than the same
+   * token found on eight networks.
+   */
+  const resolveChains = useMemo(() => {
+    if (lockedChain) return [lockedChain];
+    if (chainFilter) return [chainFilter];
+    return chains;
+  }, [lockedChain, chainFilter, chains]);
+
+  /**
+   * The pasted address, read from the chains themselves.
+   *
+   * Only meaningful when the catalogue has nothing to offer, but the hook runs
+   * regardless and returns an inert state for non-address input, which keeps it
+   * out of the conditional-hook trap.
+   */
+  const resolved = useResolvedToken(tokenQuery, resolveChains, address as Address | null);
+
   const favoriteTokenList = useMemo(
+
     () => tokensByKeys(universe, favorites.keys).filter((t) => t.key !== exclude?.key),
     [universe, favorites.keys, exclude]
   );
@@ -220,7 +272,8 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
         className={`w-full bg-surface-card/95 backdrop-blur-2xl border border-hairline
           rounded-t-3xl sm:rounded-3xl shadow-float flex flex-col overflow-hidden animate-scale-in
           max-h-[88vh] sm:max-h-[78vh] sm:min-h-[420px]
-          ${lockedChain ? 'max-w-md' : 'max-w-[940px]'}`}
+          ${lockedChain ? 'max-w-md' : 'max-w-[820px]'}`}
+
         onClick={(e) => e.stopPropagation()}
       >
         <header className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 border-b border-hairline shrink-0">
@@ -343,11 +396,26 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
             </div>
 
             <div className="flex-1 overflow-y-auto px-2 sm:px-3 pb-3">
-              {/* Held tokens lead, since the asset you own is the likeliest
-                  pick; favourites and recents follow as deliberate choices. */}
-              {heldTokens.length > 0 && (
-                <Section title="Your Tokens">{heldTokens.map(row)}</Section>
-              )}
+              {/*
+                Held tokens lead, since the asset you own is the likeliest pick;
+                favourites and recents follow as deliberate choices.
+
+                Grouped by chain, with the chain named in the heading, because
+                the same ticker exists on many networks — a flat "Your Tokens"
+                list showed USDC four times over with nothing to tell them
+                apart but a logo badge. Chains are ordered by the value held on
+                them, so the account's largest position still comes first.
+              */}
+              {heldTokens.length > 0 &&
+                groupByChain(heldTokens).map((group) => (
+                  <Section
+                    key={`held-${group.chain.id}`}
+                    title={`Your Tokens · ${chainDisplayName(group.chain)}`}
+                  >
+                    {group.tokens.map(row)}
+                  </Section>
+                ))}
+
 
               {!tokenQuery && favoriteTokenList.length > 0 && (
                 <Section title="Favorites">{favoriteTokenList.map(row)}</Section>
@@ -357,19 +425,59 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
                 <Section title="Recent">{recentTokenList.map(row)}</Section>
               )}
 
+              {/*
+                A pasted address that the catalogue does not contain: the chains
+                are asked directly, and whatever they confirm is offered here.
+              */}
+              {resolved.found.length > 0 && (
+                <Section title="Found on chain">
+                  {resolved.found.map(({ token, amount }) => (
+                    <TokenRow
+                      key={token.key}
+                      token={token}
+                      balance={amount === null ? undefined : { amount, valueUSD: null }}
+                      starred={favorites.has(token.key)}
+                      onSelect={() => handleSelect(token)}
+                      onToggleStar={() => favorites.toggle(token.key)}
+                    />
+                  ))}
+                </Section>
+              )}
+
               {filteredTokens.length === 0 ? (
                 <div className="py-12 px-4 text-center">
-                  {isAddressQuery(tokenQuery) ? (
+                  {resolved.loading ? (
+                    <p className="text-sm text-ink-secondary">
+                      Reading that address on{' '}
+                      {resolveChains.length === 1
+                        ? chainDisplayName(resolveChains[0])
+                        : `${resolveChains.length} chains`}
+                      …
+                    </p>
+                  ) : resolved.found.length > 0 ? (
+                    // The result is rendered above; this branch only exists
+                    // because the catalogue itself matched nothing, which is not
+                    // a failure once the chain has answered.
+                    null
+                  ) : isAddressQuery(tokenQuery) ? (
                     <>
                       <p className="text-sm text-ink-secondary mb-1.5">
-                        No supported token at that address.
+                        {resolved.searched
+                          ? 'No ERC-20 token responded at that address.'
+                          : 'Paste the full address to look it up.'}
                       </p>
                       <p className="text-xs text-ink-muted max-w-sm mx-auto leading-relaxed">
-                        App Kit works with USDC, EURC, USDT and native assets. An arbitrary
-                        ERC-20 cannot be handled here, so it is not offered.
+                        {resolved.searched
+                          ? `Nothing on ${
+                              resolveChains.length === 1
+                                ? chainDisplayName(resolveChains[0])
+                                : 'the chains searched'
+                            } reported a symbol and decimals there, so there is no token to offer. Check the address and the chain.`
+                          : 'A partial address cannot be read on-chain. Once the full address is in, it is checked against each chain directly.'}
                       </p>
                     </>
                   ) : (
+
                     <p className="text-sm text-ink-secondary">
                       Nothing matches that search on{' '}
                       {lockedChain
@@ -539,18 +647,35 @@ function TokenRow({
         <span className="flex-1 min-w-0">
           <span className="flex items-center gap-1.5">
             <span className="text-sm font-semibold truncate text-ink-primary">{token.symbol}</span>
-            {/* Registry tokens are the canonical issuances App Kit routes. */}
-            {!token.isNative && (
+            {/*
+              The tick means "in the App Kit registry", so a token read from a
+              contract must not carry it — it would vouch for an asset nobody
+              vouched for. Those get the warning mark instead.
+            */}
+            {token.unverified ? (
               <svg
-                className="w-3.5 h-3.5 text-accent-text shrink-0"
+                className="w-3.5 h-3.5 text-warning shrink-0"
                 fill="currentColor"
                 viewBox="0 0 20 20"
-                aria-label="In the App Kit registry"
+                aria-label="Read from the contract, not in the registry — verify before trading"
                 role="img"
               >
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
+            ) : (
+              !token.isNative && (
+                <svg
+                  className="w-3.5 h-3.5 text-accent-text shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  aria-label="In the App Kit registry"
+                  role="img"
+                >
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              )
             )}
+
           </span>
           <span className="block text-[11px] text-ink-muted truncate">
             {token.name} · {chainDisplayName(token.chain)}

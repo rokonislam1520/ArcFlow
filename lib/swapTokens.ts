@@ -3,17 +3,22 @@
  * The token universe for swapping, derived from the App Kit registry.
  *
  * Scope, stated plainly because it drives the whole selector UI: App Kit
- * exposes no token-list endpoint. A chain record carries `usdcAddress`,
- * `eurcAddress`, `usdtAddress` and a `nativeCurrency`, and `swap()` routes by
- * those aliases — not by arbitrary contract address. So the real, routable
- * universe is those four per chain, across the 18 swap-capable chains.
+ * exposes no token-list endpoint and no way to enumerate what a wallet holds.
+ * A chain record carries `usdcAddress`, `eurcAddress`, `usdtAddress` and a
+ * `nativeCurrency`, so the *browsable* catalogue is those four per chain across
+ * the swap-capable chains. That is a limit on listing, not on trading.
  *
- * This file therefore builds a genuine multichain token list from the registry
- * rather than shipping a curated JSON of thousands of tokens the app could not
- * actually swap. Search by contract address resolves against these real
- * addresses; an unknown address is reported as unroutable instead of being
- * added to the list as though it were tradable.
+ * `swap()` and `estimateSwap()` type `tokenIn`/`tokenOut` as
+ * `SupportedSwapToken | \`0x${string}\``, so a raw contract address is a valid
+ * route. Any ERC-20 the user can name can therefore be traded, even though the
+ * SDK cannot list it — see `lib/tokenResolve.ts`, which reads a pasted address
+ * straight from the token contract.
+ *
+ * So this file builds the registry-backed catalogue, and resolution by address
+ * extends it on demand. Neither path invents a token: every entry here comes
+ * from a chain record, and every resolved entry comes from the contract itself.
  */
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   getEnvChains,
@@ -23,10 +28,20 @@ import {
 
 /** A selectable token: one asset on one chain. */
 export interface SwapToken {
-  /** Stable identity, `${chainId}:${alias}`. */
+  /** Stable identity: `${chainId}:${alias}`, or `${chainId}:${address}` when resolved. */
   key: string;
   /** Alias App Kit routes by. Native is routed as 'NATIVE'. */
   alias: TokenAlias;
+  /**
+   * What to hand the SDK as `tokenIn`/`tokenOut`.
+   *
+   * Registry tokens route by alias, so this is absent for them and `alias` is
+   * used. Address-resolved tokens have no alias to speak of, so they carry the
+   * contract address here — which `swap()` accepts directly. Callers must
+   * therefore prefer `route ?? alias`; reading `alias` alone would silently
+   * trade the wrong asset, since a resolved token's alias is only a placeholder.
+   */
+  route?: string;
   /** Ticker shown to the user. Native uses the chain's own symbol. */
   symbol: string;
   /** Canonical asset name. */
@@ -36,7 +51,17 @@ export interface SwapToken {
   address?: string;
   /** True for the chain's gas asset. */
   isNative: boolean;
+  /** Known for resolved tokens, which read it from the contract. */
+  decimals?: number;
+  /** Read from a contract rather than the registry, so not badged as canonical. */
+  unverified?: boolean;
 }
+
+/** The value to send to App Kit for this token. */
+export function routeOf(token: SwapToken): string {
+  return token.route ?? token.alias;
+}
+
 
 /**
  * Canonical names for the three stablecoins in the registry.
