@@ -310,7 +310,11 @@ function TopHeader({ onOpenDrawer }: { onOpenDrawer: () => void }) {
   const { isTestnet, ready } = useNetworkMode();
 
   return (
-    <header className="sticky top-0 z-30 h-16 flex items-center gap-3 px-4 sm:px-6 lg:px-8 border-b border-hairline bg-surface-page/85 backdrop-blur-xl transition-colors duration-300 ease-premium">
+    // Opaque, with the design's structural rule under it. The header was a
+    // translucent blur panel; sharpening the cards while the chrome above them
+    // stayed frosted would have left the two layers in different languages.
+    <header className="sticky top-0 z-30 h-16 flex items-center gap-3 px-4 sm:px-6 lg:px-8 border-b-2 border-hairline bg-surface-page transition-colors duration-300 ease-premium">
+
       {/* Mobile menu */}
       <button
         onClick={onOpenDrawer}

@@ -216,7 +216,8 @@ export function TokenBadge({ symbol, size = 40 }: { symbol: string; size?: numbe
       style={{ width: size, height: size }}
       // Dark text on the bright accent, and a hairline ring so the badge keeps
       // its edge against both the card and the page background.
-      className="rounded-full bg-gradient-to-br from-arc-400 to-azure-500 ring-1 ring-inset ring-white/20 text-[11px] font-bold text-accent-contrast flex items-center justify-center shrink-0"
+      className="rounded-full bg-accent border-2 border-hairline text-[11px] font-bold text-accent-contrast flex items-center justify-center shrink-0"
+
     >
       {symbol.slice(0, 4)}
     </div>

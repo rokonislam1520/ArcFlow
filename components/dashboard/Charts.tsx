@@ -23,7 +23,8 @@ import { useId, useMemo } from 'react';
 export const SERIES_COLORS = [
   '#14f1d9',
   '#3b82f6',
-  '#8b5cf6',
+  '#c3f720',
+
   '#22c55e',
   '#5ff9e5',
   '#60a5fa',

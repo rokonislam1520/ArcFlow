@@ -169,14 +169,16 @@ function RecipientPickerBody({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/70 backdrop-blur-sm animate-in"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/75 animate-in"
+
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label="Select recipient"
     >
       <div
-        className="w-full max-w-md h-[88vh] sm:h-[600px] bg-surface-card/95 backdrop-blur-2xl border border-hairline
+        className="w-full max-w-md h-[88vh] sm:h-[600px] bg-surface-card border-2 border-hairline
+
           rounded-t-3xl sm:rounded-4xl shadow-float flex flex-col overflow-hidden animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >

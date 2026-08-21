@@ -46,8 +46,14 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-arc-500 to-mint-500 flex items-center justify-center">
-              <svg className="w-5 h-5 text-ink-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {/* Flat accent under an ink rule. The mark was a purple-to-green
+                gradient; two hues in a logo the size of a thumbnail read as
+                muddy, and the app now has exactly one brand colour. */}
+            <div className="w-9 h-9 rounded-xl bg-accent border-2 border-hairline flex items-center justify-center">
+              {/* Ink, not white: the accent is a high-luminance chartreuse, and
+                  a white glyph on it is close to invisible. */}
+              <svg className="w-5 h-5 text-accent-contrast" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>

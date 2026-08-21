@@ -11,43 +11,62 @@ const features = [
   { icon: '💳', title: 'Pay Merchant', description: 'Scan & pay at any merchant accepting stablecoins.', href: '/merchant' },
 ];
 
+/*
+ * Capability figures, not traction figures.
+ *
+ * This strip previously read "$18.5M+ volume processed" and "42,000+ active
+ * users". Nothing in the app produces those numbers — they were invented, and
+ * on a product with no users yet they are a false claim, the kind that collapses
+ * the moment anyone asks how it was measured. Everything here is instead a fact
+ * about what is built, and each one can be checked in the repository: the chain
+ * count comes from `lib/chains.ts`, the contract count from `contracts/`, and
+ * the settlement claim from ARC's own finality rather than from our metrics.
+ */
 const stats = [
-  { label: 'Volume Processed', value: '$18.5M+' },
-  { label: 'Active Users', value: '42,000+' },
-  { label: 'Chains Supported', value: '9' },
-  { label: 'Avg. Transfer Time', value: '<2s' },
+  { label: 'Chains supported', value: '9' },
+  { label: 'Stablecoins routed', value: 'USDC · EURC · USDT' },
+  { label: 'Onchain contracts', value: '4' },
+  { label: 'Gas on USDC transfers', value: 'Zero' },
 ];
+
 
 export default function HomePage() {
   const { connect } = useWallet();
   return (
     <div className="min-h-screen">
       {/* Hero */}
-      <section className="relative pt-20 pb-32 overflow-hidden">
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-20 left-1/3 w-[500px] h-[500px] bg-arc-500/10 rounded-full blur-[150px] animate-pulse-slow" />
-          <div className="absolute bottom-20 right-1/4 w-[400px] h-[400px] bg-mint-500/8 rounded-full blur-[120px] animate-pulse-slow" />
-        </div>
-
+      {/* Left-aligned rather than centred, and no blurred colour pools behind
+          it. Centred hero copy over two glows is the layout every crypto
+          landing page uses; an asymmetric masthead set against the page's own
+          grid is the editorial reference this design is built on. */}
+      <section className="relative pt-16 pb-24 border-b-2 border-hairline">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-arc-500/10 border border-arc-500/20 text-accent-text text-sm font-medium mb-8">
-              <span className="w-2 h-2 rounded-full bg-arc-400 animate-pulse" />
+          <div className="max-w-4xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 border-2 border-hairline bg-accent text-accent-contrast label-mono !text-accent-contrast mb-8">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent-contrast" />
               Built on ARC — The Economic OS
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-extrabold leading-tight mb-6">
-              <span className="text-ink-primary">Your Money,</span>
+            {/* Tight leading and heavy tracking-in: at this size the type is the
+                design, so it is set as a masthead rather than as a sentence. */}
+            <h1 className="font-display text-6xl md:text-8xl font-bold leading-[0.92] tracking-[-0.045em] mb-6">
+              <span className="text-ink-primary">Your money,</span>
               <br />
-              <span className="text-gradient">Flowing Freely.</span>
+              <span className="text-ink-primary">flowing</span>{' '}
+              {/* The one accent on the page, used as a printed highlight —
+                  ink on chartreuse, so it reads at any size in either theme. */}
+              <span className="bg-accent text-accent-contrast px-2 border-2 border-hairline">
+                freely.
+              </span>
             </h1>
 
-            <p className="text-xl text-ink-secondary mb-10 max-w-2xl mx-auto leading-relaxed">
-              Send, swap, bridge, pay & manage your stablecoins — all in one app.
+            <p className="text-lg md:text-xl text-ink-secondary mb-10 max-w-2xl leading-relaxed">
+              Send, swap, bridge, pay and manage your stablecoins — all in one app.
               Built on ARC for sub-second finality and zero gas on USDC.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4">
+
               <a href="/dashboard" className="btn-arc px-8 py-4 text-lg inline-flex items-center justify-center gap-2">
                 Launch App
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,19 +81,25 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="py-12 border-y border-arc-500/10">
+      {/* Stats. Divided by rules rather than floated in space, so the strip
+          reads as one table of facts instead of four unrelated numbers. */}
+      <section className="border-b-2 border-hairline">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-y-2 md:divide-y-0 md:divide-x-2 divide-hairline">
             {stats.map((s) => (
-              <div key={s.label} className="text-center">
-                <div className="text-2xl md:text-3xl font-bold text-gradient">{s.value}</div>
-                <div className="text-ink-muted text-sm mt-1">{s.label}</div>
+              <div key={s.label} className="py-8 md:px-6 first:md:pl-0 last:md:pr-0">
+                {/* Ink, not the accent: these are facts, and reserving the
+                    accent for a single highlight is what keeps it loud. */}
+                <div className="text-2xl md:text-3xl font-bold tracking-tight text-ink-primary">
+                  {s.value}
+                </div>
+                <div className="label-mono mt-2">{s.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
+
 
       {/* Features Grid */}
       <section id="features" className="py-24">
@@ -122,14 +147,31 @@ export default function HomePage() {
       {/* CTA */}
       <section className="py-24">
         <div className="max-w-3xl mx-auto px-4">
-          <div className="glass p-10 text-center glow-teal relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-arc-500/5 to-mint-500/5" />
-            <div className="relative">
-              <h2 className="text-3xl font-bold mb-4">Ready to Flow?</h2>
-              <p className="text-ink-secondary mb-8">Join thousands using ArcFlow for everyday stablecoin finance.</p>
-              <button onClick={connect} className="btn-arc px-10 py-4 text-lg">Connect Wallet & Start</button>
-            </div>
+          {/* Flat accent panel — no glow, no gradient wash. */}
+          <div className="border-2 border-hairline bg-accent p-10 text-center shadow-float">
+            <h2 className="font-display text-3xl md:text-4xl font-bold tracking-tight text-accent-contrast mb-3">
+              Ready to flow?
+            </h2>
+            {/*
+              Was "Join thousands using ArcFlow" — the same invented traction as
+              the old stats strip, and not a claim this project can make. What is
+              true is that it needs no signup, which is also the more persuasive
+              line to someone deciding whether to click.
+            */}
+            <p className="text-accent-contrast/75 mb-8 max-w-md mx-auto">
+              Connect a wallet to start. No signup, no KYC for core features, and
+              nothing custodial — your keys stay yours.
+            </p>
+            <button
+              onClick={connect}
+              className="px-10 py-4 text-lg font-semibold border-2 border-hairline
+                bg-surface-card text-ink-primary shadow-card
+                hover:-translate-y-0.5 active:translate-y-0 transition-transform duration-150"
+            >
+              Connect wallet &amp; start
+            </button>
           </div>
+
         </div>
       </section>
 
@@ -138,8 +180,9 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-arc-500 to-mint-500 flex items-center justify-center">
-                <svg className="w-4 h-4 text-ink-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-8 h-8 rounded-lg bg-accent border-2 border-hairline flex items-center justify-center">
+                <svg className="w-4 h-4 text-accent-contrast" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>

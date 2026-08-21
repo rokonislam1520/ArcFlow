@@ -235,7 +235,8 @@ function WalletPickerBody({
        * to one palette here.
        */
       className={`z-[60] flex flex-col overflow-hidden rounded-2xl border border-hairline
-        bg-surface-card/95 backdrop-blur-2xl shadow-float animate-scale-in
+        bg-surface-card shadow-float animate-scale-in
+
         ${box?.above ? 'origin-bottom-right' : 'origin-top-right'}`}
     >
       <header className="flex items-center justify-between gap-2 px-4 py-3 border-b border-hairline shrink-0">

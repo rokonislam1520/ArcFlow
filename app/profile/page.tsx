@@ -112,7 +112,8 @@ function CompletionMeter({ fields }: { fields: ProfileFields }) {
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-surface-raised">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-arc-500 to-mint-500 transition-all duration-500"
+          className="h-full bg-accent transition-all duration-500"
+
           style={{ width: `${percent}%` }}
         />
       </div>

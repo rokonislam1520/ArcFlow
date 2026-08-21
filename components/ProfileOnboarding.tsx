@@ -174,7 +174,8 @@ export function ProfileOnboarding() {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75"
+
       role="dialog"
       aria-modal="true"
       aria-labelledby="onboarding-title"
