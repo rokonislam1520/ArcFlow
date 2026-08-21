@@ -1,6 +1,8 @@
 'use client';
 import { FeatureCard } from '@/components/FeatureCard';
+import { Logo } from '@/components/Logo';
 import { useWallet } from '@/lib/useWallet';
+
 
 const features = [
   { icon: '💸', title: 'Send Money', description: 'Send USDC instantly to anyone, anywhere. Zero gas fees on ARC.', href: '/send' },
@@ -181,11 +183,9 @@ export default function HomePage() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-accent border-2 border-hairline flex items-center justify-center">
-                <svg className="w-4 h-4 text-accent-contrast" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+                <Logo className="w-5 h-5 text-accent-contrast" />
               </div>
+
               <span className="font-bold text-gradient">ArcFlow</span>
             </div>
             <div className="flex gap-6 text-sm text-ink-muted">

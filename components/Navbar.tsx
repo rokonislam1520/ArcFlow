@@ -3,7 +3,9 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { AccountMenu } from '@/components/AccountMenu';
 import { ConnectButton } from '@/components/ConnectButton';
+import { Logo } from '@/components/Logo';
 import { NotificationBell } from '@/components/NotificationBell';
+
 import { useWallet } from '@/lib/WalletProvider';
 import { useNetworkMode } from '@/lib/network';
 
@@ -52,11 +54,9 @@ export function Navbar() {
             <div className="w-9 h-9 rounded-xl bg-accent border-2 border-hairline flex items-center justify-center">
               {/* Ink, not white: the accent is a high-luminance chartreuse, and
                   a white glyph on it is close to invisible. */}
-              <svg className="w-5 h-5 text-accent-contrast" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+              <Logo className="w-[22px] h-[22px] text-accent-contrast" />
             </div>
+
             <span className="text-lg font-bold text-gradient">ArcFlow</span>
           </Link>
 

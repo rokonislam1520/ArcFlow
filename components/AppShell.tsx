@@ -21,6 +21,8 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { AccountMenu } from '@/components/AccountMenu';
 import { ConnectButton } from '@/components/ConnectButton';
+import { Logo } from '@/components/Logo';
+
 import { NotificationBell } from '@/components/NotificationBell';
 import { ThemeControl, ThemeToggle } from '@/components/ThemeToggle';
 import { useWallet } from '@/lib/WalletProvider';
@@ -186,10 +188,9 @@ function Sidebar({
       <div className="h-16 flex items-center gap-3 px-4 border-b border-hairline shrink-0">
         <Link href="/" className="flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 rounded-xl bg-accent flex items-center justify-center shrink-0">
-            <svg className="w-5 h-5 text-accent-contrast" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+            <Logo className="w-[22px] h-[22px] text-accent-contrast" />
           </div>
+
           {!collapsed && <span className="text-lg font-bold text-gradient truncate">ArcFlow</span>}
         </Link>
       </div>
