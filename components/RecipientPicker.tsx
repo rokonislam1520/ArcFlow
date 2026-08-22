@@ -177,9 +177,9 @@ function RecipientPickerBody({
       aria-label="Select recipient"
     >
       <div
-        className="w-full max-w-md h-[88vh] sm:h-[600px] bg-surface-card border-2 border-hairline
-
+        className="w-full max-w-md h-[88vh] sm:h-[600px] bg-surface-card border border-hairline
           rounded-t-3xl sm:rounded-4xl shadow-float flex flex-col overflow-hidden animate-scale-in"
+
         onClick={(e) => e.stopPropagation()}
       >
         <header className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-hairline shrink-0">

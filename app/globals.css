@@ -5,13 +5,15 @@
 @tailwind utilities;
 
 /**
- * ArcFlow theme — editorial / neo-brutalist fintech.
+ * ArcFlow theme — calm, dark-first fintech.
  *
  * Every surface, control and input in the app is styled through the classes in
  * this file. That is deliberate: a card is `.glass` everywhere, so cards cannot
  * drift apart from each other, and the whole app can be retuned here without
- * editing a single page. This redesign is the proof of that claim — the visual
- * language below changes on all fifteen routes, and almost no page was touched.
+ * editing a single page. A sharp-edged, hard-shadowed revision of the look was
+ * applied and then reversed entirely from this file and tailwind.config.js,
+ * across all fifteen routes, with almost no page touched — which is the
+ * strongest evidence available that the indirection earns its keep.
  *
  * The file is organised as one semantic token set with two values — a dark
  * theme on `:root` and a light theme under `[data-theme='light']`. Components
@@ -28,73 +30,89 @@
  * Four rules, applied without exception, which is what makes it read as one
  * designed thing rather than as a pile of effects:
  *
- *  1. **Ink-weight borders.** Structure is drawn with a 2px rule in a near-ink
- *     colour, not implied with a faint hairline. The border is the design.
- *  2. **Hard shadows.** Offset, fully opaque, zero blur. A blurred shadow
- *     imitates a soft light source and is what every other dashboard uses; an
- *     un-blurred one reads as printed registration.
+ *  1. **Separation by surface, not by outline.** A card is visible because it
+ *     is lighter than the page behind it. Borders are 1px and quiet; their job
+ *     is to close an edge, not to draw the structure.
+ *  2. **Soft, low shadows.** Elevation is a hint, not an effect. Panels sit a
+ *     millimetre above the page rather than casting a block.
  *  3. **Typographic hierarchy, not decorative hierarchy.** Emphasis comes from
- *     weight, size and case — a heavy grotesk for display, mono small-caps for
+ *     weight, size and case — a grotesk for display, mono small-caps for
  *     labels — rather than from gradients or glows.
- *  4. **One accent, used sparingly.** Chartreuse marks the action and nothing
- *     else. An accent that appears everywhere marks nothing.
+ *  4. **One accent, used sparingly.** Violet marks the action and nothing else.
+ *     An accent that appears everywhere marks nothing.
  *
- * Note that `.glass` is now a misnomer: there is no blur or translucency left in
- * it. The name is kept because it appears in every page in the app, and renaming
- * a class used that widely is churn that buys nothing but a tidier word.
+ * Note that `.glass` is a misnomer: there is no blur or translucency left in it.
+ * The name is kept because it appears in every page in the app, and renaming a
+ * class used that widely is churn that buys nothing but a tidier word. The same
+ * applies to the `--shadow-hard*` tokens and `.glow-teal`, which now hold soft
+ * and violet values respectively.
  */
+
 
 :root {
   /* ---- Dark theme (default) --------------------------------------------
-     Near-neutral graphite rather than the previous blue-black navy. A cool navy
-     tint fights the chartreuse accent — the two sit far enough apart on the
-     wheel that the page starts to look purple by contrast. Neutral greys let
-     the accent be the only hue on screen, which is the point of having one. */
-  --surface-page: 11 11 12;      /* #0B0B0C */
-  --surface-card: 20 20 22;      /* #141416 */
-  --surface-raised: 28 28 31;    /* #1C1C1F */
-  --surface-input: 15 15 17;     /* #0F0F11 — recessed below the card */
+     Near-neutral graphite rather than a blue-black navy. A cool tint in the
+     ground competes with the violet accent and the page ends up reading as two
+     hues arguing; neutral greys let the accent be the only colour on screen,
+     which is the point of having exactly one. */
+  --surface-page: 8 8 10;        /* #08080A — near-black, as in the reference */
+  --surface-card: 18 18 21;      /* #121215 */
+  --surface-raised: 26 26 31;    /* #1A1A1F */
+  --surface-input: 13 13 16;     /* #0D0D10 — recessed below the card */
   --surface-hover: 255 255 255;  /* tinted with alpha at point of use */
   --surface-hover-alpha: 0.05;
 
-  /* Deliberately light for borders in a dark UI: at 2px these are structural
-     lines meant to be seen, not seams meant to disappear. */
-  --border: 58 58 64;            /* #3A3A40 */
-  --border-strong: 92 92 102;    /* #5C5C66 */
+  /* Quiet on purpose. Separation is carried by the surface steps above, so a
+     border only has to close an edge; drawn any heavier it outlines every panel
+     and a page of them reads as a wireframe. */
+  --border: 38 38 44;            /* #26262C */
+  --border-strong: 58 58 66;     /* #3A3A42 */
+
 
   --text-primary: 247 247 245;   /* #F7F7F5 */
   --text-secondary: 168 168 163; /* #A8A8A3 */
   --text-muted: 116 116 112;     /* #747470 */
 
-  /* Primary action colour: chartreuse. The app has exactly one accent so that
-     "this is the action" never needs a second cue. */
-  --accent: 195 247 32;          /* #C3F720 */
-  --accent-hover: 210 255 77;    /* #D2FF4D */
-  --accent-text: 210 255 77;     /* the accent as *text* */
-  /* Ink that sits on top of an accent fill. Black, not white: chartreuse is a
-     high-luminance colour, and white text on it fails contrast badly. */
-  --accent-contrast: 11 11 12;
+  /* Primary action colour: violet. Exactly one accent, so "this is the action"
+     never needs a second cue.
+
+     Being dark enough to carry white text is the property that matters here: a
+     high-luminance accent needs dark ink on top, cannot be used as type against
+     a dark page at all, and so forces a whole parallel ramp to exist. Violet
+     works as a fill, as a border and — one step lighter — as type. */
+  --accent: 124 58 237;          /* #7C3AED */
+  --accent-hover: 139 92 246;    /* #8B5CF6 */
+  --accent-text: 167 139 250;    /* #A78BFA — the accent as *text* on black */
+  /* Ink that sits on top of an accent fill. White now, not black: violet at
+     this depth is a dark colour and black text on it is unreadable. */
+  --accent-contrast: 255 255 255;
+
 
   --success: 47 188 104;
   --warning: 245 176 65;
   --danger: 255 92 92;
 
-  /* Shadows are tokens because the hard-offset trick needs a colour that
-     contrasts with the surface behind it. Pure black is invisible against a
-     near-black page, so in dark mode the offset block is a *lifted* charcoal —
-     the shadow reads as a second sheet of paper, not as absence of light. */
-  --shadow-sm: 0 1px 0 0 rgb(0 0 0 / 0.6);
-  --shadow-card: 2px 2px 0 0 rgb(0 0 0 / 0.5);
-  --shadow-lift: 4px 4px 0 0 rgb(0 0 0 / 0.6);
-  --shadow-float: 6px 6px 0 0 rgb(0 0 0 / 0.7);
-  --shadow-hard: 4px 4px 0 0 rgb(58 58 64);
-  --shadow-hard-sm: 2px 2px 0 0 rgb(58 58 64);
-  --shadow-hard-accent: 4px 4px 0 0 rgb(var(--accent));
+  /* Soft and blurred, with depth carried by alpha rather than by offset. These
+     stay tokens because the value that reads as elevation on near-black is not
+     the one that reads as elevation on white, so each theme needs its own.
+
+     The `hard-*` names are vestigial. They are referenced throughout this file
+     and in a few components, so they are kept pointing at soft values rather
+     than renamed across the app. */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 2px 8px -2px rgb(0 0 0 / 0.35);
+  --shadow-lift: 0 4px 16px -4px rgb(0 0 0 / 0.5);
+  --shadow-float: 0 12px 32px -8px rgb(0 0 0 / 0.6);
+  --shadow-hard: 0 4px 14px -2px rgb(0 0 0 / 0.5);
+  --shadow-hard-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4);
+  /* A soft halo rather than a border, so focus stays distinguishable on a
+     control whose selected state already recolours the border. */
+  --shadow-hard-accent: 0 0 0 3px rgb(var(--accent) / 0.35);
+
 
   /* One easing and two durations for the entire app, so motion feels like it
      comes from a single system rather than from each component's own taste.
-     Shorter than before: hard edges suit brisk motion, and a 300ms ease on a
-     square panel reads as sluggish. */
+     Kept brisk: at 300ms a card hover reads as lag rather than as response. */
   --ease: cubic-bezier(0.2, 0.9, 0.25, 1);
   --fast: 150ms;
   --slow: 220ms;
@@ -102,47 +120,50 @@
 
 [data-theme='light'] {
   /* ---- Light theme ------------------------------------------------------
-     Warm paper rather than cool grey. This is the theme the design is really
-     built for: ink-black rules on a bone ground is the editorial reference, and
-     the warmth is what separates it from the blue-white of every SaaS
-     dashboard. Cards are pure white so they lift off the paper. */
-  --surface-page: 244 241 233;   /* #F4F1E9 */
+     A neutral grey ground with pure white cards, so a panel lifts off the page
+     the same way it does in dark. Deliberately not warm: a bone or cream ground
+     pushes violet toward magenta by contrast, which tints the entire app faintly
+     pink. Neutral keeps the accent the colour actually chosen. */
+  --surface-page: 245 245 247;   /* #F5F5F7 */
   --surface-card: 255 255 255;   /* #FFFFFF */
   --surface-raised: 255 255 255;
-  --surface-input: 249 247 241;  /* #F9F7F1 — recessed, as in dark */
+  --surface-input: 248 248 250;  /* #F8F8FA — recessed, as in dark */
+
   --surface-hover: 17 17 17;
   --surface-hover-alpha: 0.05;
 
-  /* Ink, not grey. A 2px near-black rule is the structural element of this
-     design; a pale grey border at the same weight just looks like a mistake. */
-  --border: 17 17 17;            /* #111111 */
-  --border-strong: 0 0 0;
+  /* Grey, not ink: on white, a near-black rule reads as a drawn outline rather
+     than as the edge of a surface. */
+  --border: 228 228 233;         /* #E4E4E9 */
+  --border-strong: 203 203 211;  /* #CBCBD3 */
+
 
   --text-primary: 11 11 11;      /* #0B0B0B */
   --text-secondary: 58 58 56;    /* #3A3A38 */
   --text-muted: 107 107 102;     /* #6B6B66 */
 
-  /* The fill stays the brand chartreuse — it is legible on paper with black ink
-     on top — but as *text* it drops to the deep end of the ramp, because
-     chartreuse type on white is effectively unreadable. */
-  --accent: 168 220 0;           /* #A8DC00 */
-  --accent-hover: 195 247 32;    /* #C3F720 */
-  --accent-text: 78 104 0;       /* #4E6800 — passes contrast as body text */
-  --accent-contrast: 11 11 11;
+  /* Violet deepens slightly on white so that both the fill and the same colour
+     used as type clear contrast against paper. */
+  --accent: 109 40 217;          /* #6D28D9 */
+  --accent-hover: 124 58 237;    /* #7C3AED */
+  --accent-text: 91 33 182;      /* #5B21B6 — passes contrast as body text */
+  --accent-contrast: 255 255 255;
+
 
   --success: 20 122 62;
   --warning: 168 100 8;
   --danger: 197 32 32;
 
-  /* Solid ink offsets. This is the signature of the light theme: no blur, no
-     transparency, the shadow is simply the same black as the border. */
-  --shadow-sm: 0 1px 0 0 rgb(17 17 17 / 0.9);
-  --shadow-card: 2px 2px 0 0 rgb(17 17 17);
-  --shadow-lift: 4px 4px 0 0 rgb(17 17 17);
-  --shadow-float: 6px 6px 0 0 rgb(17 17 17);
-  --shadow-hard: 4px 4px 0 0 rgb(17 17 17);
-  --shadow-hard-sm: 2px 2px 0 0 rgb(17 17 17);
-  --shadow-hard-accent: 4px 4px 0 0 rgb(var(--accent));
+  /* Soft and low-alpha, mirroring dark. On white a shadow only needs to hint at
+     a raised edge, and the cool grey keeps it from muddying the paper. */
+  --shadow-sm: 0 1px 2px 0 rgb(16 16 24 / 0.06);
+  --shadow-card: 0 1px 2px 0 rgb(16 16 24 / 0.06), 0 2px 8px -2px rgb(16 16 24 / 0.08);
+  --shadow-lift: 0 4px 16px -4px rgb(16 16 24 / 0.12);
+  --shadow-float: 0 12px 32px -8px rgb(16 16 24 / 0.16);
+  --shadow-hard: 0 4px 14px -2px rgb(16 16 24 / 0.12);
+  --shadow-hard-sm: 0 1px 3px 0 rgb(16 16 24 / 0.08);
+  --shadow-hard-accent: 0 0 0 3px rgb(var(--accent) / 0.20);
+
 }
 
 * { box-sizing: border-box; padding: 0; margin: 0; }
@@ -217,41 +238,39 @@ h1, h2, h3, h4 {
 /*
  * The card surface used across the app.
  *
- * A 2px ink border with a hard offset shadow, and no radius to speak of. The
- * border does the structural work here, which is why it is heavier than the
- * shadow: remove the shadow and this is still clearly a card; remove the border
- * and it is a floating smudge.
+ * A single hairline, a generous radius and a soft shadow. Separation comes
+ * mostly from the surface being lighter than the page — the border only closes
+ * the edge — which is why it is 1px and quiet. Drawn any louder, the container
+ * competes with the balance inside it for attention, and a screen holding a
+ * dozen of them reads as a wireframe.
  */
 .glass {
   background: rgb(var(--surface-card));
-  border: 2px solid rgb(var(--border));
-  border-radius: 4px;
+  border: 1px solid rgb(var(--border));
+  border-radius: 16px;
   box-shadow: var(--shadow-card);
   transition:
     background-color var(--slow) var(--ease),
     border-color var(--slow) var(--ease),
-    box-shadow var(--fast) var(--ease),
-    transform var(--fast) var(--ease);
+    box-shadow var(--fast) var(--ease);
 }
 
 /*
- * Hover deepens the offset and moves the card *toward* it.
- *
- * The translate is what sells the effect: growing the shadow alone looks like
- * the light changed, whereas shifting the card by the same amount the shadow
- * grew reads as the sheet physically lifting. The two values must stay in step.
+ * Hover lifts by light alone: a deeper shadow and a slightly brighter edge, and
+ * no movement. Nudging a card under the cursor invites the pointer to chase it,
+ * and on a dense dashboard that motion is noise rather than feedback.
  */
 .glass:hover {
   border-color: rgb(var(--border-strong));
   box-shadow: var(--shadow-lift);
-  transform: translate(-2px, -2px);
 }
 
 .glass-sm {
   background: rgb(var(--surface-card));
-  border: 2px solid rgb(var(--border));
-  border-radius: 3px;
+  border: 1px solid rgb(var(--border));
+  border-radius: 12px;
   box-shadow: var(--shadow-sm);
+
   transition:
     background-color var(--fast) var(--ease),
     border-color var(--fast) var(--ease),
@@ -268,14 +287,14 @@ h1, h2, h3, h4 {
  * tile). Applied on top of `.glass`; kept separate because a page where
  * everything lifts has no focal point at all.
  *
- * `.glass:hover` already translates, so this only needs to add the extra depth,
- * and it must not restate the transform or the two would fight.
+ * Shadow only. `.glass:hover` already handles the border, and this deepens the
+ * elevation a step further; neither rule moves the card.
  */
 .card-float:hover { box-shadow: var(--shadow-float); }
 
 /* A card that is currently selected or active. The accent border is reserved
-   for this state so "selected" is never ambiguous — and here the offset block
-   takes the accent too, which no other state does. */
+   for this state, and paired with an accent halo, so "selected" is never
+   ambiguous against a merely hovered card. */
 .card-active {
   border-color: rgb(var(--accent));
   box-shadow: var(--shadow-hard-accent);
@@ -335,11 +354,11 @@ h1, h2, h3, h4 {
 /* ========== BUTTONS ========== */
 
 /*
- * Primary action: chartreuse fill, ink border, hard offset.
+ * Primary action: solid violet, no border.
  *
- * The border is on the button as well as the card because at this weight it is
- * the shape's outline, not its decoration — without it a bright fill on paper
- * has no edge and reads as a sticker.
+ * The fill alone identifies it — it is the only violet object on the page — so
+ * it carries no outline. A border in the page's own grey around a coloured
+ * button reads as a seam rather than as an edge.
  */
 .btn-arc {
   display: inline-flex;
@@ -349,44 +368,37 @@ h1, h2, h3, h4 {
   background: rgb(var(--accent));
   color: rgb(var(--accent-contrast));
   font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.01em;
-  border-radius: 3px;
+  border-radius: 12px;
   padding: 0.75rem 1.5rem;
-  border: 2px solid rgb(var(--border));
+  border: none;
   cursor: pointer;
-  box-shadow: var(--shadow-hard-sm);
+  box-shadow: none;
   transition:
     background-color var(--fast) var(--ease),
-    transform var(--fast) var(--ease),
-    box-shadow var(--fast) var(--ease);
+    filter var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
 }
 
 .btn-arc:hover:not(:disabled) {
   background: rgb(var(--accent-hover));
-  box-shadow: var(--shadow-hard);
-  transform: translate(-2px, -2px);
 }
 
-/*
- * Press pushes the button into its own shadow: the offset collapses to zero and
- * the button travels the full distance to meet it. This is the mechanical
- * metaphor the whole design rests on, and it is the moment it pays off.
- */
+/* Press dips by a pixel — a small vertical settle is the whole acknowledgement
+   a button needs, and anything larger reads as a lurch. */
 .btn-arc:active:not(:disabled) {
-  transform: translate(2px, 2px);
-  box-shadow: none;
+  transform: translateY(1px);
   transition-duration: 60ms;
 }
 
+
 .btn-arc:disabled {
   /* Flattened to the page's own neutral rather than dimmed. A faded accent
-     still looks like a live button; a control with no colour and no offset
+     still looks like a live button, where a control with no colour at all
      reads as unavailable at a glance. */
   background: rgb(var(--surface-hover) / 0.08);
   color: rgb(var(--text-muted));
-  border-color: rgb(var(--border));
-  box-shadow: none;
   cursor: not-allowed;
 }
 
@@ -400,33 +412,31 @@ h1, h2, h3, h4 {
   background: rgb(var(--surface-card));
   color: rgb(var(--text-primary));
   font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.01em;
-  border-radius: 3px;
+  border-radius: 12px;
   padding: 0.75rem 1.5rem;
-  border: 2px solid rgb(var(--border));
+  border: 1px solid rgb(var(--border));
   cursor: pointer;
-  box-shadow: var(--shadow-hard-sm);
+  box-shadow: none;
   transition:
     background-color var(--fast) var(--ease),
     border-color var(--fast) var(--ease),
-    transform var(--fast) var(--ease),
-    box-shadow var(--fast) var(--ease);
+    transform var(--fast) var(--ease);
 }
 
 .btn-outline:hover:not(:disabled) {
   border-color: rgb(var(--border-strong));
-  box-shadow: var(--shadow-hard);
-  transform: translate(-2px, -2px);
+  background: rgb(var(--surface-raised));
 }
 
 .btn-outline:active:not(:disabled) {
-  transform: translate(2px, 2px);
-  box-shadow: none;
+  transform: translateY(1px);
   transition-duration: 60ms;
 }
 
-.btn-outline:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+.btn-outline:disabled { opacity: 0.5; cursor: not-allowed; }
+
 
 /* Keyboard focus. Applied to buttons and inputs, and only for keyboard users,
    so pointer users never see a ring they did not ask for. */
@@ -441,9 +451,10 @@ h1, h2, h3, h4 {
 
 .input-arc {
   background: rgb(var(--surface-input));
-  border: 2px solid rgb(var(--border));
-  border-radius: 3px;
+  border: 1px solid rgb(var(--border));
+  border-radius: 12px;
   padding: 0.875rem 1rem;
+
   color: rgb(var(--text-primary));
   font-size: 1rem;
   /* Amounts and addresses line up column-wise only if digits share a width. */
@@ -459,12 +470,10 @@ h1, h2, h3, h4 {
 
 .input-arc:hover:not(:disabled):not(:focus) { border-color: rgb(var(--border-strong)); }
 
-/*
- * Focus is marked with the accent border plus a hard offset, matching the
- * buttons. The old version used a soft 3px halo, which is the one thing a
- * design with no blur anywhere cannot afford.
- */
+/* Focus: accent border plus a soft accent halo, and the surface lifts to card
+   level so the field reads as active rather than merely outlined. */
 .input-arc:focus {
+
   border-color: rgb(var(--accent));
   background: rgb(var(--surface-card));
   box-shadow: var(--shadow-hard-accent);
@@ -475,9 +484,9 @@ h1, h2, h3, h4 {
 
 /* ========== EFFECTS ========== */
 
-/* Kept for the pages that still reference them, but reduced to a flat accent
-   edge. The original neon bloom belonged to the old dark-only look and has no
-   place in a design with no blur. */
+/* Kept for the pages that still reference them, but reduced to a modest shadow
+   and a thin accent ring. The original neon bloom belonged to an earlier
+   dark-only look and would be the loudest thing on the page now. */
 .glow-teal { box-shadow: var(--shadow-hard-sm); }
 .glow-teal-sm { box-shadow: 0 0 0 2px rgb(var(--accent) / 0.35); }
 
@@ -485,8 +494,8 @@ h1, h2, h3, h4 {
 
 /*
  * Status badges share one shape and differ only in hue, so the colour is doing
- * the work of distinguishing them. Square, bordered and mono-cased, so they
- * read as stamps rather than as the soft pills of the previous design.
+ * the work of distinguishing them. Rounded pills with a hairline tint, matching
+ * the cards they sit inside.
  */
 .badge-success,
 .badge-warning {
@@ -494,26 +503,27 @@ h1, h2, h3, h4 {
   align-items: center;
   gap: 0.375rem;
   padding: 0.1875rem 0.5rem;
-  border-radius: 2px;
+  border-radius: 9999px;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 0.6875rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  border: 2px solid;
+  border: 1px solid;
 }
 
 .badge-success {
-  background: rgb(var(--success) / 0.14);
+  background: rgb(var(--success) / 0.12);
   color: rgb(var(--success));
-  border-color: rgb(var(--success) / 0.55);
+  border-color: rgb(var(--success) / 0.35);
 }
 
 .badge-warning {
-  background: rgb(var(--warning) / 0.14);
+  background: rgb(var(--warning) / 0.12);
   color: rgb(var(--warning));
-  border-color: rgb(var(--warning) / 0.55);
+  border-color: rgb(var(--warning) / 0.35);
 }
+
 
 /* ========== SCROLLBAR ========== */
 
@@ -521,8 +531,9 @@ h1, h2, h3, h4 {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: rgb(var(--border-strong));
-  border-radius: 0;
+  border-radius: 9999px;
   border: 3px solid transparent;
+
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover { background: rgb(var(--text-muted)); background-clip: content-box; }

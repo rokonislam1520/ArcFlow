@@ -269,9 +269,9 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
          * long one stops at 78vh and scrolls internally. `min-h` keeps it from
          * collapsing to something cramped while balances are still arriving.
          */
-        className={`w-full bg-surface-card border-2 border-hairline
-
+        className={`w-full bg-surface-card border border-hairline
           rounded-t-3xl sm:rounded-3xl shadow-float flex flex-col overflow-hidden animate-scale-in
+
           max-h-[88vh] sm:max-h-[78vh] sm:min-h-[420px]
           ${lockedChain ? 'max-w-md' : 'max-w-[820px]'}`}
 
@@ -324,10 +324,10 @@ function TokenSelectorBody({ onClose, onSelect, exclude, title, lockedChain }: P
                       : 'hover:bg-surface-hover/[0.06] text-ink-secondary'
                   }`}
                 >
-                  <span className="w-6 h-6 rounded-full bg-accent border-2 border-hairline text-accent-contrast flex items-center justify-center text-[10px] font-bold shrink-0">
-
+                  <span className="w-6 h-6 rounded-full bg-accent border border-hairline text-accent-contrast flex items-center justify-center text-[10px] font-bold shrink-0">
                     ∞
                   </span>
+
                   <span className="truncate font-medium">All Chains</span>
                 </button>
 

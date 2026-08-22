@@ -484,9 +484,9 @@ function Avatar({ src, fallback, size = 32 }: { src: string; fallback: string; s
   return (
     <div
       style={{ width: size, height: size, fontSize: Math.round(size * 0.34) }}
-      className="rounded-full bg-accent text-accent-contrast border-2 border-hairline flex items-center justify-center font-bold shrink-0"
-
+      className="rounded-full bg-accent text-accent-contrast border border-hairline flex items-center justify-center font-bold shrink-0"
     >
+
       {fallback.slice(2, 4).toUpperCase()}
     </div>
   );

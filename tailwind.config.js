@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 /**
- * Design tokens for the ArcFlow theme — editorial / neo-brutalist fintech.
+ * Design tokens for the ArcFlow theme — calm, dark-first fintech.
  *
  * There are two families here, and the difference matters:
  *
@@ -21,20 +21,17 @@
  * The `<alpha-value>` placeholder is what lets `bg-accent/12` work: Tailwind
  * substitutes the opacity into the channel list at build time.
  *
- * ## The redesign, and why it lives here rather than in the pages
+ * ## Why the look lives here rather than in the pages
  *
- * The visual language is sharp corners, 2px rules, hard un-blurred shadows, a
- * heavy grotesk display face and mono numerals. Almost all of that is expressed
- * as *token values*, which is what makes it a redesign of fifteen routes rather
- * than of one: no page names a colour, a radius or a shadow directly, so
- * retuning them here moves the whole app at once and cannot leave one screen on
- * the old look.
+ * The visual language is a violet accent on near-black, generous rounding, thin
+ * hairline borders and soft shadows. Almost all of it is expressed as *token
+ * values*, which is what makes a retheme reach fifteen routes rather than one:
+ * no page names a colour, a radius or a shadow directly, so retuning them here
+ * moves the whole app at once and cannot leave one screen on the old look.
  *
- * The `borderRadius` block below is the clearest case. Every card, button and
- * input in the app already carries a `rounded-*` class, so instead of editing
- * hundreds of them, the scale itself is redefined: `rounded-2xl` now resolves to
- * 4px. `full` is deliberately left alone — avatars, status dots and pills are
- * meant to be circular, and flattening those would break meaning, not style.
+ * That property is what let an earlier sharp-edged, hard-shadowed revision be
+ * reverted by editing this file and globals.css alone. It is worth preserving:
+ * when a page needs a colour or a radius, give it a token, not a hex.
  */
 
 const withAlpha = (variable) => `rgb(var(${variable}) / <alpha-value>)`;
@@ -71,11 +68,12 @@ module.exports = {
         accent: {
           DEFAULT: withAlpha('--accent'),
           hover: withAlpha('--accent-hover'),
-          // The accent as *text*. Chartreuse is a fill colour: at 4px of text on
-          // white it is illegible, so as type it resolves to deep ink in light
-          // mode and to the bright ramp only in dark. Two tokens, because one
-          // value genuinely cannot do both jobs.
+          // The accent as *text*, kept separate from the accent as a *fill*.
+          // A tone that works as a filled button rarely also clears contrast as
+          // small type on the page, so this resolves darker in light mode and
+          // lighter in dark. Two tokens, because one value cannot do both jobs.
           text: withAlpha('--accent-text'),
+          // Foreground for content sitting *on* an accent fill.
           contrast: withAlpha('--accent-contrast'),
         },
         success: withAlpha('--success'),
@@ -84,41 +82,35 @@ module.exports = {
 
         /* ---- Literal palettes ---- */
         /*
-         * Brand accent, retuned from purple to chartreuse.
-         *
-         * Purple is the default accent of nearly every crypto dashboard, which
-         * is precisely why it had to go: the palette was the most generic thing
-         * about the interface. Chartreuse is rare in finance, unmistakable at a
-         * glance, and — unlike a neon cyan or magenta — still legible as a flat
-         * fill under black text.
+         * Brand accent: violet.
          *
          * The ramp keeps the `arc` name and its 50–950 shape so the couple of
          * dozen existing `bg-arc-500/15` and `border-arc-500/40` usages across
-         * the app follow the new brand automatically instead of being stranded
-         * as purple islands.
+         * the app follow the brand automatically instead of being stranded on a
+         * previous hue. 500 matches `--accent` (#7C3AED) so a literal and a
+         * token never disagree by a shade.
          */
         arc: {
-          50: '#f8ffe5', 100: '#eeffbd', 200: '#e0ff8a', 300: '#d2ff4d',
-          400: '#c3f720', 500: '#a8dc00', 600: '#8bb800', 700: '#6b8f00',
-          800: '#4e6800', 900: '#333f00', 950: '#1a2100',
+          50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd',
+          400: '#a78bfa', 500: '#7c3aed', 600: '#6d28d9', 700: '#5b21b6',
+          800: '#4c1d95', 900: '#3b1585', 950: '#250d54',
         },
-        // Success. Deepened to a true forest green so it cannot be mistaken for
-        // the chartreuse accent — "this worked" and "this is the action" must
-        // never be the same colour.
+        // Success. Kept a clear green: with a violet accent there is no risk of
+        // the two being confused, so this can be the conventional colour.
         mint: {
           300: '#5cd48b', 400: '#2fbc68', 500: '#149a4f', 600: '#0d7a3e',
         },
-
         // Informational, for states that must not read as success or warning.
         azure: {
           300: '#93c5fd', 400: '#60a5fa', 500: '#2563eb', 600: '#1d4ed8',
         },
-        // Kept under its existing name for the charts that reference it, but
-        // retuned into the brand family so a graph cannot emit a stray purple
-        // line that belongs to no other part of the app.
+        // Kept under its existing name for the charts that reference it, and
+        // aligned with the brand family so a graph cannot emit a stray hue that
+        // belongs to no other part of the app.
         iris: {
-          300: '#d2ff4d', 400: '#c3f720', 500: '#a8dc00', 600: '#8bb800',
+          300: '#c4b5fd', 400: '#a78bfa', 500: '#7c3aed', 600: '#6d28d9',
         },
+        // Extra steps between Tailwind's slate stops, for the dark surfaces.
         slate: {
           750: '#1e293b',
           850: '#101827',
@@ -129,10 +121,9 @@ module.exports = {
         /*
          * Three faces, each with a job.
          *
-         * `display` is the editorial voice: a heavy grotesk for headings and
-         * figures, which is what carries the redesign's personality. `mono` is
-         * for data — addresses, hashes, amounts, small caps labels — where
-         * fixed-width digits stop numbers from jittering as they update. `sans`
+         * `display` is a grotesk for headings and large figures. `mono` is for
+         * data — addresses, hashes, amounts, small-caps labels — where
+         * fixed-width digits stop numbers jittering as they update. `sans`
          * stays Inter for body copy, because a display face set at 14px in a
          * paragraph is a stylistic flourish that costs the reader.
          */
@@ -141,42 +132,38 @@ module.exports = {
         mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       /*
-       * The radius scale, redefined rather than extended.
+       * Radii: Tailwind's own scale, deliberately *not* overridden.
        *
-       * These names already appear throughout the app, so overriding their
-       * values is what turns every existing card and control sharp in one edit.
-       * The steps are 0–6px: enough to soften a hairline join at large sizes,
-       * never enough to read as a pill. `full` is intentionally absent so it
-       * keeps Tailwind's 9999px and circular things stay circular.
+       * Every card, button and input in the app already carries a `rounded-*`
+       * class, so this scale is the app's cornering. It was once overridden down
+       * to 0–6px to force sharp edges everywhere; that is why only the two extra
+       * steps below are declared now — the defaults are what we want, and
+       * restating them would re-create the same trap.
+       *
+       * These two are kept because a few components ask for them and would
+       * otherwise silently fall back to no radius at all.
        */
       borderRadius: {
-        none: '0px',
-        sm: '0px',
-        DEFAULT: '2px',
-        md: '2px',
-        lg: '3px',
-        xl: '3px',
-        '2xl': '4px',
-        '3xl': '5px',
-        '4xl': '6px',
-        '5xl': '6px',
+        '4xl': '20px',
+        '5xl': '24px',
       },
       borderWidth: {
-        // The structural rule weight of this design. Named so a card can ask
-        // for `border-hard` instead of restating 2px in fifty places.
-        hard: '2px',
+        // Retained because components still reference `border-hard`, but it is
+        // no longer a heavy rule: structure comes from surface steps and soft
+        // shadows, and a 2px outline around a 16px-radius card reads as a
+        // sticker. Left as an alias rather than removed, so the class keeps
+        // resolving wherever it survives.
+        hard: '1px',
       },
       boxShadow: {
         /*
-         * Hard offset shadows: a solid block of ink at a fixed offset, with no
-         * blur at all. A blurred shadow simulates a soft light source, which is
-         * the language of the interface this replaces; an un-blurred one reads
-         * as printed registration, and is the single most recognisable trait of
-         * the new look.
+         * Elevation, delegated to theme variables — the shadow that reads as
+         * depth on paper is not the one that reads as depth on near-black, so
+         * the actual values live per-theme in globals.css.
          *
-         * They stay delegated to theme variables because the trick only works
-         * with a colour that contrasts with the page — near-black on paper, and
-         * a lifted charcoal in dark mode, where solid black would vanish.
+         * `hard*` are the leftovers of the sharp revision, kept as aliases so
+         * components referencing them still resolve; the variables they point at
+         * are now soft. Prefer `card` / `card-hover` / `float` in new code.
          */
         card: 'var(--shadow-card)',
         'card-hover': 'var(--shadow-lift)',
@@ -184,15 +171,13 @@ module.exports = {
         hard: 'var(--shadow-hard)',
         'hard-sm': 'var(--shadow-hard-sm)',
         'hard-accent': 'var(--shadow-hard-accent)',
-        // Accent ring for a focused or selected control. Square, matching the
-        // geometry of everything it can land on.
+        // Accent ring for a focused or selected control.
         'glow-arc': '0 0 0 3px rgb(var(--accent) / 0.35)',
         'glow-iris': '0 0 0 3px rgb(var(--accent) / 0.35)',
       },
       transitionTimingFunction: {
         // A single easing for the whole app; mixed curves are what make an
-        // interface feel assembled from parts. Snappier than the previous
-        // curve, to match a design whose edges are hard.
+        // interface feel assembled from parts.
         premium: 'cubic-bezier(0.2, 0.9, 0.25, 1)',
       },
       animation: {
@@ -201,9 +186,9 @@ module.exports = {
         'pulse-slow': 'pulse 3s ease-in-out infinite',
         'slide-up': 'slideUp 0.5s ease-out',
         'fade-in': 'fadeIn 0.3s ease-out',
-        // Popovers now arrive by a short travel rather than a scale: a hard-edged
-        // panel that grows from 97% reads as a rubbery zoom, where a 4px slide
-        // reads as a card being placed.
+        // Popovers arrive by a short travel rather than a scale: a panel that
+        // grows from 97% reads as a rubbery zoom, where a 4px slide reads as a
+        // card being placed. The name is kept for the call sites.
         'scale-in': 'popIn 0.16s cubic-bezier(0.2, 0.9, 0.25, 1)',
         'marquee': 'marquee 40s linear infinite',
       },

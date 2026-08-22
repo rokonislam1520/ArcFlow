@@ -48,16 +48,10 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-3">
-            {/* Flat accent under an ink rule. The mark was a purple-to-green
-                gradient; two hues in a logo the size of a thumbnail read as
-                muddy, and the app now has exactly one brand colour. */}
-            <div className="w-9 h-9 rounded-xl bg-accent border-2 border-hairline flex items-center justify-center">
-              {/* Ink, not white: the accent is a high-luminance chartreuse, and
-                  a white glyph on it is close to invisible. */}
-              <Logo className="w-[22px] h-[22px] text-accent-contrast" />
-            </div>
+            {/* No plate behind the mark — see the note in AppShell. */}
+            <Logo className="w-8 h-8 text-ink-primary shrink-0" />
+            <span className="text-lg font-bold text-ink-primary">ArcFlow</span>
 
-            <span className="text-lg font-bold text-gradient">ArcFlow</span>
           </Link>
 
           <div className="hidden lg:flex items-center gap-1">

@@ -40,11 +40,11 @@ export default function HomePage() {
       {/* Left-aligned rather than centred, and no blurred colour pools behind
           it. Centred hero copy over two glows is the layout every crypto
           landing page uses; an asymmetric masthead set against the page's own
-          grid is the editorial reference this design is built on. */}
-      <section className="relative pt-16 pb-24 border-b-2 border-hairline">
+          grid is the layout the reference screen is built on. */}
+      <section className="relative pt-16 pb-24 border-b border-hairline">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 border-2 border-hairline bg-accent text-accent-contrast label-mono !text-accent-contrast mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent text-accent-contrast label-mono !text-accent-contrast mb-8">
               <span className="w-1.5 h-1.5 rounded-full bg-accent-contrast" />
               Built on ARC — The Economic OS
             </div>
@@ -55,9 +55,10 @@ export default function HomePage() {
               <span className="text-ink-primary">Your money,</span>
               <br />
               <span className="text-ink-primary">flowing</span>{' '}
-              {/* The one accent on the page, used as a printed highlight —
-                  ink on chartreuse, so it reads at any size in either theme. */}
-              <span className="bg-accent text-accent-contrast px-2 border-2 border-hairline">
+              {/* The one accent on the page, used as a highlight behind the
+                  word. `accent-contrast` rather than a literal, so the ink stays
+                  legible on the fill in both themes. */}
+              <span className="bg-accent text-accent-contrast px-2 rounded-lg">
                 freely.
               </span>
             </h1>
@@ -85,9 +86,10 @@ export default function HomePage() {
 
       {/* Stats. Divided by rules rather than floated in space, so the strip
           reads as one table of facts instead of four unrelated numbers. */}
-      <section className="border-b-2 border-hairline">
+      <section className="border-b border-hairline">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-y-2 md:divide-y-0 md:divide-x-2 divide-hairline">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-hairline">
+
             {stats.map((s) => (
               <div key={s.label} className="py-8 md:px-6 first:md:pl-0 last:md:pr-0">
                 {/* Ink, not the accent: these are facts, and reserving the
@@ -149,8 +151,8 @@ export default function HomePage() {
       {/* CTA */}
       <section className="py-24">
         <div className="max-w-3xl mx-auto px-4">
-          {/* Flat accent panel — no glow, no gradient wash. */}
-          <div className="border-2 border-hairline bg-accent p-10 text-center shadow-float">
+          {/* Solid accent panel — no glow, no gradient wash. */}
+          <div className="rounded-2xl bg-accent p-10 text-center shadow-float">
             <h2 className="font-display text-3xl md:text-4xl font-bold tracking-tight text-accent-contrast mb-3">
               Ready to flow?
             </h2>
@@ -166,9 +168,9 @@ export default function HomePage() {
             </p>
             <button
               onClick={connect}
-              className="px-10 py-4 text-lg font-semibold border-2 border-hairline
+              className="px-10 py-4 text-lg font-semibold rounded-xl
                 bg-surface-card text-ink-primary shadow-card
-                hover:-translate-y-0.5 active:translate-y-0 transition-transform duration-150"
+                hover:shadow-card-hover active:translate-y-px transition duration-150"
             >
               Connect wallet &amp; start
             </button>
@@ -182,11 +184,9 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-accent border-2 border-hairline flex items-center justify-center">
-                <Logo className="w-5 h-5 text-accent-contrast" />
-              </div>
+              <Logo className="w-7 h-7 text-ink-primary shrink-0" />
+              <span className="font-bold text-ink-primary">ArcFlow</span>
 
-              <span className="font-bold text-gradient">ArcFlow</span>
             </div>
             <div className="flex gap-6 text-sm text-ink-muted">
               <a href="#" className="hover:text-ink-primary">Docs</a>

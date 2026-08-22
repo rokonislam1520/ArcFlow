@@ -187,11 +187,18 @@ function Sidebar({
       {/* Brand */}
       <div className="h-16 flex items-center gap-3 px-4 border-b border-hairline shrink-0">
         <Link href="/" className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-accent flex items-center justify-center shrink-0">
-            <Logo className="w-[22px] h-[22px] text-accent-contrast" />
-          </div>
+          {/* The mark stands on the page, not on a coloured tile. It was set in
+              a filled accent square, which is what made it unreadable: the
+              glyph's counters — the gap inside the A, the ring threading behind
+              it — are the same width as its strokes at 22px, so any second
+              colour crowding them closed the shapes and it read as a blob.
+              Given room and a single ink colour, the orbit is legible. */}
+          <Logo className="w-8 h-8 text-ink-primary shrink-0" />
 
-          {!collapsed && <span className="text-lg font-bold text-gradient truncate">ArcFlow</span>}
+          {/* Solid ink, not the gradient. Same reasoning one step out: a
+              two-stop wordmark beside a monochrome mark reads as two logos. */}
+          {!collapsed && <span className="text-lg font-bold text-ink-primary truncate">ArcFlow</span>}
+
         </Link>
       </div>
 
@@ -314,7 +321,8 @@ function TopHeader({ onOpenDrawer }: { onOpenDrawer: () => void }) {
     // Opaque, with the design's structural rule under it. The header was a
     // translucent blur panel; sharpening the cards while the chrome above them
     // stayed frosted would have left the two layers in different languages.
-    <header className="sticky top-0 z-30 h-16 flex items-center gap-3 px-4 sm:px-6 lg:px-8 border-b-2 border-hairline bg-surface-page transition-colors duration-300 ease-premium">
+    <header className="sticky top-0 z-30 h-16 flex items-center gap-3 px-4 sm:px-6 lg:px-8 border-b border-hairline bg-surface-page transition-colors duration-300 ease-premium">
+
 
       {/* Mobile menu */}
       <button

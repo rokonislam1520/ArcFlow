@@ -214,11 +214,11 @@ export function TokenBadge({ symbol, size = 40 }: { symbol: string; size?: numbe
   return (
     <div
       style={{ width: size, height: size }}
-      // Dark text on the bright accent, and a hairline ring so the badge keeps
-      // its edge against both the card and the page background.
-      className="rounded-full bg-accent border-2 border-hairline text-[11px] font-bold text-accent-contrast flex items-center justify-center shrink-0"
-
+      // `accent-contrast` for the initials, plus a hairline ring so the badge
+      // keeps its edge against both the card and the page background.
+      className="rounded-full bg-accent border border-hairline text-[11px] font-bold text-accent-contrast flex items-center justify-center shrink-0"
     >
+
       {symbol.slice(0, 4)}
     </div>
   );
